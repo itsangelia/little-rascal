@@ -3088,15 +3088,7 @@ function drawPoop(
   poop
 ) {
 
-  let scaleAmount =
-
-    getScaleAtY(
-      poop.y
-    ) *
-
-    0.75;
-
-
+  // Waste keeps a fixed size at every floor depth.
   push();
 
 
@@ -3106,9 +3098,6 @@ function drawPoop(
   );
 
 
-  scale(
-    scaleAmount
-  );
 
 
   // Shadow
@@ -3176,12 +3165,6 @@ function cleanPoopAtMouse() {
       poops[i];
 
 
-    let scaleAmount =
-      getScaleAtY(
-        poop.y
-      );
-
-
     if (
 
       dist(
@@ -3196,8 +3179,7 @@ function cleanPoopAtMouse() {
 
       ) <
 
-      30 *
-      scaleAmount
+      30
 
     ) {
 
