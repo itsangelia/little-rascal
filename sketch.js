@@ -49,6 +49,10 @@ function toggleBGM() {
 // ============================================================
 
 let mapImg;
+let poopImg;
+
+// Visible artwork bounds inside the original transparent image.
+const POOP_ART = { x: 1010, y: 884, width: 341, height: 230 };
 
 let petNormalImg;
 let petHappyImg;
@@ -395,6 +399,9 @@ async function setup() {
     await loadImage(
       "kid cry.png"
     );
+
+
+  poopImg = await loadImage("shit.png");
 
 
   // First random poop
@@ -3125,56 +3132,22 @@ function drawPoop(
   );
 
 
-  // Poop
-
-  fill(
-    123,
-    80,
-    52
+  // Render the hand-drawn asset without its transparent outer padding.
+  // Keep its artwork proportions and align its base with the ground shadow.
+  const artWidth = 36;
+  const artHeight = artWidth * POOP_ART.height / POOP_ART.width;
+  imageMode(CORNER);
+  image(
+    poopImg,
+    -artWidth / 2,
+    8 - artHeight,
+    artWidth,
+    artHeight,
+    POOP_ART.x,
+    POOP_ART.y,
+    POOP_ART.width,
+    POOP_ART.height
   );
-
-
-  ellipse(
-    0,
-    2,
-    28,
-    15
-  );
-
-
-  ellipse(
-    0,
-    -6,
-    22,
-    15
-  );
-
-
-  ellipse(
-    1,
-    -13,
-    14,
-    12
-  );
-
-
-  // Highlight
-
-  fill(
-    180,
-    130,
-    92,
-    150
-  );
-
-
-  ellipse(
-    -4,
-    -10,
-    5,
-    4
-  );
-
 
   pop();
 
