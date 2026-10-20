@@ -3123,7 +3123,7 @@ function drawPoop(
 
   // Render the hand-drawn asset without its transparent outer padding.
   // Keep its artwork proportions and align its base with the ground shadow.
-  const artWidth = 36 * 1.30;
+  const artWidth = 36 * 1.30 * 2;
   const artHeight = artWidth * POOP_ART.height / POOP_ART.width;
   imageMode(CORNER);
   image(
@@ -3179,7 +3179,7 @@ function cleanPoopAtMouse() {
 
       ) <
 
-      30
+      60
 
     ) {
 
