@@ -88,6 +88,12 @@ let growthSleepPending = false;
 let growthWakeReady = false;
 let growthPopupOpen = false;
 let growthPopupOpenedAt = 0;
+const TEEN_REFUSAL = { feed: 0.25, pet: 0.20, play: 0.20 };
+let teenAngryUntil = 0;
+let teenReaction = null;
+let toyBall = makeToyBall();
+let ballChaseUntil = 0;
+let lastBallRewardAt = -Infinity;
 
 
 
@@ -450,6 +456,7 @@ async function setup() {
       30000
     );
 
+
 }
 
 
@@ -499,6 +506,7 @@ function draw() {
     updateStats();
     updateNeglect();
     if (!isDead) {
+      updateToyBall();
       updateMovement();
       updateActionTimer();
       updatePoopSystem();
@@ -544,6 +552,9 @@ function draw() {
   drawToolbar();
 
   drawCustomCursor();
+  if (interactionMode === "none" && !growthPopupOpen) {
+    cursor(toyBall.dragging || isOverToyBall() ? HAND : ARROW);
+  }
   if (growthPopupOpen) drawGrowthPopup();
 
 }
@@ -554,7 +565,13 @@ function draw() {
 // IS PET CRYING?
 // ============================================================
 
+function isStinkCrying() {
+  return !isDead && !isSleeping && !goingToSleep &&
+    poops.some(poop => (poop.ageSeconds || 0) >= DEATH_RULES.poopSmellSeconds);
+}
+
 function isPetCrying() {
+  if (isStinkCrying()) return true;
 
   return (
 
@@ -746,6 +763,9 @@ function updateStats() {
 // ============================================================
 
 function updateMovement() {
+  if (updateTeenReaction()) return;
+  if (lifeStage === "teenager" && millis() < teenAngryUntil &&
+      !isSleeping && !goingToSleep) return;
 
 
   // ==========================================================
@@ -875,6 +895,8 @@ function updateMovement() {
 
   }
 
+
+  if (updateBallChase()) return;
 
   // ==========================================================
   // LAND
@@ -1737,6 +1759,13 @@ function getScaleAtY(y) {
 // ============================================================
 
 function getCurrentPetImage() {
+  // Odor distress takes precedence over happy actions and teen refusal.
+  if (isStinkCrying()) return lifeStage === "teenager" ? teenCryImg : petCryImg;
+  if (millis() >= teenAngryUntil && millis() < ballChaseUntil &&
+      !isSleeping && !goingToSleep && !isPetCrying()) {
+    return lifeStage === "teenager" ? teenHappyImg : petHappyImg;
+  }
+  if (lifeStage === "teenager" && millis() < teenAngryUntil) return teenMadImg;
 
 
   // ==========================================================
@@ -1783,53 +1812,13 @@ function getCurrentPetImage() {
 // ============================================================
 
 function drawWorld() {
-
-
-  // Poop behind pet
-
-  for (
-    let poop of poops
-  ) {
-
-    if (
-      poop.y <=
-      groundY
-    ) {
-
-      drawPoop(
-        poop
-      );
-
-    }
-
-  }
-
-
-  drawPet();
-
-
-  // Poop in front
-
-  for (
-    let poop of poops
-  ) {
-
-    if (
-      poop.y >
-      groundY
-    ) {
-
-      drawPoop(
-        poop
-      );
-
-    }
-
-  }
-
+  const objects = poops.map(poop => ({ y: poop.y, draw: () => drawPoop(poop) }));
+  objects.push({ y: groundY, draw: drawPet });
+  if (!toyBall.dragging) objects.push({ y: toyBall.y, draw: drawToyBall });
+  objects.sort((a, b) => a.y - b.y);
+  for (const object of objects) object.draw();
+  if (toyBall.dragging) drawToyBall();
 }
-
-
 
 // ============================================================
 // DRAW PET
@@ -1852,6 +1841,9 @@ function drawPet() {
     );
 
 
+  const art = getPetArtwork(petImg);
+  const bodyWidth = BASE_PET_WIDTH * art.width / petImg.width;
+
   let jumpHeight =
     -jumpOffset;
 
@@ -1869,9 +1861,9 @@ function drawPet() {
 
       80,
 
-      112,
+      bodyWidth * 0.85,
 
-      66
+      bodyWidth * 0.50
 
     );
 
@@ -1881,9 +1873,9 @@ function drawPet() {
 
       shadowWidth,
 
-      66,
+      bodyWidth * 0.50,
 
-      112
+      bodyWidth * 0.85
 
     );
 
@@ -1929,7 +1921,7 @@ function drawPet() {
 
     groundX,
 
-    groundY + 8,
+    groundY + 4,
 
     shadowWidth *
     depthScale,
@@ -2149,6 +2141,21 @@ function drawPet() {
 
 
 
+  if (lifeStage === "teenager" && millis() < teenAngryUntil) {
+    targetAngle = sin(millis() * 0.03) * 0.12;
+    if (teenReaction && teenReaction.kind === "kick") {
+      if (teenReaction.phase === "windup") {
+        targetScaleX = 0.90;
+        targetScaleY = 1.08;
+        targetAngle = -teenReaction.direction * 0.10;
+      } else if (teenReaction.phase === "strike") {
+        targetScaleX = 1.15;
+        targetScaleY = 0.90;
+        targetAngle = teenReaction.direction * 0.12;
+      }
+    }
+  }
+
   // ==========================================================
   // SMOOTH BODY
   // ==========================================================
@@ -2194,32 +2201,9 @@ function drawPet() {
   // IMAGE SIZE
   // ==========================================================
 
-  let ratio =
-
-    petImg.height /
-
-    petImg.width;
-
-
-  let drawWidth =
-
-    BASE_PET_WIDTH *
-
-    depthScale *
-
-    squashX;
-
-
-  let drawHeight =
-
-    BASE_PET_WIDTH *
-
-    ratio *
-
-    depthScale *
-
-    squashY;
-
+  // Draw only visible pixels, preserving their existing on-screen scale.
+  const drawWidth = BASE_PET_WIDTH * art.width / petImg.width * depthScale * squashX;
+  const drawHeight = BASE_PET_WIDTH * art.height / petImg.width * depthScale * squashY;
 
   let characterBottomY =
 
@@ -2277,7 +2261,9 @@ function drawPet() {
 
     drawWidth,
 
-    drawHeight
+    drawHeight,
+
+    art.x, art.y, art.width, art.height
 
   );
 
@@ -2572,7 +2558,7 @@ function stopCurrentMovement() {
 // ============================================================
 
 function performFeed() {
-  if (isDead) return;
+  if (isDead || !tryTeenInteraction("feed")) return;
   if (hunger <= GROWTH_RULES.feedThreshold &&
       !isEating && !isBeingPetted && !isPlaying && !isPooping &&
       !isSleeping && !goingToSleep && lifeStage === "child") {
@@ -2647,7 +2633,7 @@ function performFeed() {
 // ============================================================
 
 function performPet() {
-  if (isDead) return;
+  if (isDead || !tryTeenInteraction("pet")) return;
   if (!isEating && !isBeingPetted && !isPlaying && !isPooping &&
       !isSleeping && !goingToSleep) recordGrowthCare();
 
@@ -2736,6 +2722,8 @@ function performPlay() {
 
   }
 
+
+  if (!tryTeenInteraction("play")) return;
 
   if (!isEating && !isBeingPetted && !isPlaying && !isPooping &&
       !isSleeping && !goingToSleep) recordGrowthCare();
@@ -2865,6 +2853,9 @@ function startSleeping() {
   }
 
 
+  teenReaction = null;
+  teenAngryUntil = 0;
+
   interactionMode =
     "none";
 
@@ -2990,6 +2981,8 @@ function updatePoopSystem() {
     isPlaying ||
 
     isPetCrying() ||
+
+    millis() < teenAngryUntil ||
 
     movementState ===
     "jump"
@@ -4558,6 +4551,21 @@ function mousePressed() {
   }
 
 
+  if (isOverToyBall()) {
+    toyBall.dragging = true;
+    toyBall.moved = false;
+    toyBall.used = true;
+    toyBall.startX = mouseX;
+    toyBall.startY = mouseY;
+    toyBall.offsetX = toyBall.x - mouseX;
+    toyBall.offsetY = toyBall.y - mouseY;
+    toyBall.lastPointerAt = millis();
+    toyBall.vx = toyBall.vy = 0;
+    interactionMode = "none";
+    cursor(HAND);
+    return;
+  }
+
   // ==========================================================
   // TOOLBAR
   // ==========================================================
@@ -4808,77 +4816,16 @@ function selectInteraction(
 // ============================================================
 
 function mouseOverPet() {
-
-  let depthScale =
-    getScaleAtY(
-      groundY
-    );
-
-
-  let petImg =
-    getCurrentPetImage();
-
-
-  let ratio =
-
-    petImg.height /
-
-    petImg.width;
-
-
-  let approximateWidth =
-
-    BASE_PET_WIDTH *
-
-    depthScale;
-
-
-  let approximateHeight =
-
-    BASE_PET_WIDTH *
-
-    ratio *
-
-    depthScale;
-
-
-  let centerY =
-
-    groundY +
-
-    jumpOffset -
-
-    approximateHeight /
-    2;
-
-
-  return (
-
-    abs(
-      mouseX -
-      groundX
-    ) <
-
-    approximateWidth *
-    0.48
-
-
-    &&
-
-
-    abs(
-      mouseY -
-      centerY
-    ) <
-
-    approximateHeight *
-    0.48
-
-  );
-
+  const body = getPetBody();
+  // Invert the same rotation used for drawing around the ground anchor.
+  const angle = isSleeping ? 0.16 : petAngle;
+  const dx = mouseX - groundX;
+  const dy = mouseY - (groundY + jumpOffset);
+  const localX = dx * cos(angle) + dy * sin(angle);
+  const localY = -dx * sin(angle) + dy * cos(angle);
+  return abs(localX) <= body.width / 2 + 4 &&
+    localY >= -body.height - 4 && localY <= 4;
 }
-
-
 
 // ============================================================
 // CUSTOM CURSOR
@@ -5114,7 +5061,12 @@ function updateNeglect(elapsedSeconds = deltaTime / 1000) {
 
 function die(cause) {
   if (isDead) return;
+  teenReaction = null;
+  toyBall.dragging = false;
+  toyBall.vx = toyBall.vy = 0;
+  ballChaseUntil = 0;
   isDead = true;
+  teenAngryUntil = 0;
   growthPopupOpen = false;
   deathCause = cause;
   deathTime = millis();
@@ -5134,7 +5086,7 @@ function drawDeadPet() {
   // Match the visible child's size and baseline without changing its original art.
   const artWidth = BASE_PET_WIDTH * depth * (651 / 2732);
   const artHeight = artWidth * DEATH_ART.height / DEATH_ART.width;
-  const bottomY = groundY - BASE_PET_WIDTH * depth * (659 / 2732);
+  const bottomY = groundY;
   push();
   noStroke();
   fill(0, 25);
@@ -5146,6 +5098,11 @@ function drawDeadPet() {
 }
 
 function restartPet() {
+  teenReaction = null;
+  toyBall = makeToyBall();
+  ballChaseUntil = 0;
+  lastBallRewardAt = -Infinity;
+  teenAngryUntil = 0;
   lifeStage = "child";
   growthFeeds = growthCare = 0;
   lastGrowthCareTime = growthStartedAt = -Infinity;
@@ -5290,4 +5247,319 @@ function closeGrowthPopup() {
   growthPopupOpen = false;
   growthStartedAt = millis();
   cursor(ARROW);
+}
+
+// Each teen care attempt rolls independently. Feeding refusal is exactly 25%.
+function tryTeenInteraction(action, roll = random()) {
+  if (lifeStage !== "teenager") return true;
+  if (isDead || growthPopupOpen || isSleeping || goingToSleep || isPooping) return false;
+  // Comfort remains available when mood is critical.
+  const needsComfort = action === "pet" && happiness <= CRY_THRESHOLD;
+  const refused = !needsComfort && roll < TEEN_REFUSAL[action];
+  if (teenReaction) stopCurrentMovement();
+  teenReaction = null;
+  ballChaseUntil = 0;
+  isEating = isBeingPetted = isPlaying = false;
+  actionEndTime = playHopsRemaining = 0;
+  teenAngryUntil = 0;
+  if (!refused) return true;
+
+  stopCurrentMovement();
+  teenAngryUntil = millis() + 2000;
+  interactionMode = "none";
+  cursor(ARROW);
+  if (action === "pet") startTeenEvade();
+  if (action === "play") startTeenKick();
+  return false;
+}
+
+// ============================================================
+// ROOM TOY: CLICK, DRAG, ROLL AND CHASE
+// ============================================================
+function makeToyBall() {
+  return { x: 560, y: 470, vx: 0, vy: 0, angle: 0, radius: 18,
+    dragging: false, moved: false, used: false, demonstrated: false };
+}
+
+function isOverToyBall() {
+  const lift = toyBall.dragging ? 16 : 0;
+  const radius = toyBall.radius * getScaleAtY(toyBall.y);
+  return dist(mouseX, mouseY, toyBall.x, toyBall.y - radius - lift) <=
+    toyBall.radius * getScaleAtY(toyBall.y) + 8;
+}
+
+function ballPosition(x, y) {
+  y = constrain(y, FLOOR_TOP + 24, FLOOR_BOTTOM - 22);
+  const bounds = getFloorBounds(y);
+  x = constrain(x, bounds.left + 24, bounds.right - 24);
+  return { x, y, blocked: isBlockedPosition(x, y) };
+}
+
+function mouseDragged() {
+  if (!toyBall.dragging || isDead || growthPopupOpen) return;
+  const position = ballPosition(mouseX + toyBall.offsetX, mouseY + toyBall.offsetY);
+  const dt = max((millis() - toyBall.lastPointerAt) / 1000, 0.016);
+  if (!position.blocked) {
+    toyBall.vx = constrain((position.x - toyBall.x) / dt, -260, 260);
+    toyBall.vy = constrain((position.y - toyBall.y) / dt, -180, 180);
+    toyBall.x = position.x;
+    toyBall.y = position.y;
+  }
+  toyBall.lastPointerAt = millis();
+  if (dist(mouseX, mouseY, toyBall.startX, toyBall.startY) > 5) toyBall.moved = true;
+  return false;
+}
+
+function mouseReleased() {
+  if (!toyBall.dragging) return;
+  toyBall.dragging = false;
+  if (isDead || growthPopupOpen) return;
+  if (!toyBall.moved) {
+    // A simple click works too, so discovering drag is not a prerequisite.
+    toyBall.vx = toyBall.x > width / 2 ? -100 : 100;
+    toyBall.vy = -25;
+  } else if (millis() - toyBall.lastPointerAt > 150) {
+    toyBall.vx = toyBall.vy = 0;
+  }
+  requestBallPlay();
+}
+
+function requestBallPlay() {
+  if (isDead || isSleeping || goingToSleep || isPooping ||
+      isEating || isBeingPetted || isPetCrying() || energy <= 10) return;
+  if (!tryTeenInteraction("play")) {
+    // A refused invitation starts an angry approach and a contact-based kick.
+    ballChaseUntil = 0;
+    return;
+  }
+  ballChaseUntil = millis() + 8000;
+}
+
+function updateToyBall() {
+  if (toyBall.dragging && !mouseIsPressed) mouseReleased();
+  // One early pet-initiated demonstration tells the player this is a toy.
+  if (!teenReaction && millis() >= teenAngryUntil &&
+      !toyBall.demonstrated && !toyBall.used && companionshipSeconds >= 4 &&
+      !isSleeping && !goingToSleep && !isPetCrying() && !isEating &&
+      !isBeingPetted && !isPooping && !isPlaying) {
+    toyBall.demonstrated = true;
+    ballChaseUntil = millis() + 8000;
+  }
+  if (toyBall.dragging) return;
+  const dt = constrain(deltaTime / 1000, 0, 0.05);
+  const steps = max(1, ceil(max(abs(toyBall.vx), abs(toyBall.vy)) * dt / 8));
+  for (let i = 0; i < steps; i++) {
+    const x = toyBall.x + toyBall.vx * dt / steps;
+    const y = toyBall.y + toyBall.vy * dt / steps;
+    const next = ballPosition(x, y);
+    if (next.blocked) {
+      toyBall.vx *= -0.4;
+      toyBall.vy *= -0.4;
+      break;
+    }
+    if (next.x !== x) toyBall.vx *= -0.55;
+    if (next.y !== y) toyBall.vy *= -0.55;
+    toyBall.angle += (next.x - toyBall.x) / toyBall.radius;
+    toyBall.x = next.x;
+    toyBall.y = next.y;
+  }
+  toyBall.vx *= pow(0.25, dt);
+  toyBall.vy *= pow(0.25, dt);
+  if (abs(toyBall.vx) < 2) toyBall.vx = 0;
+  if (abs(toyBall.vy) < 2) toyBall.vy = 0;
+}
+
+function updateBallChase() {
+  if (millis() >= ballChaseUntil || toyBall.dragging || energy <= 10 ||
+      millis() < teenAngryUntil) return false;
+  if (petTouchesBall()) {
+    if (millis() - lastBallRewardAt >= 1500) {
+      lastBallRewardAt = millis();
+      toyBall.vx = toyBall.x >= groundX ? 105 : -105;
+      toyBall.vy = 25;
+      happiness = constrain(happiness + 4, 0, 100);
+      energy = constrain(energy - 2, 0, 100);
+      hunger = constrain(hunger - 0.5, 0, 100);
+      createHeart();
+    }
+    movementState = "pause";
+    pauseTimer = 12;
+    return true;
+  }
+  if (approachToyBall()) return true;
+  ballChaseUntil = 0;
+  return false;
+}
+
+function approachToyBall() {
+  // Approach an open point beside the ball using existing jump physics.
+  const body = getPetBody();
+  const ballRadius = toyBall.radius * getScaleAtY(toyBall.y);
+  const approach = body.width * 0.35 + ballRadius - 6;
+  const targetY = toyBall.y + body.height / 2 - ballRadius;
+  for (const offset of [-approach, approach, -approach * 0.8, approach * 0.8]) {
+    const target = ballPosition(toyBall.x + offset, targetY);
+    if (!target.blocked) {
+      const dx = target.x - groundX;
+      const dy = target.y - groundY;
+      const ratio = min(1, 95 / max(sqrt(dx * dx + dy * dy), 1));
+      const step = ballPosition(groundX + dx * ratio, groundY + dy * ratio);
+      if (!step.blocked) {
+        startJumpTo(step.x, step.y, normalJumpPower);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function drawToyBall() {
+  const depth = getScaleAtY(toyBall.y);
+  const lift = toyBall.dragging ? 16 : 0;
+  push();
+  translate(toyBall.x, toyBall.y);
+  noStroke();
+  fill(76, 66, 43, toyBall.dragging ? 20 : 35);
+  ellipse(0, 4 * depth, 34 * depth, 9 * depth);
+  translate(0, -toyBall.radius * depth - lift);
+  scale(depth);
+  if (isOverToyBall() || (!toyBall.used && floor(companionshipSeconds) % 5 === 0)) {
+    noFill();
+    stroke(244, 206, 94, 150);
+    strokeWeight(2);
+    circle(0, 0, 47);
+  }
+  const wiggle = !toyBall.used && toyBall.vx === 0
+    ? sin(millis() * 0.003) * 0.08 : 0;
+  rotate(toyBall.angle + wiggle);
+  stroke(164, 121, 65);
+  strokeWeight(1.8);
+  fill(248, 218, 128);
+  circle(0, 0, 36);
+  noFill();
+  stroke(228, 152, 119);
+  strokeWeight(4);
+  arc(-10, 0, 23, 33, -HALF_PI, HALF_PI);
+  arc(10, 0, 23, 33, HALF_PI, PI + HALF_PI);
+  noStroke();
+  fill(255, 247, 210, 210);
+  ellipse(-6, -7, 8, 5);
+  pop();
+}
+
+// Visible source bounds: files remain unchanged, including their transparent padding.
+function getPetArtwork(img) {
+  if (img === petNormalImg) return { x: 970, y: 780, width: 651, height: 609 };
+  if (img === petHappyImg) return { x: 955, y: 772, width: 667, height: 625 };
+  if (img === petCryImg) return { x: 990, y: 788, width: 623, height: 584 };
+  return { x: 971, y: 642, width: 771, height: 722 };
+}
+
+function getPetBody() {
+  const img = getCurrentPetImage();
+  const art = getPetArtwork(img);
+  const factor = BASE_PET_WIDTH / img.width * getScaleAtY(groundY);
+  return { width: art.width * factor * squashX,
+    height: art.height * factor * squashY };
+}
+
+function petTouchesBall() {
+  if (toyBall.dragging || movementState === "jump" || abs(jumpOffset) > 1) return false;
+  const body = getPetBody();
+  const ballRadius = toyBall.radius * getScaleAtY(toyBall.y);
+  const dx = (toyBall.x - groundX) / (body.width * 0.48 + ballRadius);
+  const dy = (toyBall.y - ballRadius - (groundY - body.height / 2)) /
+    (body.height * 0.45 + ballRadius);
+  return dx * dx + dy * dy <= 1;
+}
+
+// Refusals have distinct physical responses instead of a stationary face swap.
+function startTeenEvade() {
+  let awayX = groundX - mouseX;
+  let awayY = (groundY - getPetBody().height / 2) - mouseY;
+  if (abs(awayX) + abs(awayY) < 10) {
+    awayX = groundX < width / 2 ? 1 : -1;
+    awayY = 0.15;
+  }
+  const direction = atan2(awayY, awayX);
+  for (const turn of [0, 0.7, -0.7, 1.4, -1.4, PI]) {
+    const target = ballPosition(groundX + cos(direction + turn) * 110,
+      groundY + sin(direction + turn) * 80);
+    if (!target.blocked && dist(groundX, groundY, target.x, target.y) >= 30) {
+      teenReaction = { kind: "evade", elapsed: 0 };
+      startJumpTo(target.x, target.y, -4.8);
+      return;
+    }
+  }
+}
+
+function startTeenKick() {
+  if (toyBall.dragging) return;
+  toyBall.used = toyBall.demonstrated = true;
+  teenReaction = { kind: "kick", phase: "approach", phaseTime: 0,
+    elapsed: 0, direction: toyBall.x >= groundX ? 1 : -1 };
+}
+
+function finishTeenReaction() {
+  teenReaction = null;
+  teenAngryUntil = millis() + 700;
+  movementState = "pause";
+  pauseTimer = 18;
+}
+
+function updateTeenReaction(elapsedSeconds = deltaTime / 1000) {
+  if (!teenReaction) return false;
+  if (isDead || isSleeping || goingToSleep || isPooping || isPetCrying()) {
+    teenReaction = null;
+    teenAngryUntil = 0;
+    stopCurrentMovement();
+    return false;
+  }
+  const reaction = teenReaction;
+  const seconds = constrain(elapsedSeconds, 0, 0.05);
+  reaction.elapsed += seconds;
+  teenAngryUntil = millis() + 400;
+
+  if (reaction.kind === "evade") {
+    if (movementState === "jump") updatePhysicsJump();
+    if (movementState !== "jump") finishTeenReaction();
+    return true;
+  }
+  if (toyBall.dragging) {
+    // The player can pick up the toy to interrupt the kick safely.
+    stopCurrentMovement();
+    finishTeenReaction();
+    return true;
+  }
+  if (reaction.phase === "approach") {
+    if (movementState === "jump") {
+      updatePhysicsJump();
+    } else if (petTouchesBall()) {
+      reaction.phase = "windup";
+      reaction.phaseTime = 0;
+      reaction.direction = toyBall.x >= groundX ? 1 : -1;
+      toyBall.vx = toyBall.vy = 0;
+      stopCurrentMovement();
+    } else if (reaction.elapsed > 6 || !approachToyBall()) {
+      stopCurrentMovement();
+      finishTeenReaction();
+    }
+  } else if (reaction.phase === "windup") {
+    reaction.phaseTime += seconds;
+    if (reaction.phaseTime >= 0.22) {
+      if (!petTouchesBall()) {
+        reaction.phase = "approach";
+        return true;
+      }
+      // Only actual body contact applies the strong impulse; no play rewards.
+      toyBall.vx = reaction.direction * 280;
+      toyBall.vy = constrain((toyBall.y - groundY) * 2, -70, 70);
+      reaction.phase = "strike";
+      reaction.phaseTime = 0;
+    }
+  } else {
+    reaction.phaseTime += seconds;
+    if (reaction.phaseTime >= 0.25) finishTeenReaction();
+  }
+  return true;
 }
