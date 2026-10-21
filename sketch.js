@@ -64,6 +64,7 @@ let deathCause = "";
 let starvationTime = 0;
 let sadnessTime = 0;
 let deathTime = 0;
+let companionshipSeconds = 0;
 const DEATH_ART = { x: 281, y: 190, width: 1261, height: 563 };
 
 // Visible artwork bounds inside the original transparent image.
@@ -438,6 +439,10 @@ async function setup() {
 // ============================================================
 
 function draw() {
+  if (isDead) {
+    drawDeathSummary();
+    return;
+  }
 
 
   // ==========================================================
@@ -461,6 +466,7 @@ function draw() {
   // ==========================================================
 
   if (!isDead) {
+    companionshipSeconds += constrain(deltaTime / 1000, 0, 0.25);
     updateStats();
     updateNeglect();
     if (!isDead) {
@@ -468,6 +474,11 @@ function draw() {
       updateActionTimer();
       updatePoopSystem();
     }
+  }
+
+  if (isDead) {
+    drawDeathSummary();
+    return;
   }
 
   // ==========================================================
@@ -496,7 +507,6 @@ function draw() {
 
   drawStats();
 
-  drawInstruction();
 
   drawToolbar();
 
@@ -4405,29 +4415,85 @@ function drawToolbarIcon(
 // INSTRUCTION
 // ============================================================
 
-// No textual status prompts. A restart symbol remains after death.
-function drawInstruction() {
-  if (!isDead) return;
+// The result screen uses the same canvas and the selected hand-drawn death asset.
+function drawDeathSummary() {
   push();
-  translate(width / 2, 550);
+  background(250, 247, 235);
   noStroke();
-  fill(255, 255, 255, 215);
-  circle(0, 0, 30);
+  // Subtle radial rays echo the reference without replacing the watercolor palette.
+  for (let i = 0; i < 40; i++) {
+    const angle = i * TWO_PI / 40;
+    const spread = 0.035;
+    fill(203, 214, 180, 55);
+    triangle(width / 2, 330,
+      width / 2 + cos(angle - spread) * 1200, 330 + sin(angle - spread) * 1200,
+      width / 2 + cos(angle + spread) * 1200, 330 + sin(angle + spread) * 1200);
+  }
   noFill();
-  stroke(74, 72, 67);
+  stroke(191, 169, 123);
   strokeWeight(2);
-  arc(0, 0, 15, 15, -PI / 3, PI * 1.5);
+  rectMode(CORNER);
+  rect(22, 20, width - 44, height - 40, 24);
+
+  textFont("Arial");
+  textAlign(CENTER, CENTER);
+  textStyle(BOLD);
+  stroke(112, 89, 60);
+  strokeWeight(3);
+  fill(255, 253, 241);
+  textSize(48);
+  text("LITTLE RASCAL", width / 2, 88);
   noStroke();
-  fill(74, 72, 67);
-  triangle(3, -9, 3, -2, 9, -5);
+  fill(112, 89, 60);
+  textSize(36);
+  text("HAS DIED", width / 2, 143);
+
+  const causes = {
+    starvation: "Starvation",
+    sadness: "A broken heart",
+    illness: "Illness from uncleaned poop"
+  };
+  textStyle(NORMAL);
+  textSize(21);
+  fill(101, 115, 83);
+  text("Cause: " + causes[deathCause], width / 2, 204);
+
+  const artWidth = 340;
+  const artHeight = artWidth * DEATH_ART.height / DEATH_ART.width;
+  fill(117, 99, 63, 22);
+  ellipse(width / 2, 394, 310, 20);
+  imageMode(CORNER);
+  image(deathImg, (width - artWidth) / 2, 390 - artHeight, artWidth, artHeight,
+    DEATH_ART.x, DEATH_ART.y, DEATH_ART.width, DEATH_ART.height);
+
+  const totalSeconds = floor(companionshipSeconds);
+  const minutes = floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  fill(112, 89, 60);
+  textSize(18);
+  text("Time together: " + minutes + "m " + seconds + "s", width / 2, 452);
+
+  const ready = millis() - deathTime >= 1000;
+  const hover = mouseX >= 340 && mouseX <= 560 && mouseY >= 522 && mouseY <= 574;
+  cursor(ready && hover ? HAND : ARROW);
+  stroke(183, 145, 72);
+  strokeWeight(2);
+  fill(ready && hover ? color(250, 224, 145) : color(242, 218, 158));
+  rect(340, 522, 220, 52, 23);
+  noStroke();
+  fill(100, 78, 49);
+  textStyle(BOLD);
+  textSize(18);
+  text("START AGAIN", width / 2, 548);
   pop();
 }
 
-// Mouse input is shared by the existing tools and the restart symbol.
+// Mouse input is shared by the existing tools and the result screen.
 function mousePressed() {
   if (isDead) {
-    // Ignore accidental last clicks before enabling the restart symbol.
-    if (millis() - deathTime >= 1000 && dist(mouseX, mouseY, width / 2, 550) <= 20) {
+    // Avoid restarting from the last care click as the result screen appears.
+    if (millis() - deathTime >= 1000 && mouseX >= 340 && mouseX <= 560 &&
+        mouseY >= 522 && mouseY <= 574) {
       restartPet();
     }
     return;
@@ -5023,7 +5089,7 @@ function drawDeadPet() {
 function restartPet() {
   isDead = false;
   deathCause = "";
-  deathTime = starvationTime = sadnessTime = 0;
+  deathTime = starvationTime = sadnessTime = companionshipSeconds = 0;
   hunger = happiness = energy = 85;
   groundX = 450;
   groundY = 420;
