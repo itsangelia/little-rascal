@@ -73,6 +73,19 @@ const POOP_ART = { x: 1010, y: 884, width: 341, height: 230 };
 let petNormalImg;
 let petHappyImg;
 let petCryImg;
+let teenNormalImg;
+let teenHappyImg;
+let teenCryImg;
+let teenMadImg;
+
+const GROWTH_RULES = { feeds: 2, care: 2, feedThreshold: 70 };
+let lifeStage = "child";
+let growthFeeds = 0;
+let growthCare = 0;
+let lastGrowthCareTime = -Infinity;
+let growthStartedAt = -Infinity;
+let growthSleepPending = false;
+let growthWakeReady = false;
 
 
 
@@ -417,6 +430,11 @@ async function setup() {
     );
 
 
+  teenNormalImg = await loadImage("teenager.png");
+  teenHappyImg = await loadImage("teenager happy.png");
+  teenCryImg = await loadImage("teenager cry.png");
+  teenMadImg = await loadImage("teenager mad.png");
+
   poopImg = await loadImage("shit.png");
   deathImg = await loadImage("design-options/death-a3-cross-eyes.png");
 
@@ -473,6 +491,7 @@ function draw() {
       updateMovement();
       updateActionTimer();
       updatePoopSystem();
+      updateGrowth();
     }
   }
 
@@ -498,7 +517,10 @@ function draw() {
 
   drawWorld();
 
-  if (!isDead) drawEffects();
+  if (!isDead) {
+    drawEffects();
+    drawGrowthEffect();
+  }
 
 
   // ==========================================================
@@ -630,6 +652,8 @@ function updateStats() {
 
 
       isSleeping = false;
+      growthWakeReady = growthSleepPending;
+      growthSleepPending = false;
 
 
       movementState =
@@ -1715,7 +1739,7 @@ function getCurrentPetImage() {
 
   ) {
 
-    return petHappyImg;
+    return lifeStage === "teenager" ? teenHappyImg : petHappyImg;
 
   }
 
@@ -1729,12 +1753,12 @@ function getCurrentPetImage() {
     CRY_THRESHOLD
   ) {
 
-    return petCryImg;
+    return lifeStage === "teenager" ? teenCryImg : petCryImg;
 
   }
 
 
-  return petNormalImg;
+  return lifeStage === "teenager" ? teenNormalImg : petNormalImg;
 
 }
 
@@ -2535,6 +2559,11 @@ function stopCurrentMovement() {
 
 function performFeed() {
   if (isDead) return;
+  if (hunger <= GROWTH_RULES.feedThreshold &&
+      !isEating && !isBeingPetted && !isPlaying && !isPooping &&
+      !isSleeping && !goingToSleep && lifeStage === "child") {
+    growthFeeds++;
+  }
 
   interactionMode =
     "none";
@@ -2605,6 +2634,8 @@ function performFeed() {
 
 function performPet() {
   if (isDead) return;
+  if (!isEating && !isBeingPetted && !isPlaying && !isPooping &&
+      !isSleeping && !goingToSleep) recordGrowthCare();
 
   interactionMode =
     "none";
@@ -2691,6 +2722,9 @@ function performPlay() {
 
   }
 
+
+  if (!isEating && !isBeingPetted && !isPlaying && !isPooping &&
+      !isSleeping && !goingToSleep) recordGrowthCare();
 
   stopCurrentMovement();
 
@@ -2852,6 +2886,9 @@ function startSleeping() {
 
   stopCurrentMovement();
 
+
+  growthSleepPending = lifeStage === "child" &&
+    growthFeeds >= GROWTH_RULES.feeds && growthCare >= GROWTH_RULES.care;
 
   goingToSleep =
     true;
@@ -3230,6 +3267,8 @@ function cleanPoopAtMouse() {
 
       );
 
+
+      recordGrowthCare();
 
       poops.splice(
         i,
@@ -5087,6 +5126,10 @@ function drawDeadPet() {
 }
 
 function restartPet() {
+  lifeStage = "child";
+  growthFeeds = growthCare = 0;
+  lastGrowthCareTime = growthStartedAt = -Infinity;
+  growthSleepPending = growthWakeReady = false;
   isDead = false;
   deathCause = "";
   deathTime = starvationTime = sadnessTime = companionshipSeconds = 0;
@@ -5135,5 +5178,38 @@ function drawPoopStink() {
     fill(62, 57, 45);
     ellipse(x, y, 5, 7);
   }
+  pop();
+}
+
+// Care contributes to growth only once per completed interaction interval.
+function recordGrowthCare() {
+  if (lifeStage !== "child" || isDead || millis() - lastGrowthCareTime < 1300) return;
+  growthCare++;
+  lastGrowthCareTime = millis();
+}
+
+function updateGrowth() {
+  if (isDead || !growthWakeReady || lifeStage !== "child" || growthFeeds < GROWTH_RULES.feeds ||
+      growthCare < GROWTH_RULES.care) return;
+  // Never interrupt a jump, care action, sleep, or waste creation.
+  if (isEating || isBeingPetted || isPlaying || isSleeping || goingToSleep ||
+      isPooping || movementState === "jump") return;
+  lifeStage = "teenager";
+  growthWakeReady = false;
+  growthStartedAt = millis();
+  createSparkles(groundX, groundY - 95 * getScaleAtY(groundY));
+}
+
+function drawGrowthEffect() {
+  const elapsed = millis() - growthStartedAt;
+  if (isDead || elapsed < 0 || elapsed >= 1500) return;
+  const progress = elapsed / 1500;
+  const depth = getScaleAtY(groundY);
+  push();
+  noFill();
+  stroke(246, 214, 118, 180 * (1 - progress));
+  strokeWeight(3 * (1 - progress));
+  ellipse(groundX, groundY - 95 * depth,
+    (75 + 65 * progress) * depth, (75 + 65 * progress) * depth);
   pop();
 }
