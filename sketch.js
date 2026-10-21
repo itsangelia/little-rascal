@@ -78,7 +78,7 @@ let teenHappyImg;
 let teenCryImg;
 let teenMadImg;
 
-const GROWTH_RULES = { feeds: 2, care: 2, feedThreshold: 70 };
+const GROWTH_RULES = { feeds: 2, care: 2, feedThreshold: 95 };
 let lifeStage = "child";
 let growthFeeds = 0;
 let growthCare = 0;
@@ -86,6 +86,8 @@ let lastGrowthCareTime = -Infinity;
 let growthStartedAt = -Infinity;
 let growthSleepPending = false;
 let growthWakeReady = false;
+let growthPopupOpen = false;
+let growthPopupOpenedAt = 0;
 
 
 
@@ -457,6 +459,15 @@ async function setup() {
 // ============================================================
 
 function draw() {
+  if (growthPopupOpen && !isDead) {
+    imageMode(CENTER);
+    image(mapImg, width / 2, height / 2, width, height);
+    drawWorld();
+    drawStats();
+    drawToolbar();
+    drawGrowthPopup();
+    return;
+  }
   if (isDead) {
     drawDeathSummary();
     return;
@@ -533,6 +544,7 @@ function draw() {
   drawToolbar();
 
   drawCustomCursor();
+  if (growthPopupOpen) drawGrowthPopup();
 
 }
 
@@ -652,7 +664,9 @@ function updateStats() {
 
 
       isSleeping = false;
-      growthWakeReady = growthSleepPending;
+      growthWakeReady = growthWakeReady || growthSleepPending ||
+        (lifeStage === "child" && growthFeeds >= GROWTH_RULES.feeds &&
+         growthCare >= GROWTH_RULES.care);
       growthSleepPending = false;
 
 
@@ -4529,6 +4543,11 @@ function drawDeathSummary() {
 
 // Mouse input is shared by the existing tools and the result screen.
 function mousePressed() {
+  if (growthPopupOpen && !isDead) {
+    if (mouseX >= 340 && mouseX <= 560 && mouseY >= 455 && mouseY <= 507 &&
+        millis() - growthPopupOpenedAt >= 500) closeGrowthPopup();
+    return;
+  }
   if (isDead) {
     // Avoid restarting from the last care click as the result screen appears.
     if (millis() - deathTime >= 1000 && mouseX >= 340 && mouseX <= 560 &&
@@ -5096,6 +5115,7 @@ function updateNeglect(elapsedSeconds = deltaTime / 1000) {
 function die(cause) {
   if (isDead) return;
   isDead = true;
+  growthPopupOpen = false;
   deathCause = cause;
   deathTime = millis();
   stopCurrentMovement();
@@ -5129,7 +5149,8 @@ function restartPet() {
   lifeStage = "child";
   growthFeeds = growthCare = 0;
   lastGrowthCareTime = growthStartedAt = -Infinity;
-  growthSleepPending = growthWakeReady = false;
+  growthSleepPending = growthWakeReady = growthPopupOpen = false;
+  growthPopupOpenedAt = 0;
   isDead = false;
   deathCause = "";
   deathTime = starvationTime = sadnessTime = companionshipSeconds = 0;
@@ -5197,6 +5218,10 @@ function updateGrowth() {
   lifeStage = "teenager";
   growthWakeReady = false;
   growthStartedAt = millis();
+  growthPopupOpen = true;
+  growthPopupOpenedAt = millis();
+  interactionMode = "none";
+  cursor(ARROW);
   createSparkles(groundX, groundY - 95 * getScaleAtY(groundY));
 }
 
@@ -5212,4 +5237,57 @@ function drawGrowthEffect() {
   ellipse(groundX, groundY - 95 * depth,
     (75 + 65 * progress) * depth, (75 + 65 * progress) * depth);
   pop();
+}
+
+// Pause all game updates while the player reads the growth announcement.
+function drawGrowthPopup() {
+  push();
+  rectMode(CORNER);
+  noStroke();
+  fill(62, 58, 43, 85);
+  rect(0, 0, width, height);
+  stroke(190, 165, 111);
+  strokeWeight(2);
+  fill(251, 248, 232);
+  rect(185, 135, 530, 400, 26);
+  noStroke();
+  textFont("Arial");
+  textAlign(CENTER, CENTER);
+  textStyle(BOLD);
+  textSize(32);
+  fill(112, 89, 60);
+  text("GROWING UP!", width / 2, 190);
+  // Source bounds remove padding without changing the illustration proportions.
+  imageMode(CORNER);
+  const spriteWidth = 155;
+  const spriteHeight = spriteWidth * 722 / 771;
+  image(teenHappyImg, (width - spriteWidth) / 2, 225, spriteWidth, spriteHeight,
+    971, 642, 771, 722);
+  textStyle(NORMAL);
+  textSize(20);
+  fill(101, 115, 83);
+  text("Little Rascal is now a teenager.", width / 2, 395);
+  textSize(16);
+  text("Your care helped them grow.", width / 2, 425);
+  const hover = mouseX >= 340 && mouseX <= 560 && mouseY >= 455 && mouseY <= 507;
+  cursor(hover ? HAND : ARROW);
+  stroke(183, 145, 72);
+  fill(hover ? color(250, 224, 145) : color(242, 218, 158));
+  rect(340, 455, 220, 52, 23);
+  noStroke();
+  fill(100, 78, 49);
+  textStyle(BOLD);
+  textSize(18);
+  text("CONTINUE", width / 2, 481);
+  pop();
+}
+
+function closeGrowthPopup() {
+  const pausedFor = millis() - growthPopupOpenedAt;
+  // Absolute event deadlines must also move forward when gameplay resumes.
+  nextPoopTime += pausedFor;
+  if (mealPoopTime > 0) mealPoopTime += pausedFor;
+  growthPopupOpen = false;
+  growthStartedAt = millis();
+  cursor(ARROW);
 }
