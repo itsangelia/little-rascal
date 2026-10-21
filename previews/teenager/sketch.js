@@ -566,7 +566,13 @@ function draw() {
 // IS PET CRYING?
 // ============================================================
 
+function isStinkCrying() {
+  return !isDead && !isSleeping && !goingToSleep &&
+    poops.some(poop => (poop.ageSeconds || 0) >= DEATH_RULES.poopSmellSeconds);
+}
+
 function isPetCrying() {
+  if (isStinkCrying()) return true;
 
   return (
 
@@ -1753,6 +1759,8 @@ function getScaleAtY(y) {
 // ============================================================
 
 function getCurrentPetImage() {
+  // Odor distress takes precedence over happy actions and teen refusal.
+  if (isStinkCrying()) return lifeStage === "teenager" ? teenCryImg : petCryImg;
   if (lifeStage === "teenager" && millis() >= teenAngryUntil &&
       millis() < ballChaseUntil && !isSleeping && !goingToSleep && !isPetCrying()) {
     return teenHappyImg;
@@ -1833,6 +1841,9 @@ function drawPet() {
     );
 
 
+  const art = getPetArtwork(petImg);
+  const bodyWidth = BASE_PET_WIDTH * art.width / petImg.width;
+
   let jumpHeight =
     -jumpOffset;
 
@@ -1850,9 +1861,9 @@ function drawPet() {
 
       80,
 
-      112,
+      bodyWidth * 0.85,
 
-      66
+      bodyWidth * 0.50
 
     );
 
@@ -1862,9 +1873,9 @@ function drawPet() {
 
       shadowWidth,
 
-      66,
+      bodyWidth * 0.50,
 
-      112
+      bodyWidth * 0.85
 
     );
 
@@ -1910,7 +1921,7 @@ function drawPet() {
 
     groundX,
 
-    groundY + 8,
+    groundY + 4,
 
     shadowWidth *
     depthScale,
@@ -2179,32 +2190,9 @@ function drawPet() {
   // IMAGE SIZE
   // ==========================================================
 
-  let ratio =
-
-    petImg.height /
-
-    petImg.width;
-
-
-  let drawWidth =
-
-    BASE_PET_WIDTH *
-
-    depthScale *
-
-    squashX;
-
-
-  let drawHeight =
-
-    BASE_PET_WIDTH *
-
-    ratio *
-
-    depthScale *
-
-    squashY;
-
+  // Draw only visible pixels, preserving their existing on-screen scale.
+  const drawWidth = BASE_PET_WIDTH * art.width / petImg.width * depthScale * squashX;
+  const drawHeight = BASE_PET_WIDTH * art.height / petImg.width * depthScale * squashY;
 
   let characterBottomY =
 
@@ -2262,7 +2250,9 @@ function drawPet() {
 
     drawWidth,
 
-    drawHeight
+    drawHeight,
+
+    art.x, art.y, art.width, art.height
 
   );
 
@@ -4814,77 +4804,16 @@ function selectInteraction(
 // ============================================================
 
 function mouseOverPet() {
-
-  let depthScale =
-    getScaleAtY(
-      groundY
-    );
-
-
-  let petImg =
-    getCurrentPetImage();
-
-
-  let ratio =
-
-    petImg.height /
-
-    petImg.width;
-
-
-  let approximateWidth =
-
-    BASE_PET_WIDTH *
-
-    depthScale;
-
-
-  let approximateHeight =
-
-    BASE_PET_WIDTH *
-
-    ratio *
-
-    depthScale;
-
-
-  let centerY =
-
-    groundY +
-
-    jumpOffset -
-
-    approximateHeight /
-    2;
-
-
-  return (
-
-    abs(
-      mouseX -
-      groundX
-    ) <
-
-    approximateWidth *
-    0.48
-
-
-    &&
-
-
-    abs(
-      mouseY -
-      centerY
-    ) <
-
-    approximateHeight *
-    0.48
-
-  );
-
+  const body = getPetBody();
+  // Invert the same rotation used for drawing around the ground anchor.
+  const angle = isSleeping ? 0.16 : petAngle;
+  const dx = mouseX - groundX;
+  const dy = mouseY - (groundY + jumpOffset);
+  const localX = dx * cos(angle) + dy * sin(angle);
+  const localY = -dx * sin(angle) + dy * cos(angle);
+  return abs(localX) <= body.width / 2 + 4 &&
+    localY >= -body.height - 4 && localY <= 4;
 }
-
-
 
 // ============================================================
 // CUSTOM CURSOR
@@ -5144,7 +5073,7 @@ function drawDeadPet() {
   // Match the visible child's size and baseline without changing its original art.
   const artWidth = BASE_PET_WIDTH * depth * (651 / 2732);
   const artHeight = artWidth * DEATH_ART.height / DEATH_ART.width;
-  const bottomY = groundY - BASE_PET_WIDTH * depth * (659 / 2732);
+  const bottomY = groundY;
   push();
   noStroke();
   fill(0, 25);
@@ -5335,7 +5264,8 @@ function makeToyBall() {
 
 function isOverToyBall() {
   const lift = toyBall.dragging ? 16 : 0;
-  return dist(mouseX, mouseY, toyBall.x, toyBall.y - lift) <=
+  const radius = toyBall.radius * getScaleAtY(toyBall.y);
+  return dist(mouseX, mouseY, toyBall.x, toyBall.y - radius - lift) <=
     toyBall.radius * getScaleAtY(toyBall.y) + 8;
 }
 
@@ -5424,8 +5354,7 @@ function updateToyBall() {
 function updateBallChase() {
   if (millis() >= ballChaseUntil || toyBall.dragging || energy <= 10 ||
       millis() < teenAngryUntil) return false;
-  const distance = dist(groundX, groundY, toyBall.x, toyBall.y);
-  if (distance < 58) {
+  if (petTouchesBall()) {
     if (millis() - lastBallRewardAt >= 1500) {
       lastBallRewardAt = millis();
       toyBall.vx = toyBall.x >= groundX ? 105 : -105;
@@ -5440,8 +5369,12 @@ function updateBallChase() {
     return true;
   }
   // Approach an open point beside the ball using existing jump physics.
-  for (const offset of [-38, 38, -58, 58]) {
-    const target = ballPosition(toyBall.x + offset, toyBall.y);
+  const body = getPetBody();
+  const ballRadius = toyBall.radius * getScaleAtY(toyBall.y);
+  const approach = body.width * 0.35 + ballRadius - 6;
+  const targetY = toyBall.y + body.height / 2 - ballRadius;
+  for (const offset of [-approach, approach, -approach * 0.8, approach * 0.8]) {
+    const target = ballPosition(toyBall.x + offset, targetY);
     if (!target.blocked) {
       const dx = target.x - groundX;
       const dy = target.y - groundY;
@@ -5464,8 +5397,8 @@ function drawToyBall() {
   translate(toyBall.x, toyBall.y);
   noStroke();
   fill(76, 66, 43, toyBall.dragging ? 20 : 35);
-  ellipse(0, 16 * depth, 34 * depth, 9 * depth);
-  translate(0, -lift);
+  ellipse(0, 4 * depth, 34 * depth, 9 * depth);
+  translate(0, -toyBall.radius * depth - lift);
   scale(depth);
   if (isOverToyBall() || (!toyBall.used && floor(companionshipSeconds) % 5 === 0)) {
     noFill();
@@ -5489,4 +5422,30 @@ function drawToyBall() {
   fill(255, 247, 210, 210);
   ellipse(-6, -7, 8, 5);
   pop();
+}
+
+// Visible source bounds: files remain unchanged, including their transparent padding.
+function getPetArtwork(img) {
+  if (img === petNormalImg) return { x: 970, y: 780, width: 651, height: 609 };
+  if (img === petHappyImg) return { x: 955, y: 772, width: 667, height: 625 };
+  if (img === petCryImg) return { x: 990, y: 788, width: 623, height: 584 };
+  return { x: 971, y: 642, width: 771, height: 722 };
+}
+
+function getPetBody() {
+  const img = getCurrentPetImage();
+  const art = getPetArtwork(img);
+  const factor = BASE_PET_WIDTH / img.width * getScaleAtY(groundY);
+  return { width: art.width * factor * squashX,
+    height: art.height * factor * squashY };
+}
+
+function petTouchesBall() {
+  if (toyBall.dragging || movementState === "jump" || abs(jumpOffset) > 1) return false;
+  const body = getPetBody();
+  const ballRadius = toyBall.radius * getScaleAtY(toyBall.y);
+  const dx = (toyBall.x - groundX) / (body.width * 0.48 + ballRadius);
+  const dy = (toyBall.y - ballRadius - (groundY - body.height / 2)) /
+    (body.height * 0.45 + ballRadius);
+  return dx * dx + dy * dy <= 1;
 }
