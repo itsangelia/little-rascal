@@ -54,20 +54,15 @@ let deathImg;
 
 // Neglect timers use active game seconds, not wall-clock time in hidden tabs.
 const DEATH_RULES = {
-  starvationSeconds: 30,
-  sadnessSeconds: 45,
-  dirtyPoopCount: 3,
-  illnessOnsetSeconds: 30,
-  illnessFatalSeconds: 45,
-  recoveryRate: 2
+  starvationSeconds: 8,
+  sadnessSeconds: 8,
+  poopSmellSeconds: 5,
+  poopFatalSeconds: 10
 };
 let isDead = false;
 let deathCause = "";
 let starvationTime = 0;
 let sadnessTime = 0;
-let dirtyTime = 0;
-let illnessTime = 0;
-let isSick = false;
 let deathTime = 0;
 const DEATH_ART = { x: 281, y: 190, width: 1261, height: 563 };
 
@@ -3100,7 +3095,9 @@ function createPoop() {
 
     x: poopX,
 
-    y: poopY
+    y: poopY,
+
+    ageSeconds: 0
 
   });
 
@@ -3166,6 +3163,9 @@ function drawPoop(
     POOP_ART.height
   );
 
+  if ((poop.ageSeconds || 0) >= DEATH_RULES.poopSmellSeconds) {
+    drawPoopStink();
+  }
   pop();
 
 }
@@ -4425,16 +4425,11 @@ function drawInstruction() {
   else if (starvationTime > 0) {
     message = "Little Rascal is starving! Feed them before it is too late.";
   }
-  else if (isSick) {
-    message = poops.length >= DEATH_RULES.dirtyPoopCount
-      ? "Little Rascal is sick! Clean the poop to help them recover."
-      : "The room is cleaner. Little Rascal is recovering...";
+  else if (poops.some(poop => poop.ageSeconds >= DEATH_RULES.poopSmellSeconds)) {
+    message = "The poop stinks! Clean it now or Little Rascal will die of illness!";
   }
   else if (sadnessTime > 0) {
     message = "Little Rascal is in despair! Pet, feed or clean to help.";
-  }
-  else if (dirtyTime > 0) {
-    message = "The room is getting unhealthy. Please clean the poop.";
   }
   else if (
     isPetCrying()
@@ -4805,6 +4800,13 @@ function getClickedToolbarButton() {
 function handleToolbarButton(
   type
 ) {
+  if (isDead) return;
+  // Cleaning remains available during sleep and other stationary actions.
+  if (type === "clean") {
+    selectInteraction(type);
+    return;
+  }
+
 
 
   // ==========================================================
@@ -5184,39 +5186,23 @@ function drawDebugFloor() {
 // ============================================================
 
 function updateNeglect(elapsedSeconds = deltaTime / 1000) {
+  if (isDead) return;
   // A background tab must not kill the pet with one oversized frame.
   const seconds = constrain(elapsedSeconds, 0, 0.25);
   starvationTime = hunger <= 0 ? starvationTime + seconds : 0;
+  sadnessTime = happiness <= 0 ? sadnessTime + seconds : 0;
 
-  // Hunger-related unhappiness is not classified as an independent sad death.
-  sadnessTime = happiness <= 0 && hunger >= LOW_HUNGER_THRESHOLD
-    ? sadnessTime + seconds : 0;
-
-  if (poops.length >= DEATH_RULES.dirtyPoopCount) {
-    if (!isSick) {
-      dirtyTime += seconds;
-      if (dirtyTime >= DEATH_RULES.illnessOnsetSeconds) {
-        isSick = true;
-        illnessTime = 0;
-      }
-    } else {
-      illnessTime += seconds;
-    }
-  } else {
-    dirtyTime = max(0, dirtyTime - seconds * DEATH_RULES.recoveryRate);
-    if (isSick) {
-      illnessTime = max(0, illnessTime - seconds * DEATH_RULES.recoveryRate);
-      if (illnessTime === 0) {
-        isSick = false;
-        dirtyTime = 0;
-      }
-    }
+  // Each pile has its own clock. Cleaning one never resets another pile.
+  for (const poop of poops) {
+    poop.ageSeconds = (poop.ageSeconds || 0) + seconds;
   }
 
   // Stable priority makes simultaneous causes deterministic.
   if (starvationTime >= DEATH_RULES.starvationSeconds) die("starvation");
-  else if (isSick && illnessTime >= DEATH_RULES.illnessFatalSeconds) die("illness");
   else if (sadnessTime >= DEATH_RULES.sadnessSeconds) die("sadness");
+  else if (poops.some(poop => poop.ageSeconds >= DEATH_RULES.poopFatalSeconds)) {
+    die("illness");
+  }
 }
 
 function die(cause) {
@@ -5254,8 +5240,7 @@ function drawDeadPet() {
 function restartPet() {
   isDead = false;
   deathCause = "";
-  deathTime = starvationTime = sadnessTime = dirtyTime = illnessTime = 0;
-  isSick = false;
+  deathTime = starvationTime = sadnessTime = 0;
   hunger = happiness = energy = 85;
   groundX = 450;
   groundY = 420;
@@ -5275,4 +5260,30 @@ function restartPet() {
   poops.length = hearts.length = sparkles.length = 0;
   nextPoopTime = millis() + random(18000, 30000);
   cursor(ARROW);
+}
+
+// Simple hand-drawn odor trails and orbiting flies for each rotten pile.
+function drawPoopStink() {
+  const time = isDead ? deathTime / 1000 : millis() / 1000;
+  push();
+  noFill();
+  stroke(117, 139, 82, 170);
+  strokeWeight(2);
+  for (let i = 0; i < 3; i++) {
+    const x = -23 + i * 23;
+    const sway = sin(time * 2 + i) * 4;
+    bezier(x, -48, x - 10 + sway, -60, x + 10 + sway, -70, x + sway, -82);
+  }
+  for (let i = 0; i < 3; i++) {
+    const angle = time * 3 + i * TWO_PI / 3;
+    const x = cos(angle) * 42;
+    const y = -38 + sin(angle * 1.3) * 15;
+    noStroke();
+    fill(238, 241, 221, 210);
+    ellipse(x - 3, y - 3, 7, 4);
+    ellipse(x + 3, y - 3, 7, 4);
+    fill(62, 57, 45);
+    ellipse(x, y, 5, 7);
+  }
+  pop();
 }
