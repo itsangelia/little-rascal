@@ -90,6 +90,9 @@ let growthPopupOpen = false;
 let growthPopupOpenedAt = 0;
 const TEEN_REFUSAL = { feed: 0.25, pet: 0.20, play: 0.20 };
 let teenAngryUntil = 0;
+let toyBall = makeToyBall();
+let ballChaseUntil = 0;
+let lastBallRewardAt = -Infinity;
 
 
 
@@ -504,6 +507,7 @@ function draw() {
     updateStats();
     updateNeglect();
     if (!isDead) {
+      updateToyBall();
       updateMovement();
       updateActionTimer();
       updatePoopSystem();
@@ -549,6 +553,9 @@ function draw() {
   drawToolbar();
 
   drawCustomCursor();
+  if (interactionMode === "none" && !growthPopupOpen) {
+    cursor(toyBall.dragging || isOverToyBall() ? HAND : ARROW);
+  }
   if (growthPopupOpen) drawGrowthPopup();
 
 }
@@ -882,6 +889,8 @@ function updateMovement() {
 
   }
 
+
+  if (updateBallChase()) return;
 
   // ==========================================================
   // LAND
@@ -1744,6 +1753,10 @@ function getScaleAtY(y) {
 // ============================================================
 
 function getCurrentPetImage() {
+  if (lifeStage === "teenager" && millis() >= teenAngryUntil &&
+      millis() < ballChaseUntil && !isSleeping && !goingToSleep && !isPetCrying()) {
+    return teenHappyImg;
+  }
   if (lifeStage === "teenager" && millis() < teenAngryUntil) return teenMadImg;
 
 
@@ -1791,53 +1804,13 @@ function getCurrentPetImage() {
 // ============================================================
 
 function drawWorld() {
-
-
-  // Poop behind pet
-
-  for (
-    let poop of poops
-  ) {
-
-    if (
-      poop.y <=
-      groundY
-    ) {
-
-      drawPoop(
-        poop
-      );
-
-    }
-
-  }
-
-
-  drawPet();
-
-
-  // Poop in front
-
-  for (
-    let poop of poops
-  ) {
-
-    if (
-      poop.y >
-      groundY
-    ) {
-
-      drawPoop(
-        poop
-      );
-
-    }
-
-  }
-
+  const objects = poops.map(poop => ({ y: poop.y, draw: () => drawPoop(poop) }));
+  objects.push({ y: groundY, draw: drawPet });
+  if (!toyBall.dragging) objects.push({ y: toyBall.y, draw: drawToyBall });
+  objects.sort((a, b) => a.y - b.y);
+  for (const object of objects) object.draw();
+  if (toyBall.dragging) drawToyBall();
 }
-
-
 
 // ============================================================
 // DRAW PET
@@ -4576,6 +4549,21 @@ function mousePressed() {
   }
 
 
+  if (isOverToyBall()) {
+    toyBall.dragging = true;
+    toyBall.moved = false;
+    toyBall.used = true;
+    toyBall.startX = mouseX;
+    toyBall.startY = mouseY;
+    toyBall.offsetX = toyBall.x - mouseX;
+    toyBall.offsetY = toyBall.y - mouseY;
+    toyBall.lastPointerAt = millis();
+    toyBall.vx = toyBall.vy = 0;
+    interactionMode = "none";
+    cursor(HAND);
+    return;
+  }
+
   // ==========================================================
   // TOOLBAR
   // ==========================================================
@@ -5132,6 +5120,9 @@ function updateNeglect(elapsedSeconds = deltaTime / 1000) {
 
 function die(cause) {
   if (isDead) return;
+  toyBall.dragging = false;
+  toyBall.vx = toyBall.vy = 0;
+  ballChaseUntil = 0;
   isDead = true;
   teenAngryUntil = 0;
   growthPopupOpen = false;
@@ -5165,6 +5156,9 @@ function drawDeadPet() {
 }
 
 function restartPet() {
+  toyBall = makeToyBall();
+  ballChaseUntil = 0;
+  lastBallRewardAt = -Infinity;
   teenAngryUntil = 0;
   lifeStage = "teenager";
   growthFeeds = growthCare = 0;
@@ -5329,4 +5323,170 @@ function tryTeenInteraction(action, roll = random()) {
   interactionMode = "none";
   cursor(ARROW);
   return false;
+}
+
+// ============================================================
+// ROOM TOY: CLICK, DRAG, ROLL AND CHASE
+// ============================================================
+function makeToyBall() {
+  return { x: 560, y: 470, vx: 0, vy: 0, angle: 0, radius: 18,
+    dragging: false, moved: false, used: false, demonstrated: false };
+}
+
+function isOverToyBall() {
+  const lift = toyBall.dragging ? 16 : 0;
+  return dist(mouseX, mouseY, toyBall.x, toyBall.y - lift) <=
+    toyBall.radius * getScaleAtY(toyBall.y) + 8;
+}
+
+function ballPosition(x, y) {
+  y = constrain(y, FLOOR_TOP + 24, FLOOR_BOTTOM - 22);
+  const bounds = getFloorBounds(y);
+  x = constrain(x, bounds.left + 24, bounds.right - 24);
+  return { x, y, blocked: isBlockedPosition(x, y) };
+}
+
+function mouseDragged() {
+  if (!toyBall.dragging || isDead || growthPopupOpen) return;
+  const position = ballPosition(mouseX + toyBall.offsetX, mouseY + toyBall.offsetY);
+  const dt = max((millis() - toyBall.lastPointerAt) / 1000, 0.016);
+  if (!position.blocked) {
+    toyBall.vx = constrain((position.x - toyBall.x) / dt, -260, 260);
+    toyBall.vy = constrain((position.y - toyBall.y) / dt, -180, 180);
+    toyBall.x = position.x;
+    toyBall.y = position.y;
+  }
+  toyBall.lastPointerAt = millis();
+  if (dist(mouseX, mouseY, toyBall.startX, toyBall.startY) > 5) toyBall.moved = true;
+  return false;
+}
+
+function mouseReleased() {
+  if (!toyBall.dragging) return;
+  toyBall.dragging = false;
+  if (isDead || growthPopupOpen) return;
+  if (!toyBall.moved) {
+    // A simple click works too, so discovering drag is not a prerequisite.
+    toyBall.vx = toyBall.x > width / 2 ? -100 : 100;
+    toyBall.vy = -25;
+  } else if (millis() - toyBall.lastPointerAt > 150) {
+    toyBall.vx = toyBall.vy = 0;
+  }
+  requestBallPlay();
+}
+
+function requestBallPlay() {
+  if (isDead || isSleeping || goingToSleep || isPooping ||
+      isEating || isBeingPetted || isPetCrying() || energy <= 10) return;
+  if (!tryTeenInteraction("play")) {
+    // The rejected ball still moves: refusal remains visible and interactive.
+    toyBall.vx = toyBall.x >= groundX ? 110 : -110;
+    toyBall.vy = 20;
+    ballChaseUntil = 0;
+    return;
+  }
+  ballChaseUntil = millis() + 8000;
+}
+
+function updateToyBall() {
+  if (toyBall.dragging && !mouseIsPressed) mouseReleased();
+  // One early pet-initiated demonstration tells the player this is a toy.
+  if (!toyBall.demonstrated && !toyBall.used && companionshipSeconds >= 4 &&
+      !isSleeping && !goingToSleep && !isPetCrying() && !isEating &&
+      !isBeingPetted && !isPooping && !isPlaying) {
+    toyBall.demonstrated = true;
+    ballChaseUntil = millis() + 8000;
+  }
+  if (toyBall.dragging) return;
+  const dt = constrain(deltaTime / 1000, 0, 0.05);
+  const steps = max(1, ceil(max(abs(toyBall.vx), abs(toyBall.vy)) * dt / 8));
+  for (let i = 0; i < steps; i++) {
+    const x = toyBall.x + toyBall.vx * dt / steps;
+    const y = toyBall.y + toyBall.vy * dt / steps;
+    const next = ballPosition(x, y);
+    if (next.blocked) {
+      toyBall.vx *= -0.4;
+      toyBall.vy *= -0.4;
+      break;
+    }
+    if (next.x !== x) toyBall.vx *= -0.55;
+    if (next.y !== y) toyBall.vy *= -0.55;
+    toyBall.angle += (next.x - toyBall.x) / toyBall.radius;
+    toyBall.x = next.x;
+    toyBall.y = next.y;
+  }
+  toyBall.vx *= pow(0.25, dt);
+  toyBall.vy *= pow(0.25, dt);
+  if (abs(toyBall.vx) < 2) toyBall.vx = 0;
+  if (abs(toyBall.vy) < 2) toyBall.vy = 0;
+}
+
+function updateBallChase() {
+  if (millis() >= ballChaseUntil || toyBall.dragging || energy <= 10 ||
+      millis() < teenAngryUntil) return false;
+  const distance = dist(groundX, groundY, toyBall.x, toyBall.y);
+  if (distance < 58) {
+    if (millis() - lastBallRewardAt >= 1500) {
+      lastBallRewardAt = millis();
+      toyBall.vx = toyBall.x >= groundX ? 105 : -105;
+      toyBall.vy = 25;
+      happiness = constrain(happiness + 4, 0, 100);
+      energy = constrain(energy - 2, 0, 100);
+      hunger = constrain(hunger - 0.5, 0, 100);
+      createHeart();
+    }
+    movementState = "pause";
+    pauseTimer = 12;
+    return true;
+  }
+  // Approach an open point beside the ball using existing jump physics.
+  for (const offset of [-38, 38, -58, 58]) {
+    const target = ballPosition(toyBall.x + offset, toyBall.y);
+    if (!target.blocked) {
+      const dx = target.x - groundX;
+      const dy = target.y - groundY;
+      const ratio = min(1, 95 / max(sqrt(dx * dx + dy * dy), 1));
+      const step = ballPosition(groundX + dx * ratio, groundY + dy * ratio);
+      if (!step.blocked) {
+        startJumpTo(step.x, step.y, normalJumpPower);
+        return true;
+      }
+    }
+  }
+  ballChaseUntil = 0;
+  return false;
+}
+
+function drawToyBall() {
+  const depth = getScaleAtY(toyBall.y);
+  const lift = toyBall.dragging ? 16 : 0;
+  push();
+  translate(toyBall.x, toyBall.y);
+  noStroke();
+  fill(76, 66, 43, toyBall.dragging ? 20 : 35);
+  ellipse(0, 16 * depth, 34 * depth, 9 * depth);
+  translate(0, -lift);
+  scale(depth);
+  if (isOverToyBall() || (!toyBall.used && floor(companionshipSeconds) % 5 === 0)) {
+    noFill();
+    stroke(244, 206, 94, 150);
+    strokeWeight(2);
+    circle(0, 0, 47);
+  }
+  const wiggle = !toyBall.used && toyBall.vx === 0
+    ? sin(millis() * 0.003) * 0.08 : 0;
+  rotate(toyBall.angle + wiggle);
+  stroke(164, 121, 65);
+  strokeWeight(1.8);
+  fill(248, 218, 128);
+  circle(0, 0, 36);
+  noFill();
+  stroke(228, 152, 119);
+  strokeWeight(4);
+  arc(-10, 0, 23, 33, -HALF_PI, HALF_PI);
+  arc(10, 0, 23, 33, HALF_PI, PI + HALF_PI);
+  noStroke();
+  fill(255, 247, 210, 210);
+  ellipse(-6, -7, 8, 5);
+  pop();
 }
