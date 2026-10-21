@@ -50,6 +50,26 @@ function toggleBGM() {
 
 let mapImg;
 let poopImg;
+let deathImg;
+
+// Neglect timers use active game seconds, not wall-clock time in hidden tabs.
+const DEATH_RULES = {
+  starvationSeconds: 30,
+  sadnessSeconds: 45,
+  dirtyPoopCount: 3,
+  illnessOnsetSeconds: 30,
+  illnessFatalSeconds: 45,
+  recoveryRate: 2
+};
+let isDead = false;
+let deathCause = "";
+let starvationTime = 0;
+let sadnessTime = 0;
+let dirtyTime = 0;
+let illnessTime = 0;
+let isSick = false;
+let deathTime = 0;
+const DEATH_ART = { x: 281, y: 190, width: 1261, height: 563 };
 
 // Visible artwork bounds inside the original transparent image.
 const POOP_ART = { x: 1010, y: 884, width: 341, height: 230 };
@@ -402,6 +422,7 @@ async function setup() {
 
 
   poopImg = await loadImage("shit.png");
+  deathImg = await loadImage("design-options/death-a3-cross-eyes.png");
 
 
   // First random poop
@@ -444,14 +465,15 @@ function draw() {
   // LOGIC
   // ==========================================================
 
-  updateStats();
-
-  updateMovement();
-
-  updateActionTimer();
-
-  updatePoopSystem();
-
+  if (!isDead) {
+    updateStats();
+    updateNeglect();
+    if (!isDead) {
+      updateMovement();
+      updateActionTimer();
+      updatePoopSystem();
+    }
+  }
 
   // ==========================================================
   // DEBUG
@@ -470,7 +492,7 @@ function draw() {
 
   drawWorld();
 
-  drawEffects();
+  if (!isDead) drawEffects();
 
 
   // ==========================================================
@@ -519,9 +541,7 @@ function isPetCrying() {
 
 function updateStats() {
 
-  let seconds =
-    deltaTime /
-    1000;
+  let seconds = constrain(deltaTime / 1000, 0, 0.25);
 
 
   // ==========================================================
@@ -1773,6 +1793,10 @@ function drawWorld() {
 // ============================================================
 
 function drawPet() {
+  if (isDead) {
+    drawDeadPet();
+    return;
+  }
 
 
   let petImg =
@@ -2505,6 +2529,7 @@ function stopCurrentMovement() {
 // ============================================================
 
 function performFeed() {
+  if (isDead) return;
 
   interactionMode =
     "none";
@@ -2574,6 +2599,7 @@ function performFeed() {
 // ============================================================
 
 function performPet() {
+  if (isDead) return;
 
   interactionMode =
     "none";
@@ -2624,6 +2650,7 @@ function performPet() {
 // ============================================================
 
 function performPlay() {
+  if (isDead) return;
 
 
   interactionMode =
@@ -2759,6 +2786,7 @@ function updateActionTimer() {
 // ============================================================
 
 function startSleeping() {
+  if (isDead) return;
 
 
   if (
@@ -3149,6 +3177,7 @@ function drawPoop(
 // ============================================================
 
 function cleanPoopAtMouse() {
+  if (isDead) return false;
 
   for (
 
@@ -4385,7 +4414,29 @@ function drawInstruction() {
   // CRYING
   // ==========================================================
 
-  if (
+  if (isDead) {
+    const causes = {
+      starvation: "starvation",
+      sadness: "sadness",
+      illness: "illness from an unclean room"
+    };
+    message = "Little Rascal died of " + causes[deathCause] + ". Click here to restart.";
+  }
+  else if (starvationTime > 0) {
+    message = "Little Rascal is starving! Feed them before it is too late.";
+  }
+  else if (isSick) {
+    message = poops.length >= DEATH_RULES.dirtyPoopCount
+      ? "Little Rascal is sick! Clean the poop to help them recover."
+      : "The room is cleaner. Little Rascal is recovering...";
+  }
+  else if (sadnessTime > 0) {
+    message = "Little Rascal is in despair! Pet, feed or clean to help.";
+  }
+  else if (dirtyTime > 0) {
+    message = "The room is getting unhealthy. Please clean the poop.";
+  }
+  else if (
     isPetCrying()
   ) {
 
@@ -4595,6 +4646,14 @@ function drawInstruction() {
 // ============================================================
 
 function mousePressed() {
+  if (isDead) {
+    // Reuse the instruction card as restart control; ignore accidental last clicks.
+    if (millis() - deathTime >= 1000 && mouseY >= 537 && mouseY <= 563 &&
+        abs(mouseX - width / 2) <= 310) {
+      restartPet();
+    }
+    return;
+  }
 
 
   // ==========================================================
@@ -5120,3 +5179,100 @@ function drawDebugFloor() {
   document.addEventListener("pointerdown", startMusic);
   document.addEventListener("keydown", startMusic);
 })();
+// ============================================================
+// NEGLECT, DEATH AND RESTART
+// ============================================================
+
+function updateNeglect(elapsedSeconds = deltaTime / 1000) {
+  // A background tab must not kill the pet with one oversized frame.
+  const seconds = constrain(elapsedSeconds, 0, 0.25);
+  starvationTime = hunger <= 0 ? starvationTime + seconds : 0;
+
+  // Hunger-related unhappiness is not classified as an independent sad death.
+  sadnessTime = happiness <= 0 && hunger >= LOW_HUNGER_THRESHOLD
+    ? sadnessTime + seconds : 0;
+
+  if (poops.length >= DEATH_RULES.dirtyPoopCount) {
+    if (!isSick) {
+      dirtyTime += seconds;
+      if (dirtyTime >= DEATH_RULES.illnessOnsetSeconds) {
+        isSick = true;
+        illnessTime = 0;
+      }
+    } else {
+      illnessTime += seconds;
+    }
+  } else {
+    dirtyTime = max(0, dirtyTime - seconds * DEATH_RULES.recoveryRate);
+    if (isSick) {
+      illnessTime = max(0, illnessTime - seconds * DEATH_RULES.recoveryRate);
+      if (illnessTime === 0) {
+        isSick = false;
+        dirtyTime = 0;
+      }
+    }
+  }
+
+  // Stable priority makes simultaneous causes deterministic.
+  if (starvationTime >= DEATH_RULES.starvationSeconds) die("starvation");
+  else if (isSick && illnessTime >= DEATH_RULES.illnessFatalSeconds) die("illness");
+  else if (sadnessTime >= DEATH_RULES.sadnessSeconds) die("sadness");
+}
+
+function die(cause) {
+  if (isDead) return;
+  isDead = true;
+  deathCause = cause;
+  deathTime = millis();
+  stopCurrentMovement();
+  isEating = isBeingPetted = isPlaying = isPooping = false;
+  isSleeping = goingToSleep = false;
+  playHopsRemaining = 0;
+  actionEndTime = mealPoopTime = poopEndTime = 0;
+  poopCreatedThisTime = false;
+  interactionMode = "none";
+  hearts.length = sparkles.length = 0;
+  cursor(ARROW);
+}
+
+function drawDeadPet() {
+  const depth = getScaleAtY(groundY);
+  // Match the visible child's size and baseline without changing its original art.
+  const artWidth = BASE_PET_WIDTH * depth * (651 / 2732);
+  const artHeight = artWidth * DEATH_ART.height / DEATH_ART.width;
+  const bottomY = groundY - BASE_PET_WIDTH * depth * (659 / 2732);
+  push();
+  noStroke();
+  fill(0, 25);
+  ellipse(groundX, groundY + 8, 112 * depth, 17 * depth);
+  imageMode(CORNER);
+  image(deathImg, groundX - artWidth / 2, bottomY - artHeight,
+    artWidth, artHeight, DEATH_ART.x, DEATH_ART.y, DEATH_ART.width, DEATH_ART.height);
+  pop();
+}
+
+function restartPet() {
+  isDead = false;
+  deathCause = "";
+  deathTime = starvationTime = sadnessTime = dirtyTime = illnessTime = 0;
+  isSick = false;
+  hunger = happiness = energy = 85;
+  groundX = 450;
+  groundY = 420;
+  stopCurrentMovement();
+  jumpTargetX = groundX;
+  jumpTargetY = groundY;
+  movementState = "land";
+  landTimer = 8;
+  pauseTimer = 0;
+  squashX = squashY = 1;
+  petAngle = 0;
+  isEating = isBeingPetted = isPlaying = isPooping = false;
+  isSleeping = goingToSleep = false;
+  actionEndTime = playHopsRemaining = mealPoopTime = poopEndTime = 0;
+  poopCreatedThisTime = false;
+  interactionMode = "none";
+  poops.length = hearts.length = sparkles.length = 0;
+  nextPoopTime = millis() + random(18000, 30000);
+  cursor(ARROW);
+}
