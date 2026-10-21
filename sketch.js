@@ -56,8 +56,8 @@ let deathImg;
 const DEATH_RULES = {
   starvationSeconds: 8,
   sadnessSeconds: 8,
-  poopSmellSeconds: 5,
-  poopFatalSeconds: 10
+  poopSmellSeconds: 6,
+  poopFatalSeconds: 13
 };
 let isDead = false;
 let deathCause = "";
@@ -3148,7 +3148,7 @@ function drawPoop(
 
   // Render the hand-drawn asset without its transparent outer padding.
   // Keep its artwork proportions and align its base with the ground shadow.
-  const artWidth = 36 * 1.30 * 2;
+  const artWidth = 36 * 1.30 * 2 * 0.70;
   const artHeight = artWidth * POOP_ART.height / POOP_ART.width;
   imageMode(CORNER);
   image(
@@ -3208,7 +3208,7 @@ function cleanPoopAtMouse() {
 
       ) <
 
-      60
+      42
 
     ) {
 
@@ -4405,246 +4405,29 @@ function drawToolbarIcon(
 // INSTRUCTION
 // ============================================================
 
+// No textual status prompts. A restart symbol remains after death.
 function drawInstruction() {
-
-  let message = "";
-
-
-  // ==========================================================
-  // CRYING
-  // ==========================================================
-
-  if (isDead) {
-    const causes = {
-      starvation: "starvation",
-      sadness: "sadness",
-      illness: "illness from an unclean room"
-    };
-    message = "Little Rascal died of " + causes[deathCause] + ". Click here to restart.";
-  }
-  else if (starvationTime > 0) {
-    message = "Little Rascal is starving! Feed them before it is too late.";
-  }
-  else if (poops.some(poop => poop.ageSeconds >= DEATH_RULES.poopSmellSeconds)) {
-    message = "The poop stinks! Clean it now or Little Rascal will die of illness!";
-  }
-  else if (sadnessTime > 0) {
-    message = "Little Rascal is in despair! Pet, feed or clean to help.";
-  }
-  else if (
-    isPetCrying()
-  ) {
-
-
-    if (
-      hunger <
-      LOW_HUNGER_THRESHOLD
-    ) {
-
-      message =
-        "Little Rascal is hungry and upset...";
-
-    }
-
-    else {
-
-      message =
-        "Little Rascal is feeling sad...";
-
-    }
-
-  }
-
-
-  else if (
-    isSleeping
-  ) {
-
-    message =
-      "Little Rascal is sleeping...";
-
-  }
-
-
-  else if (
-    goingToSleep
-  ) {
-
-    message =
-      "Little Rascal is going to bed...";
-
-  }
-
-
-  else if (
-    isPooping
-  ) {
-
-    message =
-      "...";
-
-  }
-
-
-  else if (
-    interactionMode ===
-    "feed"
-  ) {
-
-    message =
-      "Click Little Rascal to feed";
-
-  }
-
-
-  else if (
-    interactionMode ===
-    "pet"
-  ) {
-
-    message =
-      "Click Little Rascal to pet";
-
-  }
-
-
-  else if (
-    interactionMode ===
-    "play"
-  ) {
-
-    message =
-      "Click Little Rascal to play";
-
-  }
-
-
-  else if (
-    interactionMode ===
-    "clean"
-  ) {
-
-
-    if (
-      poops.length > 0
-    ) {
-
-      message =
-        "Click poop to clean";
-
-    }
-
-    else {
-
-      message =
-        "Everything is clean!";
-
-    }
-
-  }
-
-
-  if (
-    message === ""
-  ) {
-
-    return;
-
-  }
-
-
+  if (!isDead) return;
   push();
-
-
-  textAlign(
-    CENTER,
-    CENTER
-  );
-
-
-  textSize(
-    11
-  );
-
-
-  let messageWidth =
-
-    textWidth(
-      message
-    ) +
-
-    34;
-
-
+  translate(width / 2, 550);
   noStroke();
-
-
-  fill(
-    255,
-    255,
-    255,
-    215
-  );
-
-
-  rectMode(
-    CENTER
-  );
-
-
-  rect(
-
-    width / 2,
-
-    550,
-
-    messageWidth,
-
-    26,
-
-    13
-
-  );
-
-
-  fill(
-    74,
-    72,
-    67
-  );
-
-
-  text(
-
-    message,
-
-    width / 2,
-
-    550
-
-  );
-
-
-  rectMode(
-    CORNER
-  );
-
-
+  fill(255, 255, 255, 215);
+  circle(0, 0, 30);
+  noFill();
+  stroke(74, 72, 67);
+  strokeWeight(2);
+  arc(0, 0, 15, 15, -PI / 3, PI * 1.5);
+  noStroke();
+  fill(74, 72, 67);
+  triangle(3, -9, 3, -2, 9, -5);
   pop();
-
 }
 
-
-
-// ============================================================
-// MOUSE
-// ============================================================
-
+// Mouse input is shared by the existing tools and the restart symbol.
 function mousePressed() {
   if (isDead) {
-    // Reuse the instruction card as restart control; ignore accidental last clicks.
-    if (millis() - deathTime >= 1000 && mouseY >= 537 && mouseY <= 563 &&
-        abs(mouseX - width / 2) <= 310) {
+    // Ignore accidental last clicks before enabling the restart symbol.
+    if (millis() - deathTime >= 1000 && dist(mouseX, mouseY, width / 2, 550) <= 20) {
       restartPet();
     }
     return;
@@ -5266,6 +5049,7 @@ function restartPet() {
 function drawPoopStink() {
   const time = isDead ? deathTime / 1000 : millis() / 1000;
   push();
+  scale(0.70);
   noFill();
   stroke(117, 139, 82, 170);
   strokeWeight(2);
