@@ -57,6 +57,12 @@ let teenNormalImg;
 let teenHappyImg;
 let teenCryImg;
 let teenMadImg;
+let adultSprites = {};
+let adultApproach = null;
+let adultNextActionAt = 0;
+let adultActionCount = 0;
+let adultAffectionUntil = 0;
+let adultInvitingBall = false;
 
 const GROWTH_RULES = { feeds: 2, care: 2, feedThreshold: 95 };
 let lifeStage = "child";
@@ -423,6 +429,8 @@ async function setup() {
   teenCryImg = await loadImage("teenager cry.png");
   teenMadImg = await loadImage("teenager mad.png");
 
+  adultSprites = extractAdultSprites(await loadImage("assets/adult-expressions.png"));
+
   poopImg = await loadImage("shit.png");
   deathImg = await loadImage("design-options/death-a3-cross-eyes.png");
 
@@ -488,6 +496,7 @@ function draw() {
     updateNeglect();
     if (!isDead) {
       updateToyBall();
+      updateAdultBehavior();
       updateMovement();
       updateActionTimer();
       updatePoopSystem();
@@ -663,7 +672,7 @@ function updateStats() {
 
       isSleeping = false;
       growthWakeReady = growthWakeReady || growthSleepPending ||
-        (lifeStage === "child" && growthFeeds >= GROWTH_RULES.feeds &&
+        (lifeStage !== "adult" && growthFeeds >= GROWTH_RULES.feeds &&
          growthCare >= GROWTH_RULES.care);
       growthSleepPending = false;
 
@@ -877,6 +886,7 @@ function updateMovement() {
   }
 
 
+  if (updateAdultApproach()) return;
   if (updateBallChase()) return;
 
   // ==========================================================
@@ -1740,6 +1750,13 @@ function getScaleAtY(y) {
 // ============================================================
 
 function getCurrentPetImage() {
+  if (lifeStage === "adult") {
+    if (isStinkCrying()) return adultSprites.crying;
+    if (isSleeping) return adultSprites.sleepy;
+    if (isBeingPetted || millis() < adultAffectionUntil) return adultSprites.affectionate;
+    if (isEating || isPlaying || (millis() < ballChaseUntil && !isPetCrying())) return adultSprites.happy;
+    return happiness < CRY_THRESHOLD ? adultSprites.crying : adultSprites.normal;
+  }
   // Odor distress takes precedence over happy actions and teen refusal.
   if (isStinkCrying()) return lifeStage === "teenager" ? teenCryImg : petCryImg;
   if (millis() >= teenAngryUntil && millis() < ballChaseUntil &&
@@ -1823,7 +1840,7 @@ function drawPet() {
 
 
   const art = getPetArtwork(petImg);
-  const bodyWidth = BASE_PET_WIDTH * art.width / petImg.width;
+  const bodyWidth = art.width * petRenderFactor(petImg);
 
   let jumpHeight =
     -jumpOffset;
@@ -2183,8 +2200,8 @@ function drawPet() {
   // ==========================================================
 
   // Draw only visible pixels, preserving their existing on-screen scale.
-  const drawWidth = BASE_PET_WIDTH * art.width / petImg.width * depthScale * squashX;
-  const drawHeight = BASE_PET_WIDTH * art.height / petImg.width * depthScale * squashY;
+  const drawWidth = art.width * petRenderFactor(petImg) * depthScale * squashX;
+  const drawHeight = art.height * petRenderFactor(petImg) * depthScale * squashY;
 
   let characterBottomY =
 
@@ -2542,7 +2559,7 @@ function performFeed() {
   if (isDead || !tryTeenInteraction("feed")) return;
   if (hunger <= GROWTH_RULES.feedThreshold &&
       !isEating && !isBeingPetted && !isPlaying && !isPooping &&
-      !isSleeping && !goingToSleep && lifeStage === "child") {
+      !isSleeping && !goingToSleep && lifeStage !== "adult") {
     growthFeeds++;
   }
 
@@ -2834,6 +2851,8 @@ function startSleeping() {
   }
 
 
+  adultApproach = null;
+  adultInvitingBall = false;
   teenReaction = null;
   teenAngryUntil = 0;
 
@@ -2873,7 +2892,7 @@ function startSleeping() {
   stopCurrentMovement();
 
 
-  growthSleepPending = lifeStage === "child" &&
+  growthSleepPending = lifeStage !== "adult" &&
     growthFeeds >= GROWTH_RULES.feeds && growthCare >= GROWTH_RULES.care;
 
   goingToSleep =
@@ -5020,6 +5039,8 @@ function updateNeglect(elapsedSeconds = deltaTime / 1000) {
 
 function die(cause) {
   if (isDead) return;
+  adultApproach = null;
+  adultInvitingBall = false;
   teenReaction = null;
   toyBall.dragging = false;
   toyBall.vx = toyBall.vy = 0;
@@ -5057,6 +5078,9 @@ function drawDeadPet() {
 }
 
 function restartPet() {
+  adultApproach = null;
+  adultNextActionAt = adultActionCount = adultAffectionUntil = 0;
+  adultInvitingBall = false;
   teenReaction = null;
   toyBall = makeToyBall();
   ballChaseUntil = 0;
@@ -5120,18 +5144,21 @@ function drawPoopStink() {
 
 // Care contributes to growth only once per completed interaction interval.
 function recordGrowthCare() {
-  if (lifeStage !== "child" || isDead || millis() - lastGrowthCareTime < 1300) return;
+  if (lifeStage === "adult" || isDead || millis() - lastGrowthCareTime < 1300) return;
   growthCare++;
   lastGrowthCareTime = millis();
 }
 
 function updateGrowth() {
-  if (isDead || !growthWakeReady || lifeStage !== "child" || growthFeeds < GROWTH_RULES.feeds ||
+  if (isDead || !growthWakeReady || lifeStage === "adult" || growthFeeds < GROWTH_RULES.feeds ||
       growthCare < GROWTH_RULES.care) return;
   // Never interrupt a jump, care action, sleep, or waste creation.
   if (isEating || isBeingPetted || isPlaying || isSleeping || goingToSleep ||
       isPooping || movementState === "jump") return;
-  lifeStage = "teenager";
+  lifeStage = lifeStage === "child" ? "teenager" : "adult";
+  growthFeeds = growthCare = 0;
+  lastGrowthCareTime = -Infinity;
+  adultNextActionAt = companionshipSeconds + 12;
   growthWakeReady = false;
   growthStartedAt = millis();
   growthPopupOpen = true;
@@ -5176,13 +5203,15 @@ function drawGrowthPopup() {
   // Source bounds remove padding without changing the illustration proportions.
   imageMode(CORNER);
   const spriteWidth = 155;
-  const spriteHeight = spriteWidth * 722 / 771;
-  image(teenHappyImg, (width - spriteWidth) / 2, 225, spriteWidth, spriteHeight,
-    971, 642, 771, 722);
+  const grownImage = lifeStage === "adult" ? adultSprites.happy : teenHappyImg;
+  const art = getPetArtwork(grownImage);
+  const spriteHeight = spriteWidth * art.height / art.width;
+  image(grownImage, (width - spriteWidth) / 2, 225, spriteWidth, spriteHeight,
+    art.x, art.y, art.width, art.height);
   textStyle(NORMAL);
   textSize(20);
   fill(101, 115, 83);
-  text("Little Rascal is now a teenager.", width / 2, 395);
+  text(lifeStage === "adult" ? "Little Rascal is now an adult." : "Little Rascal is now a teenager.", width / 2, 395);
   textSize(16);
   text("Your care helped them grow.", width / 2, 425);
   const hover = mouseX >= 340 && mouseX <= 560 && mouseY >= 455 && mouseY <= 507;
@@ -5210,6 +5239,16 @@ function closeGrowthPopup() {
 
 // Each teen care attempt rolls independently. Feeding refusal is exactly 25%.
 function tryTeenInteraction(action, roll = random()) {
+  if (lifeStage === "adult") {
+    if (isDead || growthPopupOpen || isSleeping || goingToSleep || isPooping) return false;
+    adultApproach = null;
+    adultInvitingBall = false;
+    adultNextActionAt = companionshipSeconds + 12;
+    isEating = isBeingPetted = isPlaying = false;
+    actionEndTime = playHopsRemaining = 0;
+    ballChaseUntil = teenAngryUntil = 0;
+    return true;
+  }
   if (lifeStage !== "teenager") return true;
   if (isDead || growthPopupOpen || isSleeping || goingToSleep || isPooping) return false;
   // Comfort remains available when mood is critical.
@@ -5334,8 +5373,15 @@ function updateBallChase() {
   if (petTouchesBall()) {
     if (millis() - lastBallRewardAt >= 1500) {
       lastBallRewardAt = millis();
-      toyBall.vx = toyBall.x >= groundX ? 105 : -105;
-      toyBall.vy = 25;
+      if (lifeStage === "adult" && adultInvitingBall) {
+        const targetX = mouseY >= FLOOR_TOP && mouseY <= FLOOR_BOTTOM ? mouseX : width / 2;
+        toyBall.vx = targetX >= toyBall.x ? 105 : -105;
+        toyBall.vy = 0;
+        adultInvitingBall = false;
+      } else {
+        toyBall.vx = toyBall.x >= groundX ? 105 : -105;
+        toyBall.vy = 25;
+      }
       happiness = constrain(happiness + 4, 0, 100);
       energy = constrain(energy - 2, 0, 100);
       hunger = constrain(hunger - 0.5, 0, 100);
@@ -5408,6 +5454,7 @@ function drawToyBall() {
 
 // Visible source bounds: files remain unchanged, including their transparent padding.
 function getPetArtwork(img) {
+  if (Object.values(adultSprites).includes(img)) return { x: 0, y: 0, width: img.width, height: img.height };
   if (img === petNormalImg) return { x: 970, y: 780, width: 651, height: 609 };
   if (img === petHappyImg) return { x: 955, y: 772, width: 667, height: 625 };
   if (img === petCryImg) return { x: 990, y: 788, width: 623, height: 584 };
@@ -5417,7 +5464,7 @@ function getPetArtwork(img) {
 function getPetBody() {
   const img = getCurrentPetImage();
   const art = getPetArtwork(img);
-  const factor = BASE_PET_WIDTH / img.width * getScaleAtY(groundY);
+  const factor = petRenderFactor(img) * getScaleAtY(groundY);
   return { width: art.width * factor * squashX,
     height: art.height * factor * squashY };
 }
@@ -5552,3 +5599,82 @@ function updateTeenReaction(elapsedSeconds = deltaTime / 1000) {
     document.addEventListener(gesture, startMusic, true);
   }
 })();
+
+// Extract the six approved expressions once; no editing of original character assets.
+function extractAdultSprites(sheet) {
+  sheet.loadPixels();
+  const names = ["normal", "happy", "crying", "angry", "sleepy", "affectionate"];
+  const sprites = {};
+  for (let i = 0; i < names.length; i++) {
+    const x0 = floor((i % 3) * sheet.width / 3);
+    const x1 = floor((i % 3 + 1) * sheet.width / 3);
+    const y0 = floor(floor(i / 3) * sheet.height / 2);
+    const y1 = floor((floor(i / 3) + 1) * sheet.height / 2);
+    let left = x1, right = x0, top = y1, bottom = y0;
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+      if (sheet.pixels[(y * sheet.width + x) * 4 + 3] >= 128) {
+        left = min(left, x); right = max(right, x);
+        top = min(top, y); bottom = max(bottom, y);
+      }
+    }
+    if (right < left || bottom < top) throw new Error("Missing adult expression: " + names[i]);
+    sprites[names[i]] = sheet.get(left, top, right - left + 1, bottom - top + 1);
+  }
+  return sprites;
+}
+
+function petRenderFactor(img) {
+  if (Object.values(adultSprites).includes(img)) {
+    return (BASE_PET_WIDTH * 771 / teenNormalImg.width) / img.width;
+  }
+  return BASE_PET_WIDTH / img.width;
+}
+
+// Adults alternate between approaching the player and initiating ball play.
+function updateAdultBehavior() {
+  if (lifeStage !== "adult" || isDead || growthPopupOpen) return;
+  if (isPetCrying() || isSleeping || goingToSleep || isEating || isBeingPetted ||
+      isPlaying || isPooping || toyBall.dragging || millis() < ballChaseUntil) {
+    adultApproach = null;
+    adultNextActionAt = max(adultNextActionAt, companionshipSeconds + 3);
+    return;
+  }
+  if (adultApproach || companionshipSeconds < adultNextActionAt || energy < 35 || hunger < 35) return;
+  adultNextActionAt = companionshipSeconds + 12;
+  adultActionCount++;
+  if (adultActionCount % 2 === 0) {
+    adultInvitingBall = true;
+    ballChaseUntil = millis() + 8000;
+    return;
+  }
+  if (mouseY < FLOOR_TOP + 24 || mouseY > FLOOR_BOTTOM - 22) return;
+  const target = ballPosition(mouseX, mouseY);
+  if (!target.blocked && dist(groundX, groundY, target.x, target.y) > 50) {
+    adultApproach = { x: target.x, y: target.y, until: companionshipSeconds + 6 };
+  }
+}
+
+function updateAdultApproach() {
+  if (lifeStage !== "adult" || !adultApproach) return false;
+  if (isPetCrying() || companionshipSeconds >= adultApproach.until ||
+      isBlockedPosition(adultApproach.x, adultApproach.y)) {
+    adultApproach = null;
+    return false;
+  }
+  const dx = adultApproach.x - groundX;
+  const dy = adultApproach.y - groundY;
+  const distance = sqrt(dx * dx + dy * dy);
+  if (distance <= 45) {
+    adultApproach = null;
+    adultAffectionUntil = millis() + 1800;
+    createHeart();
+    movementState = "pause";
+    pauseTimer = 35;
+    return true;
+  }
+  const ratio = min(1, 75 / distance);
+  const target = ballPosition(groundX + dx * ratio, groundY + dy * ratio);
+  if (target.blocked) { adultApproach = null; return false; }
+  startJumpTo(target.x, target.y, -5.4);
+  return true;
+}
