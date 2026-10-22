@@ -12,7 +12,7 @@ function updateMusicButton() {
 }
 
 async function startBGM() {
-  if (!bgm || musicMuted) return;
+  if (!bgm || musicMuted || !bgm.paused) return;
   try {
     await bgm.play();
   } catch {
@@ -23,7 +23,7 @@ async function startBGM() {
 
 function toggleBGM() {
   if (!bgm) return;
-  if (musicMuted) {
+  if (musicMuted || bgm.paused) {
     musicMuted = false;
     bgm.muted = false;
     startBGM();
@@ -63,8 +63,11 @@ function setupMusicControls() {
     if (event.target === musicButton.elt) return;
     startBGM();
   };
-  document.addEventListener("pointerdown", retryFromGesture);
-  document.addEventListener("keydown", retryFromGesture);
+  // Capture both press and release: browsers differ in which gesture unlocks audio.
+  for (const eventName of ["pointerdown", "pointerup", "click", "touchend", "keydown"]) {
+    document.addEventListener(eventName, retryFromGesture, true);
+  }
+  bgm.addEventListener("canplay", () => startBGM());
   updateMusicButton();
   startBGM();
 }
@@ -440,6 +443,8 @@ const DEBUG_FLOOR = false;
 // ============================================================
 
 async function setup() {
+  // Register audio gestures before asynchronous image loading can miss a first click.
+  setupMusicControls();
   imageMode(CENTER);
   textFont("Arial");
 
@@ -508,7 +513,6 @@ async function setup() {
     );
 
 
-  setupMusicControls();
 
 }
 
@@ -4589,6 +4593,8 @@ function drawDeathSummary() {
 
 // Mouse input is shared by the existing tools and the result screen.
 function mousePressed() {
+  // Audio gestures work immediately; game hit tests wait for image loading.
+  if (!deathImg) return;
   if (growthPopupOpen && !isDead) {
     if (mouseX >= 340 && mouseX <= 560 && mouseY >= 455 && mouseY <= 507 &&
         millis() - growthPopupOpenedAt >= 500) closeGrowthPopup();
