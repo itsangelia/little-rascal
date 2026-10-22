@@ -1,11 +1,11 @@
-// One shared audio instance; the button reflects actual playback state.
+// Music is enabled by default; the switch reflects the player's preference.
 let bgm;
 let musicButton;
 let musicMuted = false;
 
 function updateMusicButton() {
   if (!musicButton) return;
-  const playing = bgm && !bgm.paused && !musicMuted;
+  const playing = !musicMuted;
   musicButton.html(playing ? "Music: ON" : "Music: OFF");
   musicButton.attribute("aria-pressed", String(Boolean(playing)));
   musicButton.attribute("aria-label", playing ? "Turn background music off" : "Turn background music on");
@@ -23,7 +23,7 @@ async function startBGM() {
 
 function toggleBGM() {
   if (!bgm) return;
-  if (bgm.paused || musicMuted) {
+  if (musicMuted) {
     musicMuted = false;
     bgm.muted = false;
     startBGM();
@@ -38,8 +38,10 @@ function toggleBGM() {
 function setupMusicControls() {
   bgm = new Audio("bgm.mp3");
   bgm.loop = true;
+  bgm.autoplay = true;
+  bgm.preload = "auto";
   bgm.volume = 0.3;
-  musicButton = createButton("Music: OFF");
+  musicButton = createButton("Music: ON");
   musicButton.id("music-toggle");
   musicButton.attribute("type", "button");
   musicButton.position(CANVAS_W - 120, 67);
