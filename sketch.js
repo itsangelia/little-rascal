@@ -5548,6 +5548,7 @@ function updateTeenReaction(elapsedSeconds = deltaTime / 1000) {
   bgm.addEventListener("canplaythrough", startMusic);
 
   // Fallback for browser autoplay restrictions
-  document.addEventListener("pointerdown", startMusic);
-  document.addEventListener("keydown", startMusic);
+  for (const gesture of ["pointerdown", "pointerup", "click", "touchend", "keydown"]) {
+    document.addEventListener(gesture, startMusic, true);
+  }
 })();
