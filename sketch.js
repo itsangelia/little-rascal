@@ -1,24 +1,73 @@
-// BACKGROUND MUSIC
+// One shared audio instance; the button reflects actual playback state.
 let bgm;
 let musicButton;
 let musicMuted = false;
 
-function startBGM() {
-  if (bgm && !musicMuted && bgm.paused) {
-    bgm.play().catch(() => {});
+function updateMusicButton() {
+  if (!musicButton) return;
+  const playing = bgm && !bgm.paused && !musicMuted;
+  musicButton.html(playing ? "Music: ON" : "Music: OFF");
+  musicButton.attribute("aria-pressed", String(Boolean(playing)));
+  musicButton.attribute("aria-label", playing ? "Turn background music off" : "Turn background music on");
+}
+
+async function startBGM() {
+  if (!bgm || musicMuted) return;
+  try {
+    await bgm.play();
+  } catch {
+    // Autoplay may be blocked; a later user gesture can retry safely.
   }
+  updateMusicButton();
 }
 
 function toggleBGM() {
-  musicMuted = !musicMuted;
-  bgm.muted = musicMuted;
-
-  musicButton.html(musicMuted ? "Music: OFF" : "Music: ON");
-
-  if (!musicMuted) {
+  if (!bgm) return;
+  if (bgm.paused || musicMuted) {
+    musicMuted = false;
+    bgm.muted = false;
     startBGM();
+  } else {
+    musicMuted = true;
+    bgm.muted = true;
+    bgm.pause();
+    updateMusicButton();
   }
-}// ============================================================
+}
+
+function setupMusicControls() {
+  bgm = new Audio("bgm.mp3");
+  bgm.loop = true;
+  bgm.volume = 0.3;
+  musicButton = createButton("Music: OFF");
+  musicButton.id("music-toggle");
+  musicButton.attribute("type", "button");
+  musicButton.position(CANVAS_W - 120, 67);
+  musicButton.style("padding", "7px 12px");
+  musicButton.style("border", "1px solid #b79148");
+  musicButton.style("border-radius", "16px");
+  musicButton.style("background", "#f2da9e");
+  musicButton.style("color", "#644e31");
+  musicButton.style("font", "12px Arial, sans-serif");
+  musicButton.style("cursor", "pointer");
+  musicButton.elt.addEventListener("click", toggleBGM);
+  // Keep music gestures separate from game tools and autoplay retries.
+  musicButton.elt.addEventListener("mousedown", event => event.stopPropagation());
+  musicButton.elt.addEventListener("pointerdown", event => event.stopPropagation());
+  bgm.addEventListener("play", updateMusicButton);
+  bgm.addEventListener("pause", updateMusicButton);
+  bgm.addEventListener("error", updateMusicButton);
+  const retryFromGesture = event => {
+    if (event.target === musicButton.elt) return;
+    startBGM();
+  };
+  document.addEventListener("pointerdown", retryFromGesture);
+  document.addEventListener("keydown", retryFromGesture);
+  updateMusicButton();
+  startBGM();
+}
+
+// ============================================================
 // LITTLE RASCAL
 // COMPLETE TERRARIUM VERSION
 // p5.js 2.0
@@ -456,6 +505,8 @@ async function setup() {
       30000
     );
 
+
+  setupMusicControls();
 
 }
 
@@ -5010,31 +5061,7 @@ function drawDebugFloor() {
 
   pop();
 
-}(() => {
-  const bgm = new Audio("bgm.mp3");
-
-  bgm.loop = true;
-  bgm.volume = 0.3;
-  bgm.autoplay = true;
-
-  function startMusic() {
-    if (bgm.paused) {
-      bgm.play().catch(() => {
-        console.log("Waiting for browser audio permission");
-      });
-    }
-  }
-
-  // Try playing immediately
-  startMusic();
-
-  // Retry automatically when audio becomes available
-  bgm.addEventListener("canplaythrough", startMusic);
-
-  // Fallback for browser autoplay restrictions
-  document.addEventListener("pointerdown", startMusic);
-  document.addEventListener("keydown", startMusic);
-})();
+}
 // ============================================================
 // NEGLECT, DEATH AND RESTART
 // ============================================================
