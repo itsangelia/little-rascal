@@ -35,12 +35,31 @@ function toggleBGM() {
   }
 }
 
-function setupMusicControls() {
+function initializeBGM() {
+  if (bgm) return;
   bgm = new Audio("bgm.mp3");
   bgm.loop = true;
   bgm.autoplay = true;
   bgm.preload = "auto";
   bgm.volume = 0.3;
+  bgm.addEventListener("play", updateMusicButton);
+  bgm.addEventListener("pause", updateMusicButton);
+  bgm.addEventListener("error", updateMusicButton);
+  const retryFromGesture = event => {
+    if (musicButton && event.target === musicButton.elt) return;
+    startBGM();
+  };
+  for (const eventName of ["pointerdown", "pointerup", "click", "touchend", "keydown"]) {
+    document.addEventListener(eventName, retryFromGesture, true);
+  }
+  // Preserve the original loading-complete retry as well as early readiness.
+  bgm.addEventListener("canplay", startBGM);
+  bgm.addEventListener("canplaythrough", startBGM);
+  startBGM();
+}
+
+function setupMusicControls() {
+  initializeBGM();
   musicButton = createButton("Music: ON");
   musicButton.id("music-toggle");
   musicButton.attribute("type", "button");
@@ -56,20 +75,7 @@ function setupMusicControls() {
   // Keep music gestures separate from game tools and autoplay retries.
   musicButton.elt.addEventListener("mousedown", event => event.stopPropagation());
   musicButton.elt.addEventListener("pointerdown", event => event.stopPropagation());
-  bgm.addEventListener("play", updateMusicButton);
-  bgm.addEventListener("pause", updateMusicButton);
-  bgm.addEventListener("error", updateMusicButton);
-  const retryFromGesture = event => {
-    if (event.target === musicButton.elt) return;
-    startBGM();
-  };
-  // Capture both press and release: browsers differ in which gesture unlocks audio.
-  for (const eventName of ["pointerdown", "pointerup", "click", "touchend", "keydown"]) {
-    document.addEventListener(eventName, retryFromGesture, true);
-  }
-  bgm.addEventListener("canplay", () => startBGM());
   updateMusicButton();
-  startBGM();
 }
 
 // ============================================================
@@ -5598,3 +5604,6 @@ function updateTeenReaction(elapsedSeconds = deltaTime / 1000) {
   }
   return true;
 }
+
+// Start loading audio when the script runs, as in the original game.
+initializeBGM();
