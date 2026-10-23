@@ -30,6 +30,7 @@
 
 let mapImg;
 let poopImg;
+let toyBallImg;
 let deathImg;
 
 // Neglect timers use active game seconds, not wall-clock time in hidden tabs.
@@ -79,6 +80,9 @@ let teenAngryUntil = 0;
 let teenReaction = null;
 let toyBall = makeToyBall();
 let ballChaseUntil = 0;
+let ballChaseSpeed = 0;
+let ballChaseStride = 0;
+let ballChaseFacing = 1;
 let lastBallRewardAt = -Infinity;
 
 
@@ -439,6 +443,7 @@ async function setup() {
 
   adultSprites = extractAdultSprites(await loadImage("assets/adult-expressions.png"));
 
+  toyBallImg = trimToyBallArtwork(await loadImage("assets/hand-drawn-toy-ball.png"));
   poopImg = await loadImage("shit.png");
   deathImg = await loadImage("design-options/death-a3-cross-eyes.png");
   await initializeHatching();
@@ -2204,6 +2209,12 @@ function drawPet() {
     }
   }
 
+  if (movementState === "chase") {
+    targetScaleX = 1.04 + sin(ballChaseStride) * 0.025;
+    targetScaleY = 0.97 - sin(ballChaseStride) * 0.025;
+    targetAngle = ballChaseFacing * 0.025;
+  }
+
   const deflation = hungryFlattenAmount();
   if (deflation > 0) {
     targetScaleX = lerp(targetScaleX, 1.18, deflation);
@@ -2264,7 +2275,7 @@ function drawPet() {
 
     groundY +
 
-    jumpOffset;
+    jumpOffset - (movementState === "chase" ? abs(sin(ballChaseStride)) * 2.5 : 0);
 
 
 
@@ -4624,6 +4635,8 @@ function mousePressed() {
   }
 
   if (isOverToyBall()) {
+    toyBall.dragHeight = max(16, toyBall.height || 0);
+    toyBall.height = toyBall.verticalSpeed = toyBall.impact = 0;
     toyBall.dragging = true;
     toyBall.moved = false;
     toyBall.used = true;
@@ -5158,6 +5171,7 @@ function restartPet() {
   teenReaction = null;
   toyBall = makeToyBall();
   ballChaseUntil = 0;
+  ballChaseSpeed = ballChaseStride = 0;
   lastBallRewardAt = -Infinity;
   teenAngryUntil = 0;
   lifeStage = "child";
@@ -5351,11 +5365,12 @@ function tryTeenInteraction(action, roll = random()) {
 // ============================================================
 function makeToyBall() {
   return { x: 560, y: 470, vx: 0, vy: 0, angle: 0, radius: 18,
+    height: 0, verticalSpeed: 0, impact: 0, dragHeight: 16,
     dragging: false, moved: false, used: false, demonstrated: false };
 }
 
 function isOverToyBall() {
-  const lift = toyBall.dragging ? 16 : 0;
+  const lift = getToyBallVisual(toyBall).lift * getScaleAtY(toyBall.y);
   const radius = toyBall.radius * getScaleAtY(toyBall.y);
   return dist(mouseX, mouseY, toyBall.x, toyBall.y - radius - lift) <=
     toyBall.radius * getScaleAtY(toyBall.y) + 8;
@@ -5373,8 +5388,8 @@ function mouseDragged() {
   const position = ballPosition(mouseX + toyBall.offsetX, mouseY + toyBall.offsetY);
   const dt = max((millis() - toyBall.lastPointerAt) / 1000, 0.016);
   if (!position.blocked) {
-    toyBall.vx = constrain((position.x - toyBall.x) / dt, -260, 260);
-    toyBall.vy = constrain((position.y - toyBall.y) / dt, -180, 180);
+    toyBall.vx = lerp(toyBall.vx, constrain((position.x - toyBall.x) / dt, -430, 430), 0.65);
+    toyBall.vy = lerp(toyBall.vy, constrain((position.y - toyBall.y) / dt, -300, 300), 0.65);
     toyBall.x = position.x;
     toyBall.y = position.y;
   }
@@ -5394,6 +5409,8 @@ function mouseReleased() {
   } else if (millis() - toyBall.lastPointerAt > 150) {
     toyBall.vx = toyBall.vy = 0;
   }
+  toyBall.height = toyBall.dragHeight;
+  launchToyBounce(toyBall);
   requestBallPlay();
 }
 
@@ -5405,6 +5422,11 @@ function requestBallPlay() {
     ballChaseUntil = 0;
     return;
   }
+  // A thrown toy takes priority over the toolbar's remaining random play hops.
+  isPlaying = false;
+  playHopsRemaining = 0;
+  actionEndTime = 0;
+  ballChaseSpeed = 90;
   ballChaseUntil = millis() + 8000;
 }
 
@@ -5420,31 +5442,20 @@ function updateToyBall() {
   }
   if (toyBall.dragging) return;
   const dt = constrain(deltaTime / 1000, 0, 0.05);
-  const steps = max(1, ceil(max(abs(toyBall.vx), abs(toyBall.vy)) * dt / 8));
-  for (let i = 0; i < steps; i++) {
-    const x = toyBall.x + toyBall.vx * dt / steps;
-    const y = toyBall.y + toyBall.vy * dt / steps;
-    const next = ballPosition(x, y);
-    if (next.blocked) {
-      toyBall.vx *= -0.4;
-      toyBall.vy *= -0.4;
-      break;
-    }
-    if (next.x !== x) toyBall.vx *= -0.55;
-    if (next.y !== y) toyBall.vy *= -0.55;
-    toyBall.angle += (next.x - toyBall.x) / toyBall.radius;
-    toyBall.x = next.x;
-    toyBall.y = next.y;
-  }
-  toyBall.vx *= pow(0.25, dt);
-  toyBall.vy *= pow(0.25, dt);
-  if (abs(toyBall.vx) < 2) toyBall.vx = 0;
-  if (abs(toyBall.vy) < 2) toyBall.vy = 0;
+  const canChase = millis() < ballChaseUntil && !isDead && !isSleeping &&
+    !goingToSleep && !isEating && !isBeingPetted && !isPooping && !isPetCrying() &&
+    hunger >= HUNGER_FLATTEN_THRESHOLD && !teenReaction;
+  ballChaseSpeed = canChase ? min(310, ballChaseSpeed + 560 * dt) : 0;
+  advanceToyBallPhysics(toyBall, dt);
 }
 
 function updateBallChase() {
   if (millis() >= ballChaseUntil || toyBall.dragging || energy <= 10 ||
-      millis() < teenAngryUntil) return false;
+      millis() < teenAngryUntil) {
+    ballChaseSpeed = 0;
+    if (movementState === "chase") { movementState = "pause"; pauseTimer = 12; }
+    return false;
+  }
   if (petTouchesBall()) {
     if (millis() - lastBallRewardAt >= 1500) {
       lastBallRewardAt = millis();
@@ -5457,6 +5468,7 @@ function updateBallChase() {
         toyBall.vx = toyBall.x >= groundX ? 105 : -105;
         toyBall.vy = 25;
       }
+      launchToyBounce(toyBall);
       happiness = constrain(happiness + 4, 0, 100);
       energy = constrain(energy - 2, 0, 100);
       hunger = constrain(hunger - 0.5, 0, 100);
@@ -5466,20 +5478,22 @@ function updateBallChase() {
     pauseTimer = 12;
     return true;
   }
-  if (approachToyBall()) return true;
+  if (approachToyBall(true)) return true;
   ballChaseUntil = 0;
   return false;
 }
 
-function approachToyBall() {
-  // Approach an open point beside the ball using existing jump physics.
+function approachToyBall(running = false) {
+  // Running follows the moving ball; refusal kicks retain their existing hops.
   const body = getPetBody();
   const ballRadius = toyBall.radius * getScaleAtY(toyBall.y);
   const approach = body.width * 0.35 + ballRadius - 6;
   const targetY = toyBall.y + body.height / 2 - ballRadius;
-  for (const offset of [-approach, approach, -approach * 0.8, approach * 0.8]) {
+  const side = groundX <= toyBall.x ? -1 : 1;
+  for (const offset of [side * approach, -side * approach, side * approach * 0.8, -side * approach * 0.8]) {
     const target = ballPosition(toyBall.x + offset, targetY);
     if (!target.blocked) {
+      if (running) return runTowardToyBall(target);
       const dx = target.x - groundX;
       const dy = target.y - groundY;
       const ratio = min(1, 95 / max(sqrt(dx * dx + dy * dy), 1));
@@ -5493,37 +5507,59 @@ function approachToyBall() {
   return false;
 }
 
+// Small floor steps allow acceleration and steering without a remote kick.
+function runTowardToyBall(target) {
+  const dx = target.x - groundX, dy = target.y - groundY;
+  const distance = Math.hypot(dx, dy);
+  const travel = min(distance, max(90, ballChaseSpeed) * constrain(deltaTime / 1000, 0, 0.05));
+  const steps = max(1, ceil(travel / 5));
+  let moved = 0;
+  for (let i = 0; i < steps && distance > 0.1; i++) {
+    const sx = dx / distance * travel / steps, sy = dy / distance * travel / steps;
+    let next = ballPosition(groundX + sx, groundY + sy);
+    if (next.blocked) {
+      const alternatives = [ballPosition(groundX + sx, groundY), ballPosition(groundX, groundY + sy)]
+        .filter(point => !point.blocked)
+        .sort((a, b) => dist(a.x, a.y, target.x, target.y) - dist(b.x, b.y, target.x, target.y));
+      if (!alternatives.length) break;
+      next = alternatives[0];
+    }
+    moved += dist(groundX, groundY, next.x, next.y);
+    groundX = next.x;
+    groundY = next.y;
+  }
+  floorVX = floorVY = jumpOffset = jumpVelocity = 0;
+  ballChaseFacing = dx >= 0 ? 1 : -1;
+  ballChaseStride += moved * TWO_PI / 42;
+  movementState = moved > 0.01 ? "chase" : "pause";
+  pauseTimer = 8;
+  return true;
+}
+
 function drawToyBall() {
   const depth = getScaleAtY(toyBall.y);
-  const lift = toyBall.dragging ? 16 : 0;
+  const visual = getToyBallVisual(toyBall);
   push();
   translate(toyBall.x, toyBall.y);
   noStroke();
-  fill(76, 66, 43, toyBall.dragging ? 20 : 35);
-  ellipse(0, 4 * depth, 34 * depth, 9 * depth);
-  translate(0, -toyBall.radius * depth - lift);
+  fill(76, 66, 43, visual.shadowAlpha);
+  ellipse(0, 4 * depth, 34 * depth * visual.shadowScale, 9 * depth * visual.shadowScale);
+  translate(0, -visual.lift * depth);
   scale(depth);
   if (isOverToyBall() || (!toyBall.used && floor(companionshipSeconds) % 5 === 0)) {
     noFill();
     stroke(244, 206, 94, 150);
     strokeWeight(2);
-    circle(0, 0, 47);
+    circle(0, -toyBall.radius, 47);
   }
-  const wiggle = !toyBall.used && toyBall.vx === 0
-    ? sin(millis() * 0.003) * 0.08 : 0;
+  // Deform around the bottom so landing compression stays on the floor.
+  scale(visual.scaleX, visual.scaleY);
+  translate(0, -toyBall.radius);
+  const wiggle = !toyBall.used && toyBall.vx === 0 ? sin(millis() * 0.003) * 0.08 : 0;
   rotate(toyBall.angle + wiggle);
-  stroke(164, 121, 65);
-  strokeWeight(1.8);
-  fill(248, 218, 128);
-  circle(0, 0, 36);
-  noFill();
-  stroke(228, 152, 119);
-  strokeWeight(4);
-  arc(-10, 0, 23, 33, -HALF_PI, HALF_PI);
-  arc(10, 0, 23, 33, HALF_PI, PI + HALF_PI);
-  noStroke();
-  fill(255, 247, 210, 210);
-  ellipse(-6, -7, 8, 5);
+  imageMode(CENTER);
+  const diameter = toyBall.radius * 2;
+  image(toyBallImg, 0, 0, diameter, diameter * toyBallImg.height / toyBallImg.width);
   pop();
 }
 
@@ -5545,11 +5581,11 @@ function getPetBody() {
 }
 
 function petTouchesBall() {
-  if (toyBall.dragging || movementState === "jump" || abs(jumpOffset) > 1) return false;
+  if (toyBall.dragging || toyBall.height > 18 || movementState === "jump" || abs(jumpOffset) > 1) return false;
   const body = getPetBody();
   const ballRadius = toyBall.radius * getScaleAtY(toyBall.y);
   const dx = (toyBall.x - groundX) / (body.width * 0.48 + ballRadius);
-  const dy = (toyBall.y - ballRadius - (groundY - body.height / 2)) /
+  const dy = (toyBall.y - ballRadius - (toyBall.height || 0) * getScaleAtY(toyBall.y) - (groundY - body.height / 2)) /
     (body.height * 0.45 + ballRadius);
   return dx * dx + dy * dy <= 1;
 }
@@ -5635,6 +5671,7 @@ function updateTeenReaction(elapsedSeconds = deltaTime / 1000) {
       // Only actual body contact applies the strong impulse; no play rewards.
       toyBall.vx = reaction.direction * 280;
       toyBall.vy = constrain((toyBall.y - groundY) * 2, -70, 70);
+      launchToyBounce(toyBall);
       reaction.phase = "strike";
       reaction.phaseTime = 0;
     }
