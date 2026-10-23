@@ -6,6 +6,9 @@ const FLOOR_Y = 455;
 const EGG_Y = FLOOR_Y - 40;
 const PET_ART = { x: 970, y: 780, width: 651, height: 609 };
 const HAPPY_ART = { x: 955, y: 772, width: 667, height: 625 };
+// Let the player see the new pet land before the next screen appears.
+const HATCH_REVEAL_END = 2750;
+const HATCH_FINISH_MS = HATCH_REVEAL_END + 1000;
 let roomImage, childImage, happyImage, eggImage;
 let hatchStartedAt = null;
 let hatchPhase = "loading";
@@ -40,7 +43,8 @@ function draw() {
   image(roomImage, 0, 0, width, height);
   const time = hatchStartedAt === null ? -1 : millis() - hatchStartedAt;
   hatchPhase = time < 0 ? "idle" : time < 350 ? "shake" : time < 1400 ? "meteor"
-    : time < 1800 ? "crack" : time < 2450 ? "reveal" : "alive";
+    : time < 1800 ? "crack" : time < HATCH_REVEAL_END ? "reveal"
+    : time < HATCH_FINISH_MS ? "welcome" : "alive";
 
   noStroke();
   fill(88, 71, 40, 30);
@@ -62,13 +66,15 @@ function draw() {
     if (time >= 1400) drawCrack(hatchSmooth((time - 1400) / 400));
   }
   if (time >= 350 && time < 1400) drawMeteor((time - 350) / 1050);
-  if (time >= 1400 && time < 2450) drawStarBurst((time - 1400) / 1050);
+  if (time >= 1400 && time < HATCH_REVEAL_END) {
+    drawStarBurst((time - 1400) / (HATCH_REVEAL_END - 1400));
+  }
   if (time >= 1800) {
-    const reveal = hatchEaseOut((time - 1800) / 650);
+    const reveal = hatchEaseOut((time - 1800) / (HATCH_REVEAL_END - 1800));
     drawShells(reveal);
     drawHatchedPet(reveal, time);
   }
-  if (time >= 2450) drawReplay();
+  if (time >= HATCH_FINISH_MS) drawReplay();
 
   const overEgg = abs(mouseX - EGG_X) < 42 && mouseY > FLOOR_Y - 91 && mouseY < FLOOR_Y + 8;
   const overReplay = dist(mouseX, mouseY, width / 2, 574) < 24;
@@ -199,14 +205,15 @@ function drawShells(progress) {
 }
 
 function drawHatchedPet(progress, time) {
-  const happy = time < 3900;
+  const happy = time < HATCH_FINISH_MS + 1450;
   const img = happy ? happyImage : childImage;
   const art = happy ? HAPPY_ART : PET_ART;
   const baseWidth = 82;
   const w = baseWidth * (0.75 + progress * 0.25);
   const h = w * art.height / art.width;
-  const hop = time < 2450 ? sin(progress * PI) * 22 : 0;
-  const breathe = time >= 2450 ? 1 + sin((time - 2450) * 0.002) * 0.012 : 1;
+  const hop = time < HATCH_REVEAL_END ? sin(progress * PI) * 22 : 0;
+  const breathe = time >= HATCH_REVEAL_END
+    ? 1 + sin((time - HATCH_REVEAL_END) * 0.002) * 0.012 : 1;
   push();
   tint(255, 255 * progress);
   imageMode(CORNER);
