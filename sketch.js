@@ -433,6 +433,7 @@ async function setup() {
 
   poopImg = await loadImage("shit.png");
   deathImg = await loadImage("design-options/death-a3-cross-eyes.png");
+  await initializeHatching();
 
 
   // First random poop
@@ -455,6 +456,10 @@ async function setup() {
 // ============================================================
 
 function draw() {
+  if (!hatchingComplete) {
+    drawHatchingIntro();
+    return;
+  }
   if (growthPopupOpen && !isDead) {
     imageMode(CENTER);
     image(mapImg, width / 2, height / 2, width, height);
@@ -4538,6 +4543,10 @@ function drawDeathSummary() {
 function mousePressed() {
   // Audio gestures work immediately; game hit tests wait for image loading.
   if (!deathImg) return;
+  if (!hatchingComplete) {
+    handleHatchingClick();
+    return;
+  }
   if (growthPopupOpen && !isDead) {
     if (mouseX >= 340 && mouseX <= 560 && mouseY >= 455 && mouseY <= 507 &&
         millis() - growthPopupOpenedAt >= 500) closeGrowthPopup();
@@ -5078,6 +5087,9 @@ function drawDeadPet() {
 }
 
 function restartPet() {
+  hatchingComplete = false;
+  hatchStartedAt = null;
+  hatchPhase = "idle";
   adultApproach = null;
   adultNextActionAt = adultActionCount = adultAffectionUntil = 0;
   adultInvitingBall = false;
