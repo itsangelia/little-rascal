@@ -232,6 +232,14 @@ let energyDrain = 0.30;
 // Mood falls faster.
 
 const LOW_HUNGER_THRESHOLD = 35;
+const HUNGER_FLATTEN_THRESHOLD = 20;
+let helpHasBeenShown = false;
+
+// This recoverable pose never uses the death sprite or changes neglect timers.
+function hungryFlattenAmount() {
+  if (isDead || isSleeping || goingToSleep || isEating || isPooping) return 0;
+  return constrain((HUNGER_FLATTEN_THRESHOLD - hunger) / 15, 0, 1);
+}
 
 
 // Below 30 mood:
@@ -458,6 +466,20 @@ async function setup() {
 function draw() {
   if (!hatchingComplete) {
     drawHatchingIntro();
+    if (hatchingComplete && !helpHasBeenShown) {
+      helpHasBeenShown = true;
+      openHelpPopup();
+    }
+    return;
+  }
+  if (helpPopupOpen) {
+    imageMode(CENTER);
+    image(mapImg, width / 2, height / 2, width, height);
+    drawWorld();
+    drawStats();
+    drawToolbar();
+    drawHelpButton();
+    drawHelpPopup();
     return;
   }
   if (growthPopupOpen && !isDead) {
@@ -547,8 +569,9 @@ function draw() {
   drawToolbar();
 
   drawCustomCursor();
+  drawHelpButton();
   if (interactionMode === "none" && !growthPopupOpen) {
-    cursor(toyBall.dragging || isOverToyBall() ? HAND : ARROW);
+    cursor(toyBall.dragging || isOverToyBall() || isOverHelpButton() ? HAND : ARROW);
   }
   if (growthPopupOpen) drawGrowthPopup();
 
@@ -890,6 +913,15 @@ function updateMovement() {
 
   }
 
+
+  // A hungry pet rests on the floor; explicit care and play still work above.
+  if (hunger < HUNGER_FLATTEN_THRESHOLD) {
+    floorVX = floorVY = 0;
+    movementState = "pause";
+    pauseTimer = 30;
+    adultApproach = null;
+    return;
+  }
 
   if (updateAdultApproach()) return;
   if (updateBallChase()) return;
@@ -2157,6 +2189,13 @@ function drawPet() {
         targetAngle = teenReaction.direction * 0.12;
       }
     }
+  }
+
+  const deflation = hungryFlattenAmount();
+  if (deflation > 0) {
+    targetScaleX = lerp(targetScaleX, 1.18, deflation);
+    targetScaleY = lerp(targetScaleY, 0.48 + sin(millis() * 0.002) * 0.008, deflation);
+    targetAngle *= 1 - deflation;
   }
 
   // ==========================================================
@@ -4543,6 +4582,10 @@ function drawDeathSummary() {
 function mousePressed() {
   // Audio gestures work immediately; game hit tests wait for image loading.
   if (!deathImg) return;
+  if (helpPopupOpen) {
+    handleHelpClick();
+    return;
+  }
   if (!hatchingComplete) {
     handleHatchingClick();
     return;
@@ -4561,6 +4604,11 @@ function mousePressed() {
     return;
   }
 
+
+  if (isOverHelpButton()) {
+    openHelpPopup();
+    return;
+  }
 
   if (isOverToyBall()) {
     toyBall.dragging = true;
@@ -5306,7 +5354,7 @@ function ballPosition(x, y) {
 }
 
 function mouseDragged() {
-  if (!toyBall.dragging || isDead || growthPopupOpen) return;
+  if (!toyBall.dragging || isDead || growthPopupOpen || helpPopupOpen) return;
   const position = ballPosition(mouseX + toyBall.offsetX, mouseY + toyBall.offsetY);
   const dt = max((millis() - toyBall.lastPointerAt) / 1000, 0.016);
   if (!position.blocked) {
@@ -5321,7 +5369,7 @@ function mouseDragged() {
 }
 
 function mouseReleased() {
-  if (!toyBall.dragging) return;
+  if (helpPopupOpen || !toyBall.dragging) return;
   toyBall.dragging = false;
   if (isDead || growthPopupOpen) return;
   if (!toyBall.moved) {
