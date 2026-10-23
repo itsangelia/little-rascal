@@ -464,6 +464,12 @@ async function setup() {
 // ============================================================
 
 function draw() {
+  drawGameFrame();
+  // Keep one music control available across the egg, dialogs and gameplay.
+  drawMusicButton();
+}
+
+function drawGameFrame() {
   if (!hatchingComplete) {
     drawHatchingIntro();
     if (hatchingComplete && !petHasBeenNamed) openNamingPopup();
@@ -4586,6 +4592,7 @@ function drawDeathSummary() {
 
 // Mouse input is shared by the existing tools and the result screen.
 function mousePressed() {
+  if (handleMusicClick()) return;
   // Audio gestures work immediately; game hit tests wait for image loading.
   if (!deathImg || namingPopupOpen) return;
   if (helpPopupOpen) {
@@ -5639,34 +5646,6 @@ function updateTeenReaction(elapsedSeconds = deltaTime / 1000) {
 }
 
 
-
-// Original background music startup; no on-screen switch.
-(() => {
-  const bgm = new Audio("bgm.mp3");
-
-  bgm.loop = true;
-  bgm.volume = 0.3;
-  bgm.autoplay = true;
-
-  function startMusic() {
-    if (bgm.paused) {
-      bgm.play().catch(() => {
-        console.log("Waiting for browser audio permission");
-      });
-    }
-  }
-
-  // Try playing immediately
-  startMusic();
-
-  // Retry automatically when audio becomes available
-  bgm.addEventListener("canplaythrough", startMusic);
-
-  // Fallback for browser autoplay restrictions
-  for (const gesture of ["pointerdown", "pointerup", "click", "touchend", "keydown"]) {
-    document.addEventListener(gesture, startMusic, true);
-  }
-})();
 
 // Extract the six approved expressions once; no editing of original character assets.
 function extractAdultSprites(sheet) {

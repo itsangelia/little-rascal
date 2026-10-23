@@ -8,6 +8,7 @@ let namingInput = null;
 let namingError = "";
 let namingComposing = false;
 let namingSubmitted = false;
+let namingLayoutKey = "";
 
 function petNameCharacters(value) {
   if (typeof Intl.Segmenter === "function") {
@@ -26,6 +27,10 @@ function positionNamingForm() {
   const canvas = document.querySelector("canvas");
   if (!canvas) return;
   const bounds = canvas.getBoundingClientRect();
+  // Keep the native text field stable while its caret and selection are active.
+  const layoutKey = [bounds.left, bounds.top, bounds.width, bounds.height, width, height].join(":");
+  if (layoutKey === namingLayoutKey) return;
+  namingLayoutKey = layoutKey;
   const sx = bounds.width / width;
   const sy = bounds.height / height;
   Object.assign(namingForm.style, {
@@ -63,7 +68,8 @@ function openNamingPopup() {
   namingInput.type = "text";
   namingInput.autocomplete = "off";
   namingInput.spellcheck = false;
-  namingInput.placeholder = "e.g. Mochi / 球球";
+  namingInput.autofocus = true;
+  namingInput.removeAttribute("placeholder");
   namingInput.setAttribute("aria-label", "Pet name, up to 16 characters");
   namingInput.setAttribute("enterkeyhint", "done");
   namingInput.setAttribute("aria-describedby", "pet-name-feedback");
@@ -75,7 +81,8 @@ function openNamingPopup() {
   Object.assign(namingInput.style, {
     boxSizing: "border-box", border: "1.5px solid #c4ad78", outlineColor: "#c59c48",
     background: "#fffdf3", color: "#705b3c", fontFamily: "Arial, sans-serif",
-    textAlign: "center", pointerEvents: "auto", boxShadow: "inset 0 2px 4px #b9a77d14"
+    textAlign: "center", pointerEvents: "auto", cursor: "text", caretColor: "#705b3c",
+    userSelect: "text", webkitUserSelect: "text", boxShadow: "inset 0 2px 4px #b9a77d14"
   });
   const button = document.createElement("button");
   button.type = "submit";
@@ -87,6 +94,10 @@ function openNamingPopup() {
   });
   button.addEventListener("mouseenter", () => { button.style.background = "#fade89"; });
   button.addEventListener("mouseleave", () => { button.style.background = "#f2d89c"; });
+  // Native focus preserves the blinking caret and opens touch keyboards on a tap.
+  namingInput.addEventListener("pointerdown", () => {
+    if (document.activeElement !== namingInput) namingInput.focus({ preventScroll: true });
+  });
   namingInput.addEventListener("compositionstart", () => { namingComposing = true; });
   namingInput.addEventListener("compositionend", () => { namingComposing = false; namingError = ""; });
   namingInput.addEventListener("input", () => {
@@ -129,6 +140,7 @@ function closeNamingPopup() {
   namingPopupOpen = false;
   if (namingForm) namingForm.remove();
   namingForm = namingInput = null;
+  namingLayoutKey = "";
   namingComposing = false;
   cursor(ARROW);
 }
