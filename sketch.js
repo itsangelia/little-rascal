@@ -83,6 +83,7 @@ let ballChaseUntil = 0;
 let ballChaseSpeed = 0;
 let ballChaseStride = 0;
 let ballChaseFacing = 1;
+let toyPlayAction = null;
 let lastBallRewardAt = -Infinity;
 
 
@@ -799,6 +800,7 @@ function updateStats() {
 // ============================================================
 
 function updateMovement() {
+  if (updateToyPlayAction()) return;
   if (updateTeenReaction()) return;
   if (lifeStage === "teenager" && millis() < teenAngryUntil &&
       !isSleeping && !goingToSleep) return;
@@ -1809,7 +1811,7 @@ function getCurrentPetImage() {
     if (isStinkCrying()) return adultSprites.crying;
     if (isSleeping) return adultSprites.sleepy;
     if (isBeingPetted || millis() < adultAffectionUntil) return adultSprites.affectionate;
-    if (isEating || isPlaying || (millis() < ballChaseUntil && !isPetCrying())) return adultSprites.happy;
+    if (isEating || isPlaying || toyPlayAction || (millis() < ballChaseUntil && !isPetCrying())) return adultSprites.happy;
     return happiness < CRY_THRESHOLD ? adultSprites.crying : adultSprites.normal;
   }
   // Odor distress takes precedence over happy actions and teen refusal.
@@ -1831,7 +1833,7 @@ function getCurrentPetImage() {
 
     isBeingPetted ||
 
-    isPlaying
+    isPlaying || toyPlayAction
 
   ) {
 
@@ -2215,6 +2217,14 @@ function drawPet() {
     targetAngle = ballChaseFacing * 0.025;
   }
 
+  if (toyPlayAction) {
+    const windingUp = toyPlayAction.phase === "windup";
+    const tapping = toyPlayAction.phase === "release";
+    targetScaleX = windingUp ? 0.98 : tapping ? 1.06 : 1;
+    targetScaleY = windingUp ? 1.02 : tapping ? 0.95 : 1;
+    targetAngle = toyPlayAction.direction * (windingUp ? -0.035 : tapping ? 0.055 : 0);
+  }
+
   const deflation = hungryFlattenAmount();
   if (deflation > 0) {
     targetScaleX = lerp(targetScaleX, 1.18, deflation);
@@ -2596,6 +2606,9 @@ function drawCryingTears(
 // ============================================================
 
 function stopCurrentMovement() {
+  // Care and sleep cancel a pending toy pursuit as well as its kick pose.
+  toyPlayAction = null;
+  ballChaseUntil = ballChaseSpeed = 0;
 
   jumpOffset = 0;
 
@@ -4635,6 +4648,7 @@ function mousePressed() {
   }
 
   if (isOverToyBall()) {
+    toyPlayAction = null;
     toyBall.dragHeight = max(16, toyBall.height || 0);
     toyBall.height = toyBall.verticalSpeed = toyBall.impact = 0;
     toyBall.dragging = true;
@@ -5172,6 +5186,7 @@ function restartPet() {
   toyBall = makeToyBall();
   ballChaseUntil = 0;
   ballChaseSpeed = ballChaseStride = 0;
+  toyPlayAction = null;
   lastBallRewardAt = -Infinity;
   teenAngryUntil = 0;
   lifeStage = "child";
@@ -5364,7 +5379,7 @@ function tryTeenInteraction(action, roll = random()) {
 // ROOM TOY: CLICK, DRAG, ROLL AND CHASE
 // ============================================================
 function makeToyBall() {
-  return { x: 560, y: 470, vx: 0, vy: 0, angle: 0, radius: 18,
+  return { x: 560, y: 470, vx: 0, vy: 0, angle: 0, radius: 20.7,
     height: 0, verticalSpeed: 0, impact: 0, dragHeight: 16,
     dragging: false, moved: false, used: false, demonstrated: false };
 }
@@ -5426,7 +5441,8 @@ function requestBallPlay() {
   isPlaying = false;
   playHopsRemaining = 0;
   actionEndTime = 0;
-  ballChaseSpeed = 90;
+  toyPlayAction = null;
+  ballChaseSpeed = 65;
   ballChaseUntil = millis() + 8000;
 }
 
@@ -5443,9 +5459,9 @@ function updateToyBall() {
   if (toyBall.dragging) return;
   const dt = constrain(deltaTime / 1000, 0, 0.05);
   const canChase = millis() < ballChaseUntil && !isDead && !isSleeping &&
-    !goingToSleep && !isEating && !isBeingPetted && !isPooping && !isPetCrying() &&
-    hunger >= HUNGER_FLATTEN_THRESHOLD && !teenReaction;
-  ballChaseSpeed = canChase ? min(310, ballChaseSpeed + 560 * dt) : 0;
+    !goingToSleep && !isEating && !isBeingPetted && !isPooping && !isPetCrying() && energy > 10 &&
+    hunger >= HUNGER_FLATTEN_THRESHOLD && !teenReaction && !toyPlayAction;
+  ballChaseSpeed = canChase ? min(180, ballChaseSpeed + 260 * dt) : 0;
   advanceToyBallPhysics(toyBall, dt);
 }
 
@@ -5457,22 +5473,13 @@ function updateBallChase() {
     return false;
   }
   if (petTouchesBall()) {
-    if (millis() - lastBallRewardAt >= 1500) {
-      lastBallRewardAt = millis();
-      if (lifeStage === "adult" && adultInvitingBall) {
-        const targetX = mouseY >= FLOOR_TOP && mouseY <= FLOOR_BOTTOM ? mouseX : width / 2;
-        toyBall.vx = targetX >= toyBall.x ? 105 : -105;
-        toyBall.vy = 0;
-        adultInvitingBall = false;
-      } else {
-        toyBall.vx = toyBall.x >= groundX ? 105 : -105;
-        toyBall.vy = 25;
-      }
-      launchToyBounce(toyBall);
-      happiness = constrain(happiness + 4, 0, 100);
-      energy = constrain(energy - 2, 0, 100);
-      hunger = constrain(hunger - 0.5, 0, 100);
-      createHeart();
+    // Wait for the thrown toy to settle near the pet before one gentle kick.
+    if (toyBall.height <= 1) {
+      stopCurrentMovement();
+      movementState = "pause";
+      toyBall.vx = toyBall.vy = toyBall.verticalSpeed = toyBall.height = 0;
+      toyPlayAction = { phase: "windup", elapsed: 0,
+        direction: toyBall.x >= groundX ? 1 : -1 };
     }
     movementState = "pause";
     pauseTimer = 12;
@@ -5481,6 +5488,63 @@ function updateBallChase() {
   if (approachToyBall(true)) return true;
   ballChaseUntil = 0;
   return false;
+}
+
+// Each successful chase ends with a short preparation, one tap, and a rest.
+function updateToyPlayAction() {
+  if (!toyPlayAction) return false;
+  if (isDead || toyBall.dragging || isSleeping || goingToSleep || isPooping ||
+      isEating || isBeingPetted || isPetCrying() || teenReaction ||
+      energy <= 10 || hunger < HUNGER_FLATTEN_THRESHOLD) {
+    toyPlayAction = null;
+    ballChaseUntil = ballChaseSpeed = 0;
+    movementState = "pause";
+    pauseTimer = 12;
+    return false;
+  }
+  const action = toyPlayAction;
+  action.elapsed += constrain(deltaTime / 1000, 0, 0.05);
+  floorVX = floorVY = jumpOffset = jumpVelocity = 0;
+  movementState = "pause";
+  if (action.phase === "windup" && action.elapsed >= 0.18) {
+    if (!petTouchesBall()) {
+      toyPlayAction = null;
+      ballChaseUntil = ballChaseSpeed = 0;
+      return false;
+    }
+    let dx = toyBall.x - groundX;
+    let dy = (toyBall.y - groundY) * 0.6;
+    if (lifeStage === "adult" && adultInvitingBall) {
+      dx = (mouseY >= FLOOR_TOP && mouseY <= FLOOR_BOTTOM ? mouseX : width / 2) - toyBall.x;
+      dy = 0;
+    }
+    if (Math.hypot(dx, dy) < 1) dx = action.direction;
+    const length = Math.hypot(dx, dy);
+    toyBall.vx = dx / length * 55;
+    toyBall.vy = dy / length * 55;
+    toyBall.height = 0;
+    toyBall.verticalSpeed = 40;
+    toyBall.impact = 0.12;
+    // Every throw can receive a physical tap; rewards keep their existing cooldown.
+    if (millis() - lastBallRewardAt >= 1500) {
+      lastBallRewardAt = millis();
+      happiness = constrain(happiness + 4, 0, 100);
+      energy = constrain(energy - 2, 0, 100);
+      hunger = constrain(hunger - 0.5, 0, 100);
+      createHeart();
+    }
+    ballChaseUntil = ballChaseSpeed = 0;
+    adultInvitingBall = false;
+    action.phase = "release";
+    action.elapsed = 0;
+  } else if (action.phase === "release" && action.elapsed >= 0.22) {
+    action.phase = "rest";
+    action.elapsed = 0;
+  } else if (action.phase === "rest" && action.elapsed >= 0.7) {
+    toyPlayAction = null;
+    pauseTimer = 45;
+  }
+  return true;
 }
 
 function approachToyBall(running = false) {
@@ -5511,7 +5575,7 @@ function approachToyBall(running = false) {
 function runTowardToyBall(target) {
   const dx = target.x - groundX, dy = target.y - groundY;
   const distance = Math.hypot(dx, dy);
-  const travel = min(distance, max(90, ballChaseSpeed) * constrain(deltaTime / 1000, 0, 0.05));
+  const travel = min(distance, max(65, ballChaseSpeed) * constrain(deltaTime / 1000, 0, 0.05));
   const steps = max(1, ceil(travel / 5));
   let moved = 0;
   for (let i = 0; i < steps && distance > 0.1; i++) {
@@ -5543,14 +5607,15 @@ function drawToyBall() {
   translate(toyBall.x, toyBall.y);
   noStroke();
   fill(76, 66, 43, visual.shadowAlpha);
-  ellipse(0, 4 * depth, 34 * depth * visual.shadowScale, 9 * depth * visual.shadowScale);
+  ellipse(0, 4 * depth, toyBall.radius * 1.89 * depth * visual.shadowScale,
+    toyBall.radius * 0.5 * depth * visual.shadowScale);
   translate(0, -visual.lift * depth);
   scale(depth);
   if (isOverToyBall() || (!toyBall.used && floor(companionshipSeconds) % 5 === 0)) {
     noFill();
     stroke(244, 206, 94, 150);
     strokeWeight(2);
-    circle(0, -toyBall.radius, 47);
+    circle(0, -toyBall.radius, toyBall.radius * 2 + 11);
   }
   // Deform around the bottom so landing compression stays on the floor.
   scale(visual.scaleX, visual.scaleY);
