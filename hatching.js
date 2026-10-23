@@ -55,7 +55,9 @@ function drawHatchingIntro() {
   }
 
   if (time < 1800) {
-    const shake = time >= 0 && time < 350 ? sin(time * 0.055) * 0.09 : 0;
+    // A slow, subtle invitation before the stronger click-to-hatch shake.
+    const idleRock = sin(millis() * TWO_PI / 2800) * 0.035;
+    const shake = time < 0 ? idleRock : time < 350 ? sin(time * 0.055) * 0.09 : 0;
     const glow = time >= 0 ? 0.5 + 0.5 * sin(time * 0.008) : 0;
     drawEgg(shake, glow);
     if (time >= 1400) drawCrack(hatchSmooth((time - 1400) / 400));
@@ -103,12 +105,19 @@ function eggOutline() {
 function drawEgg(angle, glow) {
   push();
   translate(EGG_X, EGG_Y);
-  rotate(angle);
   if (hatchPhase === "idle") {
     noFill();
     stroke(232, 196, 106, 65 + sin(millis() * 0.003) * 25);
     strokeWeight(2);
     ellipse(0, 4, 83, 101);
+  }
+  // Rock around the base so the idle egg stays planted on the floor.
+  if (hatchPhase === "idle") {
+    translate(0, 43);
+    rotate(angle);
+    translate(0, -43);
+  } else {
+    rotate(angle);
   }
   // Render the selected illustrated asset instead of approximating its design.
   const eggHeight = 86;
