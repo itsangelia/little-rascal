@@ -54,6 +54,8 @@ const POOP_ART = { x: 1010, y: 884, width: 341, height: 230 };
 let petNormalImg;
 let petHappyImg;
 let petCryImg;
+let hungryPetImg;
+const HUNGRY_ART = { x: 293, y: 241, width: 982, height: 566 };
 let teenNormalImg;
 let teenHappyImg;
 let teenCryImg;
@@ -237,13 +239,12 @@ let energyDrain = 0.30;
 // Mood falls faster.
 
 const LOW_HUNGER_THRESHOLD = 35;
-const HUNGER_FLATTEN_THRESHOLD = 20;
+const HUNGER_FLATTEN_THRESHOLD = 30;
 let helpHasBeenShown = false;
 
-// This recoverable pose never uses the death sprite or changes neglect timers.
-function hungryFlattenAmount() {
-  if (isDead || isSleeping || goingToSleep || isEating || isPooping) return 0;
-  return constrain((HUNGER_FLATTEN_THRESHOLD - hunger) / 15, 0, 1);
+// Hunger selects its artwork independently of sleep, care and neglect timers.
+function isHungryPose() {
+  return !!hungryPetImg && !isDead && hunger < HUNGER_FLATTEN_THRESHOLD;
 }
 
 
@@ -437,6 +438,7 @@ async function setup() {
     );
 
 
+  hungryPetImg = await loadImage("assets/hungry-pet.png");
   teenNormalImg = await loadImage("teenager.png");
   teenHappyImg = await loadImage("teenager happy.png");
   teenCryImg = await loadImage("teenager cry.png");
@@ -1807,6 +1809,7 @@ function getScaleAtY(y) {
 // ============================================================
 
 function getCurrentPetImage() {
+  if (isHungryPose()) return hungryPetImg;
   if (lifeStage === "adult") {
     if (isStinkCrying()) return adultSprites.crying;
     if (isSleeping) return adultSprites.sleepy;
@@ -2225,11 +2228,11 @@ function drawPet() {
     targetAngle = toyPlayAction.direction * (windingUp ? -0.035 : tapping ? 0.055 : 0);
   }
 
-  const deflation = hungryFlattenAmount();
-  if (deflation > 0) {
-    targetScaleX = lerp(targetScaleX, 1.18, deflation);
-    targetScaleY = lerp(targetScaleY, 0.48 + sin(millis() * 0.002) * 0.008, deflation);
-    targetAngle *= 1 - deflation;
+  if (petImg === hungryPetImg) {
+    // The new artwork is already flat: retain its proportions and add quiet breathing.
+    targetScaleX = 1;
+    targetScaleY = 1 + sin(millis() * 0.002) * 0.008;
+    targetAngle = 0;
   }
 
   // ==========================================================
@@ -2343,6 +2346,14 @@ function drawPet() {
 
   );
 
+  if (petImg === hungryPetImg && lifeStage === "adult") {
+    // Keep the grown pet's small lower-right star in this shared hunger pose.
+    fill(255, 225, 145);
+    stroke(190, 140, 70);
+    strokeWeight(0.9);
+    strokeJoin(ROUND);
+    drawStar(drawWidth * 0.35, -drawHeight * 0.13, drawWidth * 0.05);
+  }
 
   pop();
 
@@ -2537,7 +2548,7 @@ function drawCryingTears(
     topY +
 
     drawHeight *
-    0.47;
+    (isHungryPose() ? 0.68 : 0.47);
 
 
   noStroke();
@@ -2557,7 +2568,7 @@ function drawCryingTears(
 
     groundX -
     drawWidth *
-    0.17,
+    (isHungryPose() ? 0.04 : 0.17),
 
     tearStartY +
     fall1 *
@@ -2579,7 +2590,7 @@ function drawCryingTears(
 
     groundX +
     drawWidth *
-    0.17,
+    (isHungryPose() ? 0.25 : 0.17),
 
     tearStartY +
     fall2 *
@@ -5630,6 +5641,7 @@ function drawToyBall() {
 
 // Visible source bounds: files remain unchanged, including their transparent padding.
 function getPetArtwork(img) {
+  if (img === hungryPetImg) return HUNGRY_ART;
   if (Object.values(adultSprites).includes(img)) return { x: 0, y: 0, width: img.width, height: img.height };
   if (img === petNormalImg) return { x: 970, y: 780, width: 651, height: 609 };
   if (img === petHappyImg) return { x: 955, y: 772, width: 667, height: 625 };
@@ -5773,6 +5785,10 @@ function extractAdultSprites(sheet) {
 }
 
 function petRenderFactor(img) {
+  if (img === hungryPetImg) {
+    const stageWidth = lifeStage === "child" ? 651 : 771;
+    return (BASE_PET_WIDTH * stageWidth / teenNormalImg.width) * 1.18 / HUNGRY_ART.width;
+  }
   if (Object.values(adultSprites).includes(img)) {
     return (BASE_PET_WIDTH * 771 / teenNormalImg.width) / img.width;
   }
