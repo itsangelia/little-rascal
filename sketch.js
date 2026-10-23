@@ -466,10 +466,14 @@ async function setup() {
 function draw() {
   if (!hatchingComplete) {
     drawHatchingIntro();
-    if (hatchingComplete && !helpHasBeenShown) {
-      helpHasBeenShown = true;
-      openHelpPopup();
-    }
+    if (hatchingComplete && !petHasBeenNamed) openNamingPopup();
+    return;
+  }
+  if (namingPopupOpen) {
+    imageMode(CENTER);
+    image(mapImg, width / 2, height / 2, width, height);
+    drawWorld();
+    drawNamingPopup();
     return;
   }
   if (helpPopupOpen) {
@@ -477,6 +481,7 @@ function draw() {
     image(mapImg, width / 2, height / 2, width, height);
     drawWorld();
     drawStats();
+    drawPetNameLabel();
     drawToolbar();
     drawHelpButton();
     drawHelpPopup();
@@ -487,6 +492,7 @@ function draw() {
     image(mapImg, width / 2, height / 2, width, height);
     drawWorld();
     drawStats();
+    drawPetNameLabel();
     drawToolbar();
     drawGrowthPopup();
     return;
@@ -570,6 +576,7 @@ function draw() {
 
   drawCustomCursor();
   drawHelpButton();
+  drawPetNameLabel();
   if (interactionMode === "none" && !growthPopupOpen) {
     cursor(toyBall.dragging || isOverToyBall() || isOverHelpButton() ? HAND : ARROW);
   }
@@ -4531,8 +4538,7 @@ function drawDeathSummary() {
   stroke(112, 89, 60);
   strokeWeight(3);
   fill(255, 253, 241);
-  textSize(48);
-  text("LITTLE RASCAL", width / 2, 88);
+  drawFittedPetText(petName, width / 2, 88, 760, 48);
   noStroke();
   fill(112, 89, 60);
   textSize(36);
@@ -4581,7 +4587,7 @@ function drawDeathSummary() {
 // Mouse input is shared by the existing tools and the result screen.
 function mousePressed() {
   // Audio gestures work immediately; game hit tests wait for image loading.
-  if (!deathImg) return;
+  if (!deathImg || namingPopupOpen) return;
   if (helpPopupOpen) {
     handleHelpClick();
     return;
@@ -5135,6 +5141,7 @@ function drawDeadPet() {
 }
 
 function restartPet() {
+  resetPetNaming();
   hatchingComplete = false;
   hatchStartedAt = null;
   hatchPhase = "idle";
@@ -5271,7 +5278,8 @@ function drawGrowthPopup() {
   textStyle(NORMAL);
   textSize(20);
   fill(101, 115, 83);
-  text(lifeStage === "adult" ? "Little Rascal is now an adult." : "Little Rascal is now a teenager.", width / 2, 395);
+  const growthMessage = petName + (lifeStage === "adult" ? " is now an adult." : " is now a teenager.");
+  drawFittedPetText(growthMessage, width / 2, 395, 470, 20);
   textSize(16);
   text("Your care helped them grow.", width / 2, 425);
   const hover = mouseX >= 340 && mouseX <= 560 && mouseY >= 455 && mouseY <= 507;
@@ -5354,7 +5362,7 @@ function ballPosition(x, y) {
 }
 
 function mouseDragged() {
-  if (!toyBall.dragging || isDead || growthPopupOpen || helpPopupOpen) return;
+  if (!toyBall.dragging || isDead || growthPopupOpen || helpPopupOpen || namingPopupOpen) return;
   const position = ballPosition(mouseX + toyBall.offsetX, mouseY + toyBall.offsetY);
   const dt = max((millis() - toyBall.lastPointerAt) / 1000, 0.016);
   if (!position.blocked) {
@@ -5369,7 +5377,7 @@ function mouseDragged() {
 }
 
 function mouseReleased() {
-  if (helpPopupOpen || !toyBall.dragging) return;
+  if (namingPopupOpen || helpPopupOpen || !toyBall.dragging) return;
   toyBall.dragging = false;
   if (isDead || growthPopupOpen) return;
   if (!toyBall.moved) {
@@ -5737,4 +5745,25 @@ function updateAdultApproach() {
   if (target.blocked) { adultApproach = null; return false; }
   startJumpTo(target.x, target.y, -5.4);
   return true;
+}
+
+// Naming is part of birth, before any care timers begin running.
+function finishPetNaming(name) {
+  if (!namingPopupOpen || petHasBeenNamed) return;
+  petName = name;
+  petHasBeenNamed = true;
+  const pausedFor = millis() - namingOpenedAt;
+  nextPoopTime += pausedFor;
+  closeNamingPopup();
+  if (!helpHasBeenShown) {
+    helpHasBeenShown = true;
+    openHelpPopup();
+  }
+}
+
+function drawFittedPetText(label, x, y, maxWidth, preferredSize) {
+  textSize(preferredSize);
+  const measured = textWidth(label);
+  if (measured > maxWidth) textSize(preferredSize * maxWidth / measured);
+  text(label, x, y);
 }
