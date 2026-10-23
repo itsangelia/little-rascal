@@ -93,12 +93,39 @@ function drawEgg(angle, glow) {
   stroke(171, 126, 66);
   strokeWeight(2);
   eggOutline();
+  // Clip the butter-yellow wave to the existing egg silhouette.
+  drawingContext.save();
+  drawingContext.beginPath();
+  for (let i = 0; i <= 48; i++) {
+    const theta = i * TWO_PI / 48;
+    const x = sin(theta) * 34 * (1 + cos(theta) * 0.12);
+    const y = cos(theta) * 43;
+    if (i === 0) drawingContext.moveTo(x, y);
+    else drawingContext.lineTo(x, y);
+  }
+  drawingContext.closePath();
+  drawingContext.clip();
+  noStroke();
+  fill(255, 225, 145);
+  beginShape();
+  for (let x = -40; x <= 40; x += 2) {
+    vertex(x, 14 + sin((x + 12) * 0.14) * 4);
+  }
+  vertex(40, 48);
+  vertex(-40, 48);
+  endShape(CLOSE);
+  drawingContext.restore();
+  noFill();
+  stroke(171, 126, 66);
+  strokeWeight(2);
+  eggOutline();
   fill(250, 220, 130);
+  stroke(207, 151, 61);
   strokeWeight(1.6);
-  drawStar(0, 2, 13);
+  drawStar(0, -12, 10);
   noStroke();
   fill(255, 234, 160, glow * 55);
-  circle(0, 2, 36);
+  circle(0, -12, 29);
   pop();
 }
 
