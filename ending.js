@@ -1,4 +1,4 @@
-// Farewell is an active-time sequence. The letter waits for the player's choice.
+// Farewell uses active time. Both the envelope and letter wait for the player.
 const FAREWELL_SECONDS = { still: 3, soften: 4, dissolve: 3, rise: 3.8, scatter: 1.8,
   gather: 3.4, newborn: 1.8 };
 const LETTER_CLOSE = { x: 360, y: 563, w: 180, h: 40 };
@@ -63,11 +63,16 @@ function farewellNoise(i) {
 
 function updateFarewell(seconds = deltaTime / 1000) {
   if (!farewell || farewell.phase === "letter" || document.hidden) return;
+  if (farewell.phase === "envelope") {
+    // Fade in once, then wait indefinitely for a deliberate open action.
+    farewell.elapsed = min(0.8, farewell.elapsed + constrain(seconds, 0, 0.1));
+    return;
+  }
   farewell.elapsed += constrain(seconds, 0, 0.1);
   const duration = FAREWELL_SECONDS[farewell.phase];
   if (farewell.elapsed < duration) return;
   const next = { still: "soften", soften: "dissolve", dissolve: "rise", rise: "scatter",
-    scatter: "letter", gather: "newborn" }[farewell.phase];
+    scatter: "envelope", gather: "newborn" }[farewell.phase];
   if (farewell.phase === "newborn") {
     restartPet();
     return;
@@ -95,8 +100,8 @@ function drawFarewellRoom() {
 
 function farewellBodyShape(softness) {
   const p = hatchSmooth(softness);
-  return { width: farewell.bodyWidth * (1 + 0.16 * p),
-    height: farewell.bodyWidth * farewell.art.height / farewell.art.width * (1 - 0.55 * p) };
+  return { width: farewell.bodyWidth * (1 + 0.04 * p),
+    height: farewell.bodyWidth * farewell.art.height / farewell.art.width * (1 - 0.15 * p) };
 }
 
 function drawFarewellBody(progress, softness = 1) {
@@ -167,6 +172,61 @@ function drawSoulStars(progress) {
       point.y - 45 + sin(angle) * distance - progress * 25,
       3 + i % 4, 220 * (1 - hatchSmooth(progress)), i * 0.6 + progress * 0.2);
   }
+}
+
+function farewellEnvelopeBounds() {
+  return { x: farewell.x - 48, y: farewell.y - 58, w: 96, h: 64 };
+}
+
+function isOverFarewellEnvelope() {
+  if (farewell?.phase !== "envelope") return false;
+  const b = farewellEnvelopeBounds();
+  return helpContains(b.x, b.y, b.w, b.h);
+}
+
+function drawFarewellEnvelope() {
+  const opacity = hatchSmooth(farewell.elapsed / 0.8);
+  const hover = isOverFarewellEnvelope();
+  push();
+  translate(farewell.x, farewell.y - 26);
+  noStroke();
+  fill(96, 77, 53, opacity * 25);
+  ellipse(0, 29, 86, 10);
+  rotate(-0.055);
+  // A cream paper envelope with a folded flap and the pet's little star seal.
+  stroke(174, 143, 95, opacity * 230);
+  strokeWeight(1.4);
+  strokeJoin(ROUND);
+  fill(hover ? color(255, 247, 218, opacity * 255) : color(253, 247, 229, opacity * 255));
+  beginShape();
+  vertex(-43, -27); vertex(42, -26); vertex(44, 26);
+  vertex(-42, 27); vertex(-43, -27);
+  endShape(CLOSE);
+  stroke(194, 164, 117, opacity * 200);
+  noFill();
+  beginShape();
+  vertex(-42, 25); vertex(-6, -2); vertex(6, -2); vertex(43, 25);
+  endShape();
+  fill(248, 236, 207, opacity * 255);
+  beginShape();
+  vertex(-42, -26); vertex(42, -25); vertex(4, 5); vertex(-3, 5);
+  endShape(CLOSE);
+  drawFarewellStar(0, 3, 8, opacity * 245);
+  if (hover) {
+    noFill();
+    stroke(226, 190, 113, opacity * 130);
+    strokeWeight(1);
+    rect(-48, -32, 96, 64, 5);
+  }
+  pop();
+  cursor(hover ? HAND : ARROW);
+}
+
+function openFarewellEnvelope() {
+  if (farewell?.phase !== "envelope") return;
+  farewell.phase = "letter";
+  farewell.elapsed = 0;
+  cursor(ARROW);
 }
 
 // Keep the owner's wording exactly; only visual line wrapping may vary.
@@ -277,7 +337,8 @@ function drawFarewell() {
   else if (phase === "scatter") {
     drawFarewellSoul(1, 205 * (1 - hatchSmooth(min(1, p * 1.7))));
     drawSoulStars(p);
-  } else if (phase === "letter") drawFarewellLetter();
+  } else if (phase === "envelope") drawFarewellEnvelope();
+  else if (phase === "letter") drawFarewellLetter();
   else if (phase === "gather") drawRebirth(p);
   else if (phase === "newborn") {
     drawRebirth(1);
@@ -300,6 +361,10 @@ function closeFarewellLetter() {
 }
 
 function handleFarewellClick() {
+  if (farewell?.phase === "envelope") {
+    if (isOverFarewellEnvelope()) openFarewellEnvelope();
+    return;
+  }
   if (farewell?.phase !== "letter") return;
   const b = LETTER_CLOSE;
   if (helpContains(b.x, b.y, b.w, b.h)) closeFarewellLetter();
@@ -307,8 +372,13 @@ function handleFarewellClick() {
 
 // Extend input without introducing another p5 keyPressed() handler.
 document.addEventListener("keydown", event => {
-  if (typeof isDead === "undefined" || !isDead || farewell?.phase !== "letter" || event.repeat) return;
-  if (["Enter", "Escape", " "].includes(event.key)) {
+  if (typeof isDead === "undefined" || !isDead || !farewell || event.repeat) return;
+  if (farewell.phase === "envelope" && ["Enter", " "].includes(event.key)) {
+    event.preventDefault();
+    openFarewellEnvelope();
+    return;
+  }
+  if (farewell.phase === "letter" && ["Enter", "Escape", " "].includes(event.key)) {
     event.preventDefault();
     closeFarewellLetter();
   }
