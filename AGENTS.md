@@ -45,3 +45,10 @@ These instructions apply to the entire repository and all future Codex tasks.
 
 - Child world artwork renders at 85% of its former width and height, including its birth reveal, hungry and death poses. Preserve image proportions and keep its hitbox and shadow aligned. Guide/naming portraits and the other life stages keep their existing sizes.
 - A rewarded physical toy interaction costs 5 energy points; accepted toolbar PLAY costs 32. Preserve the existing reward cooldown and energy clamping. Refused play does not charge energy. See [docs/play-balance.md](docs/play-balance.md).
+
+## Approved farewell and rebirth
+
+- Preserve the ending in `ending.js`: existing death pose → gradual body dissolution → approved F winged soul rises and scatters into stars → thank-you letter → player closes letter → room starlight gathers into the selected C egg → “新生” → existing clickable egg, meteor, and naming flow.
+- Reuse F directly from `design-options/farewell-options.png`; keep the original sheet intact. Preserve its closed eyes, wings, cheeks, head star and wavy ghost silhouette.
+- Pause all care, movement, growth and lifetime counters during farewell, the letter and rebirth. The letter never closes automatically. Keep the name, active companionship time, stage and cause in the letter until the next egg is ready.
+- The ending applies to the existing neglect deaths. It does not introduce a natural-death timer. The dedicated `previews/farewell/` page starts a demonstration; normal game pages always begin at the egg.
