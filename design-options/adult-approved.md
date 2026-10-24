@@ -12,9 +12,9 @@ The owner designated two inline reference images as the adult pet on 24 October 
 - Crying expression: small blue tears under the eyes and a small downward mouth.
 - Adult faces do not use the elderly eye-corner creases.
 
-## Expression designs for review
+## Rejected expression sheet
 
-[adult-user-expression-options.png](adult-user-expression-options.png) contains generated proposals based on those references:
+[adult-user-expression-options.png](adult-user-expression-options.png) was rejected by the owner because it changed the body proportions and drawing style. Do not use it as an appearance reference or integrate it into the game.
 
 | Label | Expression |
 | --- | --- |
@@ -22,8 +22,18 @@ The owner designated two inline reference images as the adult pet on 24 October 
 | B | Angry, with a bright red comic anger mark. |
 | C | Happy, with the baby-style happy mouth. |
 
-These proposals remain subject to the owner's review. The supplied neutral and crying references are the authority for the body and drawing style.
+The requested expressions remain unimpressed, angry (with a red anger mark), and happy. Edit only facial features using the owner's original PNG as the reference. Preserve the original round silhouette, side bumps, cream fill, pink cheeks and both stars. Do not add watercolor texture, change the body into a wider dome, or enlarge the features.
+
+## Revised expression proposal
+
+[adult-original-expression-review.png](adult-original-expression-review.png) is a new transparent comparison generated using the actual normal PNG from the ZIP as the image-edit reference. From left to right: unimpressed, angry with a red anger mark, and happy. It is a proposal for review, not an approved asset. The generator can still alter edges, fill and proportions; do not claim that this file preserves the original body pixel-for-pixel. The originals below remain authoritative. No gameplay assets have been replaced.
 
 ## Original file archive
 
-The current references were supplied as inline chat images. Their original PNG files are not yet available as file attachments in the workspace. Preserve this distinction: the generated comparison sheet is not an archive of the original PNGs. Archive the originals unchanged when the owner supplies them as files, such as a ZIP attachment.
+The owner subsequently supplied `归档.zip`. Both original 2732 × 2048 RGBA PNG files are now archived byte-for-byte:
+
+- [Normal original](../assets/adult-original/normal.png), originally `未命名作品-1 5.png`.
+- [Crying original](../assets/adult-original/crying.png), originally `未命名作品-2 2.png`.
+- [Archive manifest](../assets/adult-original/manifest.json) records original filenames, byte counts and SHA-256 hashes.
+
+These original PNGs are the authoritative adult artwork. Keep them unchanged. Generated expression proposals are separate files, require the owner's review, and must not be described as exact copies of the original artwork.

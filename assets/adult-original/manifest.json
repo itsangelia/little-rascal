@@ -1,0 +1,18 @@
+{
+  "source_upload": "归档.zip",
+  "preserved_without_modification": true,
+  "files": [
+    {
+      "file": "normal.png",
+      "source_entry": "未命名作品-1 5.png",
+      "sha256": "e7dff76884f796da6a15572fff44881df6d6fc0d1a8382667aeeb1899d3ddc8b",
+      "bytes": 254877
+    },
+    {
+      "file": "crying.png",
+      "source_entry": "未命名作品-2 2.png",
+      "sha256": "e26c92053c6dfebcae09c94eae46e0933ba1864dd5f92c2ffc1a9cd14ebb40a5",
+      "bytes": 252362
+    }
+  ]
+}
