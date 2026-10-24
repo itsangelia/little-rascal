@@ -92,8 +92,7 @@ function isMatureArtwork(img) {
   return Object.values(adultSprites).includes(img) || Object.values(elderSprites).includes(img);
 }
 
-const ELDER_MOVEMENT = { speedFactor: 0.4, hopPower: 0.65, restFraction: 0.30, activeSeconds: 1.4 };
-let elderActiveSeconds = 0;
+const ELDER_MOVEMENT = { speedFactor: 0.4, hopPower: 0.65, restSeconds: 3 };
 let elderRestRemaining = 0;
 
 function petMovementFactor() {
@@ -110,12 +109,11 @@ function ballPursuitMilliseconds() {
 }
 
 function resetElderMovement() {
-  elderActiveSeconds = elderRestRemaining = 0;
+  elderRestRemaining = 0;
 }
 
 function elderRestPending() {
-  return lifeStage === "elder" &&
-    (elderRestRemaining > 0 || elderActiveSeconds >= ELDER_MOVEMENT.activeSeconds);
+  return lifeStage === "elder" && elderRestRemaining > 0;
 }
 
 function updateElderRest() {
@@ -123,17 +121,10 @@ function updateElderRest() {
       goingToSleep || isPlaying || toyBall.dragging ||
       millis() < ballChaseUntil) return false;
   const seconds = constrain(deltaTime / 1000, 0, 0.05);
-  if (elderRestRemaining <= 0) {
-    elderActiveSeconds += seconds;
-    if (elderActiveSeconds < ELDER_MOVEMENT.activeSeconds || movementState === "jump") return false;
-    // Finish the current hop before resting. Account for that extra active time,
-    // so rest is 30% of autonomous activity instead of a 30% per-frame dice roll.
-    elderRestRemaining = elderActiveSeconds * ELDER_MOVEMENT.restFraction /
-      (1 - ELDER_MOVEMENT.restFraction);
-    elderActiveSeconds = 0;
-  }
-  if (movementState === "jump") return false;
+  if (elderRestRemaining <= 0 || movementState === "jump") return false;
+  // A full three-second floor stop follows each autonomous landing.
   elderRestRemaining = Math.max(0, elderRestRemaining - seconds);
+  if (adultApproach) adultApproach.until += seconds;
   floorVX = floorVY = jumpOffset = jumpVelocity = 0;
   movementState = "pause";
   pauseTimer = 1;

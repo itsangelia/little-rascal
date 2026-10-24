@@ -1117,6 +1117,10 @@ function updatePhysicsJump() {
         ? 3
         : lifeStage === "elder" ? 1 : 7;
 
+    if (lifeStage === "elder" && !goingToSleep && !isPlaying && millis() >= ballChaseUntil) {
+      elderRestRemaining = ELDER_MOVEMENT.restSeconds;
+    }
+
 
     // ========================================================
     // BED ARRIVAL
