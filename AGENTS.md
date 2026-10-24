@@ -26,3 +26,8 @@ These instructions apply to the entire repository and all future Codex tasks.
 - Preserve existing user changes and do not commit unrelated files.
 - Do not introduce build tools or dependencies unless the task requires them.
 - For local validation, serve the repository with `python3 -m http.server 8000` from its root. A syntax check such as `node --check sketch.js` complements browser testing but does not replace it for gameplay changes.
+
+## Approved elderly appearance
+
+- Use the approved artwork and expression choices in [design-options/elder-approved.md](design-options/elder-approved.md) for future elderly-stage work.
+- Preserve the selected A body, line style, two stars and eye-corner creases. The approved expressions are kind (A), tired sigh (F), and happy with the baby happy mouth while retaining A's eyes and creases.
