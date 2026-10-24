@@ -52,7 +52,7 @@ function fulfillElderPetRequest() {
 
 function elderPetBubbleBounds() {
   const body = getPetBody();
-  const w = 72, h = 72;
+  const w = 96, h = 64;
   const onRight = groundX + body.width * 0.5 + w + 12 < width - 14;
   const x = onRight ? groundX + body.width * 0.35 + 8 : groundX - body.width * 0.35 - w - 8;
   const y = constrain(groundY + jumpOffset - body.height - h - 18, 104, height - h - 112);
@@ -62,7 +62,9 @@ function elderPetBubbleBounds() {
 function isOverElderPetBubble() {
   if (!elderPetRequests.active || !canShowElderPetRequest()) return false;
   const b = elderPetBubbleBounds();
-  return dist(mouseX, mouseY, b.x + b.w / 2, b.y + b.h / 2) <= b.w / 2 + 4;
+  const dx = (mouseX - b.x - b.w / 2) / (b.w / 2 + 4);
+  const dy = (mouseY - b.y - b.h / 2) / (b.h / 2 + 4);
+  return dx * dx + dy * dy <= 1;
 }
 
 function drawPettingHand(x, y) {
@@ -100,24 +102,34 @@ function drawElderPetRequest() {
   const hover = isOverElderPetBubble();
   push();
   translate(b.x, b.y);
-  // Three small thought circles lead to the large circle containing only icons.
+  // A wide comic bubble has a soft bottom tip and three trailing thought dots.
   drawingContext.globalAlpha *= opacity;
-  stroke(184, 158, 109);
-  strokeWeight(1.4);
-  fill(hover ? color(255, 248, 225) : color(254, 250, 236));
+  stroke(79, 75, 67);
+  strokeWeight(1.6);
+  fill(hover ? color(255, 252, 241) : color(255, 254, 250));
   ellipseMode(CENTER);
   const side = b.onRight ? 1 : -1;
-  const tailX = b.onRight ? 3 : b.w - 3;
-  circle(tailX - side * 9, b.h + 15, 4);
-  circle(tailX - side * 3, b.h + 8, 6);
-  circle(tailX + side * 5, b.h + 1, 9);
-  circle(b.w / 2, b.h / 2, b.w);
+  const tailX = b.w * (b.onRight ? 0.4 : 0.6);
+  circle(tailX - side * 4, b.h + 16, 7);
+  circle(tailX - side * 12, b.h + 25, 5);
+  circle(tailX - side * 19, b.h + 31, 3);
+  // Native curves preserve a continuous outline around the oval and its tip.
+  const ctx = drawingContext;
+  ctx.beginPath();
+  ctx.moveTo(0, b.h / 2);
+  ctx.bezierCurveTo(0, -b.h / 6, b.w, -b.h / 6, b.w, b.h / 2);
+  ctx.bezierCurveTo(b.w, b.h * 0.83, b.w * 0.76, b.h, tailX + 7, b.h);
+  ctx.bezierCurveTo(tailX + 4, b.h + 9, tailX - 4, b.h + 9, tailX - 7, b.h);
+  ctx.bezierCurveTo(b.w * 0.18, b.h, 0, b.h * 0.8, 0, b.h / 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
   push();
-  translate(22, 35);
+  translate(31, 31);
   scale(0.62);
   drawToolbarIcon("pet", 0, 0);
   pop();
-  drawPettingHand(48, 36);
+  drawPettingHand(65, 32);
   pop();
   if (hover) cursor(HAND);
 }
