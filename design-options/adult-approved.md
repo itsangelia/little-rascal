@@ -2,6 +2,12 @@
 
 The owner designated two inline reference images as the adult pet on 24 October 2026 (Perth time): a neutral face and a crying face.
 
+## Current integration status
+
+After reviewing the eight-image overview, the owner requested that both later stages be added to the game. The five adult appearances in that overview are now used by `stages.js` and `sketch.js`: original normal and crying PNGs, the outlined unimpressed and angry designs, and the approved open-eye happy design. The original source images remain unchanged. Earlier review notes below describe the design history, not the current integration status.
+
+Normal is the default; low mood below 50 (but at least 30) uses angry, and low energy below 30 uses unimpressed. Feeding, petting, playing and affectionate approaches use happy. Critical mood or smelly waste uses crying. Sleep reuses unimpressed with the existing Z animation. The shared hungry pose still takes priority below 30 hunger.
+
 ## Confirmed appearance
 
 - Round cream body with small side bumps, a visible black outer contour, and the owner's simple flat drawing style. Preserve the black contour around both side bumps and along the bottom. The outline can be hard to see when a transparent PNG is displayed on black; inspect originals on a light or gray background.
@@ -31,17 +37,17 @@ The requested expressions remain unimpressed, angry (with a red anger mark), and
 
 ## Outlined expression proposal
 
-[adult-outlined-expression-review.png](adult-outlined-expression-review.png) restores the visible black body contour, including the side bumps and bottom. From left to right: unimpressed, angry with a red anger mark, and happy. The transparent PNG was inspected on a white browser background to verify the outline is visible. This generated proposal is awaiting the owner's review; it is not a pixel-identical edit of the originals and has not been integrated into gameplay.
+[adult-outlined-expression-review.png](adult-outlined-expression-review.png) restores the visible black body contour, including the side bumps and bottom. From left to right: unimpressed, angry with a red anger mark, and happy. The transparent PNG was inspected on a white browser background to verify the outline is visible. At that point it was awaiting the owner's review; it is not a pixel-identical edit of the originals. The first two faces are now integrated, following approval of the overview; its rejected happy face remains unused.
 
 The owner rejected the happy face in this sheet: its closed crescent eyes and short mouth do not match the supplied happy reference. Do not use that happy face for integration. This feedback does not establish approval of the other two designs.
 
 ## Approved open-eye happy design
 
-[adult-happy-open-eyes.png](adult-happy-open-eyes.png) was approved by the owner ("OK了就这样") on 24 October 2026, Perth time. It uses open tilted black oval eyes, a small omega-shaped upper lip and a narrow vertical pink U-shaped open mouth. It retains the adult's right-cheek star and black body outline. No gameplay assets are replaced; the previous three-expression sheet remains unchanged for comparison.
+[adult-happy-open-eyes.png](adult-happy-open-eyes.png) was approved by the owner ("OK了就这样") on 24 October 2026, Perth time. It uses open tilted black oval eyes, a small omega-shaped upper lip and a narrow vertical pink U-shaped open mouth. It retains the adult's right-cheek star and black body outline. It is now the adult happy face in the game. The previous three-expression sheet remains unchanged for comparison.
 
 ## Current appearance overview
 
-[appearance-gallery.html](appearance-gallery.html) displays five adult designs (original normal, original crying, current unimpressed and angry proposals, and approved open-eye happy) and the three approved elderly expressions. It displays the existing source images through cropped viewports without repainting or changing the originals. [appearance-overview.png](appearance-overview.png) is a browser screenshot of that gallery. The adult gallery is an asset inventory, not a claim that every expression is approved or integrated.
+[appearance-gallery.html](appearance-gallery.html) displays the five integrated adult designs and the three approved elderly expressions. It displays the existing source images through cropped viewports without repainting or changing the originals. [appearance-overview.png](appearance-overview.png) is a browser screenshot of that gallery.
 
 ## Original file archive
 

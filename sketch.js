@@ -61,6 +61,7 @@ let teenHappyImg;
 let teenCryImg;
 let teenMadImg;
 let adultSprites = {};
+let elderSprites = {};
 let adultApproach = null;
 let adultNextActionAt = 0;
 let adultActionCount = 0;
@@ -445,12 +446,15 @@ async function setup() {
   teenCryImg = await loadImage("teenager cry.png");
   teenMadImg = await loadImage("teenager mad.png");
 
-  adultSprites = extractAdultSprites(await loadImage("assets/adult-expressions.png"));
+  const stageArtwork = await loadApprovedStageArtwork();
+  adultSprites = stageArtwork.adult;
+  elderSprites = stageArtwork.elder;
 
   toyBallImg = trimToyBallArtwork(await loadImage("assets/toyball.png"));
   poopImg = await loadImage("shit.png");
   deathImg = await loadImage("design-options/death-a3-cross-eyes.png");
   await initializeHatching();
+  initializeStagePreview();
 
 
   // First random poop
@@ -722,7 +726,7 @@ function updateStats() {
 
       isSleeping = false;
       growthWakeReady = growthWakeReady || growthSleepPending ||
-        (lifeStage !== "adult" && growthFeeds >= GROWTH_RULES.feeds &&
+        (nextLifeStage() && growthFeeds >= GROWTH_RULES.feeds &&
          growthCare >= GROWTH_RULES.care);
       growthSleepPending = false;
 
@@ -1816,7 +1820,17 @@ function getCurrentPetImage() {
     if (isSleeping) return adultSprites.sleepy;
     if (isBeingPetted || millis() < adultAffectionUntil) return adultSprites.affectionate;
     if (isEating || isPlaying || toyPlayAction || (millis() < ballChaseUntil && !isPetCrying())) return adultSprites.happy;
-    return happiness < CRY_THRESHOLD ? adultSprites.crying : adultSprites.normal;
+    if (happiness < CRY_THRESHOLD) return adultSprites.crying;
+    if (happiness < 50) return adultSprites.angry;
+    return energy < 30 ? adultSprites.unimpressed : adultSprites.normal;
+  }
+  if (lifeStage === "elder") {
+    // Keep the elderly silhouette and creases even during distress or sleep.
+    // Existing falling tears communicate crying without borrowing a younger body.
+    if (isStinkCrying() || isPetCrying() || isSleeping) return elderSprites.tired;
+    if (isEating || isBeingPetted || isPlaying || toyPlayAction ||
+        millis() < adultAffectionUntil || millis() < ballChaseUntil) return elderSprites.happy;
+    return energy < 30 ? elderSprites.tired : elderSprites.normal;
   }
   // Odor distress takes precedence over happy actions and teen refusal.
   if (isStinkCrying()) return lifeStage === "teenager" ? teenCryImg : petCryImg;
@@ -2347,13 +2361,13 @@ function drawPet() {
 
   );
 
-  if (petImg === hungryPetImg && lifeStage === "adult") {
-    // Keep the grown pet's small lower-right star in this shared hunger pose.
+  if (petImg === hungryPetImg && isMatureStage()) {
+    // The adult's star is beside the cheek; the elderly star sits lower down.
     fill(255, 225, 145);
     stroke(190, 140, 70);
     strokeWeight(0.9);
     strokeJoin(ROUND);
-    drawStar(drawWidth * 0.35, -drawHeight * 0.13, drawWidth * 0.05);
+    drawStar(drawWidth * 0.35, -drawHeight * (lifeStage === "adult" ? 0.38 : 0.13), drawWidth * 0.05);
   }
 
   pop();
@@ -2549,7 +2563,7 @@ function drawCryingTears(
     topY +
 
     drawHeight *
-    (isHungryPose() ? 0.70 : 0.47);
+    (isHungryPose() ? 0.70 : isMatureStage() ? 0.61 : 0.47);
 
 
   noStroke();
@@ -2649,10 +2663,11 @@ function stopCurrentMovement() {
 // ============================================================
 
 function performFeed() {
+  const countsForGrowth = hunger <= GROWTH_RULES.feedThreshold &&
+    !isEating && !isBeingPetted && !isPlaying && !isPooping &&
+    !isSleeping && !goingToSleep && !!nextLifeStage();
   if (isDead || !tryTeenInteraction("feed")) return;
-  if (hunger <= GROWTH_RULES.feedThreshold &&
-      !isEating && !isBeingPetted && !isPlaying && !isPooping &&
-      !isSleeping && !goingToSleep && lifeStage !== "adult") {
+  if (countsForGrowth) {
     growthFeeds++;
   }
 
@@ -2985,7 +3000,7 @@ function startSleeping() {
   stopCurrentMovement();
 
 
-  growthSleepPending = lifeStage !== "adult" &&
+  growthSleepPending = !!nextLifeStage() &&
     growthFeeds >= GROWTH_RULES.feeds && growthCare >= GROWTH_RULES.care;
 
   goingToSleep =
@@ -5259,21 +5274,28 @@ function drawPoopStink() {
 
 // Care contributes to growth only once per completed interaction interval.
 function recordGrowthCare() {
-  if (lifeStage === "adult" || isDead || millis() - lastGrowthCareTime < 1300) return;
+  if (!nextLifeStage() || isDead || millis() - lastGrowthCareTime < 1300) return;
   growthCare++;
   lastGrowthCareTime = millis();
 }
 
 function updateGrowth() {
-  if (isDead || !growthWakeReady || lifeStage === "adult" || growthFeeds < GROWTH_RULES.feeds ||
+  const nextStage = nextLifeStage();
+  if (isDead || !growthWakeReady || !nextStage || growthFeeds < GROWTH_RULES.feeds ||
       growthCare < GROWTH_RULES.care) return;
   // Never interrupt a jump, care action, sleep, or waste creation.
   if (isEating || isBeingPetted || isPlaying || isSleeping || goingToSleep ||
-      isPooping || movementState === "jump") return;
-  lifeStage = lifeStage === "child" ? "teenager" : "adult";
+      isPooping || toyBall.dragging || toyPlayAction || teenReaction ||
+      movementState === "jump") return;
+  lifeStage = nextStage;
   growthFeeds = growthCare = 0;
   lastGrowthCareTime = -Infinity;
   adultNextActionAt = companionshipSeconds + 12;
+  adultApproach = null;
+  adultInvitingBall = false;
+  adultAffectionUntil = 0;
+  stopCurrentMovement();
+  growthSleepPending = false;
   growthWakeReady = false;
   growthStartedAt = millis();
   growthPopupOpen = true;
@@ -5314,11 +5336,12 @@ function drawGrowthPopup() {
   textStyle(BOLD);
   textSize(32);
   fill(112, 89, 60);
-  text("GROWING UP!", width / 2, 190);
+  text(lifeStage === "elder" ? "GROWING OLDER!" : "GROWING UP!", width / 2, 190);
   // Source bounds remove padding without changing the illustration proportions.
   imageMode(CORNER);
   const spriteWidth = 155;
-  const grownImage = lifeStage === "adult" ? adultSprites.happy : teenHappyImg;
+  const grownImage = lifeStage === "elder" ? elderSprites.happy :
+    lifeStage === "adult" ? adultSprites.happy : teenHappyImg;
   const art = getPetArtwork(grownImage);
   const spriteHeight = spriteWidth * art.height / art.width;
   image(grownImage, (width - spriteWidth) / 2, 225, spriteWidth, spriteHeight,
@@ -5326,7 +5349,8 @@ function drawGrowthPopup() {
   textStyle(NORMAL);
   textSize(20);
   fill(101, 115, 83);
-  const growthMessage = petName + (lifeStage === "adult" ? " is now an adult." : " is now a teenager.");
+  const growthMessage = petName + (lifeStage === "elder" ? " is now a senior." :
+    lifeStage === "adult" ? " is now an adult." : " is now a teenager.");
   drawFittedPetText(growthMessage, width / 2, 395, 470, 20);
   textSize(16);
   text("Your care helped them grow.", width / 2, 425);
@@ -5355,7 +5379,7 @@ function closeGrowthPopup() {
 
 // Each teen care attempt rolls independently. Feeding refusal is exactly 25%.
 function tryTeenInteraction(action, roll = random()) {
-  if (lifeStage === "adult") {
+  if (isMatureStage()) {
     if (isDead || growthPopupOpen || isSleeping || goingToSleep || isPooping) return false;
     adultApproach = null;
     adultInvitingBall = false;
@@ -5532,7 +5556,7 @@ function updateToyPlayAction() {
     }
     let dx = toyBall.x - (groundX + toyKickOffsetX());
     let dy = (toyBall.y - groundY) * 0.6;
-    if (lifeStage === "adult" && adultInvitingBall) {
+    if (isMatureStage() && adultInvitingBall) {
       dx = (mouseY >= FLOOR_TOP && mouseY <= FLOOR_BOTTOM ? mouseX : width / 2) - toyBall.x;
       dy = 0;
     }
@@ -5549,6 +5573,8 @@ function updateToyPlayAction() {
       happiness = constrain(happiness + 4, 0, 100);
       energy = constrain(energy - 2, 0, 100);
       hunger = constrain(hunger - 0.5, 0, 100);
+      // A completed player-started ball interaction is care too; idle demos are not.
+      if (toyBall.used && !adultInvitingBall) recordGrowthCare();
       createHeart();
     }
     ballChaseUntil = ballChaseSpeed = 0;
@@ -5675,7 +5701,7 @@ function drawToyBall() {
 // Visible source bounds: files remain unchanged, including their transparent padding.
 function getPetArtwork(img) {
   if (img === hungryPetImg) return HUNGRY_ART;
-  if (Object.values(adultSprites).includes(img)) return { x: 0, y: 0, width: img.width, height: img.height };
+  if (isMatureArtwork(img)) return { x: 0, y: 0, width: img.width, height: img.height };
   if (img === petNormalImg) return { x: 970, y: 780, width: 651, height: 609 };
   if (img === petHappyImg) return { x: 955, y: 772, width: 667, height: 625 };
   if (img === petCryImg) return { x: 990, y: 788, width: 623, height: 584 };
@@ -5798,35 +5824,12 @@ function updateTeenReaction(elapsedSeconds = deltaTime / 1000) {
 
 
 
-// Extract the six approved expressions once; no editing of original character assets.
-function extractAdultSprites(sheet) {
-  sheet.loadPixels();
-  const names = ["normal", "happy", "crying", "angry", "sleepy", "affectionate"];
-  const sprites = {};
-  for (let i = 0; i < names.length; i++) {
-    const x0 = floor((i % 3) * sheet.width / 3);
-    const x1 = floor((i % 3 + 1) * sheet.width / 3);
-    const y0 = floor(floor(i / 3) * sheet.height / 2);
-    const y1 = floor((floor(i / 3) + 1) * sheet.height / 2);
-    let left = x1, right = x0, top = y1, bottom = y0;
-    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
-      if (sheet.pixels[(y * sheet.width + x) * 4 + 3] >= 128) {
-        left = min(left, x); right = max(right, x);
-        top = min(top, y); bottom = max(bottom, y);
-      }
-    }
-    if (right < left || bottom < top) throw new Error("Missing adult expression: " + names[i]);
-    sprites[names[i]] = sheet.get(left, top, right - left + 1, bottom - top + 1);
-  }
-  return sprites;
-}
-
 function petRenderFactor(img) {
   if (img === hungryPetImg) {
     const stageWidth = lifeStage === "child" ? 651 : 771;
     return (BASE_PET_WIDTH * stageWidth / teenNormalImg.width) * 1.18 / HUNGRY_ART.width;
   }
-  if (Object.values(adultSprites).includes(img)) {
+  if (isMatureArtwork(img)) {
     return (BASE_PET_WIDTH * 771 / teenNormalImg.width) / img.width;
   }
   return BASE_PET_WIDTH / img.width;
@@ -5834,7 +5837,7 @@ function petRenderFactor(img) {
 
 // Adults alternate between approaching the player and initiating ball play.
 function updateAdultBehavior() {
-  if (lifeStage !== "adult" || isDead || growthPopupOpen) return;
+  if (!isMatureStage() || isDead || growthPopupOpen) return;
   if (isPetCrying() || isSleeping || goingToSleep || isEating || isBeingPetted ||
       isPlaying || isPooping || toyBall.dragging || millis() < ballChaseUntil) {
     adultApproach = null;
@@ -5858,7 +5861,7 @@ function updateAdultBehavior() {
 }
 
 function updateAdultApproach() {
-  if (lifeStage !== "adult" || !adultApproach) return false;
+  if (!isMatureStage() || !adultApproach) return false;
   if (isPetCrying() || companionshipSeconds >= adultApproach.until ||
       isBlockedPosition(adultApproach.x, adultApproach.y)) {
     adultApproach = null;

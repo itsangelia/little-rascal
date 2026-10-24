@@ -84,14 +84,20 @@ function helpDrawAbout() {
   const stages = [
     { x: 235, img: petNormalImg, label: "LITTLE ONE" },
     { x: 450, img: teenNormalImg, label: "TEENAGER" },
-    { x: 665, img: adultSprites.normal, label: "GROWN UP" }
+    { x: 665, img: adultSprites.normal, elderImg: elderSprites.normal, label: "ADULT / SENIOR" }
   ];
   for (const stage of stages) {
     stroke(222, 213, 177);
     strokeWeight(1);
     fill(250, 246, 228);
     rect(stage.x - 83, 245, 166, 139, 20);
-    helpDrawSprite(stage.img, stage.x, 306, 78);
+    if (stage.elderImg) {
+      // Show both later stages inside the existing third card and layout.
+      helpDrawSprite(stage.img, stage.x - 38, 306, 59);
+      helpDrawSprite(stage.elderImg, stage.x + 38, 306, 59);
+    } else {
+      helpDrawSprite(stage.img, stage.x, 306, 78);
+    }
     noStroke();
     fill(119, 124, 91);
     textSize(12);

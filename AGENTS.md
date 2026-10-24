@@ -31,6 +31,7 @@ These instructions apply to the entire repository and all future Codex tasks.
 
 - Use the approved artwork and expression choices in [design-options/elder-approved.md](design-options/elder-approved.md) for future elderly-stage work.
 - Preserve the selected A body, line style, two stars and eye-corner creases. The approved expressions are kind (A), tired sigh (F), and happy with the baby happy mouth while retaining A's eyes and creases.
+- The integrated growth sequence is child → teenager → adult → elder. Each transition uses two effective feeds and two other care actions, followed by the next waking. Elder is the final growth stage; do not add automatic old-age death without a separate request.
 
 ## Approved adult appearance
 
