@@ -10,6 +10,7 @@ The owner designated two inline reference images as the adult pet on 24 October 
 - Flat pale-pink cheeks and compact black pen facial features.
 - Neutral expression: small tilted black oval eyes and a little w-shaped mouth.
 - Crying expression: small blue tears under the eyes and a small downward mouth.
+- Happy expression: follow the owner's latest happy-face reference, with open tilted black oval eyes and a tiny omega-shaped upper mouth joined to a narrow, vertically elongated U-shaped pink open mouth. Do not substitute closed crescent eyes, a wide grin, or a small semicircle tongue. Keep the adult's cheek star; the single-star happy reference specifies the face, not a stage change.
 - Adult faces do not use the elderly eye-corner creases.
 
 ## Rejected expression sheet
@@ -31,6 +32,12 @@ The requested expressions remain unimpressed, angry (with a red anger mark), and
 ## Outlined expression proposal
 
 [adult-outlined-expression-review.png](adult-outlined-expression-review.png) restores the visible black body contour, including the side bumps and bottom. From left to right: unimpressed, angry with a red anger mark, and happy. The transparent PNG was inspected on a white browser background to verify the outline is visible. This generated proposal is awaiting the owner's review; it is not a pixel-identical edit of the originals and has not been integrated into gameplay.
+
+The owner rejected the happy face in this sheet: its closed crescent eyes and short mouth do not match the supplied happy reference. Do not use that happy face for integration. This feedback does not establish approval of the other two designs.
+
+## Open-eye happy proposal
+
+[adult-happy-open-eyes.png](adult-happy-open-eyes.png) revises only the happy design for review: open tilted black oval eyes, a small omega-shaped upper lip and a narrow vertical pink U-shaped open mouth. It retains the adult's right-cheek star and black body outline. No gameplay assets are replaced; the previous three-expression sheet remains unchanged for comparison.
 
 ## Original file archive
 
