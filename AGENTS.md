@@ -40,3 +40,8 @@ These instructions apply to the entire repository and all future Codex tasks.
 - Preserve the round cream body, its visible black outer contour (including both side bumps and the bottom), and flat drawing style, with the large head star and the smaller star beside the right cheek. Both stars retain their warm ochre outlines. Adult artwork has no elderly eye-corner creases.
 - The original transparent PNG contains a black body outline that can disappear visually against a black image-viewer background. Inspect it on a light or gray background. Never instruct image generation to remove the black body outline.
 - The adult happy face uses open tilted black oval eyes and a tiny omega-shaped upper mouth joined to a narrow vertical pink U-shaped open mouth, following the owner's happy reference. Keep both adult stars. Do not substitute closed smiling eyes.
+
+## Current size and play balance
+
+- Child world artwork renders at 85% of its former width and height, including its birth reveal, hungry and death poses. Preserve image proportions and keep its hitbox and shadow aligned. Guide/naming portraits and the other life stages keep their existing sizes.
+- A rewarded physical toy interaction costs 5 energy points; accepted toolbar PLAY costs 32. Preserve the existing reward cooldown and energy clamping. Refused play does not charge energy. See [docs/play-balance.md](docs/play-balance.md).

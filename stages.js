@@ -78,6 +78,7 @@ function clearExteriorPaper(img) {
 }
 
 const LIFE_STAGES = ["child", "teenager", "adult", "elder"];
+const CHILD_MODEL_SCALE = 0.85;
 
 function nextLifeStage() {
   const index = LIFE_STAGES.indexOf(lifeStage);

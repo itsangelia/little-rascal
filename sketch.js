@@ -230,6 +230,7 @@ let hungerDrain = 0.90;
 let happinessDrain = 0.5175;
 
 let energyDrain = 0.345;
+const PLAY_ENERGY_COST = { button: 32, toy: 5 };
 
 
 
@@ -2018,7 +2019,7 @@ function drawPet() {
     depthScale,
 
     17 *
-    depthScale
+    depthScale * (lifeStage === "child" ? CHILD_MODEL_SCALE : 1)
 
   );
 
@@ -2887,7 +2888,7 @@ function performPlay() {
 
 
   energy -=
-    26;
+    PLAY_ENERGY_COST.button;
 
 
   hunger -=
@@ -5224,14 +5225,15 @@ function die(cause) {
 
 function drawDeadPet() {
   const depth = getScaleAtY(groundY);
+  const stageScale = lifeStage === "child" ? CHILD_MODEL_SCALE : 1;
   // Match the visible child's size and baseline without changing its original art.
-  const artWidth = BASE_PET_WIDTH * depth * (651 / 2732);
+  const artWidth = BASE_PET_WIDTH * depth * (651 / 2732) * stageScale;
   const artHeight = artWidth * DEATH_ART.height / DEATH_ART.width;
   const bottomY = groundY;
   push();
   noStroke();
   fill(0, 25);
-  ellipse(groundX, groundY + 8, 112 * depth, 17 * depth);
+  ellipse(groundX, groundY + 8, 112 * depth * stageScale, 17 * depth * stageScale);
   imageMode(CORNER);
   image(deathImg, groundX - artWidth / 2, bottomY - artHeight,
     artWidth, artHeight, DEATH_ART.x, DEATH_ART.y, DEATH_ART.width, DEATH_ART.height);
@@ -5612,7 +5614,7 @@ function updateToyPlayAction() {
     if (millis() - lastBallRewardAt >= 1500) {
       lastBallRewardAt = millis();
       happiness = constrain(happiness + 4, 0, 100);
-      energy = constrain(energy - 2, 0, 100);
+      energy = constrain(energy - PLAY_ENERGY_COST.toy, 0, 100);
       hunger = constrain(hunger - 0.5, 0, 100);
       // A completed player-started ball interaction is care too; idle demos are not.
       if (toyBall.used && !adultInvitingBall) recordGrowthCare();
@@ -5869,12 +5871,14 @@ function updateTeenReaction(elapsedSeconds = deltaTime / 1000) {
 function petRenderFactor(img) {
   if (img === hungryPetImg) {
     const stageWidth = lifeStage === "child" ? 651 : 771;
-    return (BASE_PET_WIDTH * stageWidth / teenNormalImg.width) * 1.18 / HUNGRY_ART.width;
+    const stageScale = lifeStage === "child" ? CHILD_MODEL_SCALE : 1;
+    return (BASE_PET_WIDTH * stageWidth / teenNormalImg.width) * 1.18 * stageScale / HUNGRY_ART.width;
   }
   if (isMatureArtwork(img)) {
     return (BASE_PET_WIDTH * 771 / teenNormalImg.width) / img.width;
   }
-  return BASE_PET_WIDTH / img.width;
+  const stageScale = [petNormalImg, petHappyImg, petCryImg].includes(img) ? CHILD_MODEL_SCALE : 1;
+  return BASE_PET_WIDTH * stageScale / img.width;
 }
 
 // Adults alternate between approaching the player and initiating ball play.

@@ -216,7 +216,7 @@ function drawHatchedPet(progress, time) {
   const happy = time < HATCH_FINISH_MS + 1450;
   const img = happy ? happyImage : childImage;
   const art = happy ? HAPPY_ART : PET_ART;
-  const baseWidth = 82;
+  const baseWidth = 82 * CHILD_MODEL_SCALE;
   const w = baseWidth * (0.75 + progress * 0.25);
   const h = w * art.height / art.width;
   const hop = time < HATCH_REVEAL_END ? sin(progress * PI) * 22 : 0;
