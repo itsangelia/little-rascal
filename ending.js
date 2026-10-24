@@ -2,7 +2,7 @@
 const FAREWELL_SECONDS = { still: 3, soften: 4, dissolve: 3, rise: 3.8, scatter: 1.8,
   gather: 3.4, newborn: 1.8 };
 const LETTER_CLOSE = { x: 360, y: 563, w: 180, h: 40 };
-const NATURAL_LIFESPAN_SECONDS = 90;
+const NATURAL_LIFESPAN_SECONDS = 80;
 let elderAgeSeconds = 0;
 let farewell = null;
 let farewellSoul;

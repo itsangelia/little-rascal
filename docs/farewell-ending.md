@@ -4,7 +4,7 @@ Only natural old-age death enters the thank-you-letter ending. Starvation (8 sec
 
 ## Natural lifespan
 
-`NATURAL_LIFESPAN_SECONDS` in `ending.js` is initially 90 seconds after entering the senior stage. This is visible active gameplay time; birth, naming, help, growth announcements, hidden tabs and endings do not count. The clock resets on entering the stage and starting a new life. At the deadline, finish the last airborne hop and ongoing care or sleep before stopping. Zero hunger/mood or stinky waste defer natural death so neglect remains meaningful.
+`NATURAL_LIFESPAN_SECONDS` in `ending.js` is initially 80 seconds after entering the senior stage. This is visible active gameplay time; birth, naming, help, growth announcements, hidden tabs and endings do not count. The clock resets on entering the stage and starting a new life. At the deadline, finish the last airborne hop and ongoing care or sleep before stopping. Zero hunger/mood or stinky waste defer natural death so neglect remains meaningful.
 
 ## Animation and letter
 
@@ -20,5 +20,5 @@ Closing the letter starts 3.4 seconds of starlight gathering into the C egg, fol
 
 - Open `previews/farewell/` to watch natural death immediately. Verify the real senior stands for 3 seconds, softens gradually without floating, dissolves, then becomes the rising F soul and stars.
 - Check the exact English letter, stationery, indefinite pause and music. Close it and confirm starlight, the English title, a clickable egg, meteor and a new name.
-- In `play.html`, raise the pet to senior and care for it through its 90-second active lifespan. Help/growth dialogs must pause aging; young stages do not age toward this deadline.
+- In `play.html`, raise the pet to senior and care for it through its 80-second active lifespan. Help/growth dialogs must pause aging; young stages do not age toward this deadline.
 - Trigger each neglect death: the earlier result screen should appear without a thank-you letter, and START AGAIN should return to the egg.
