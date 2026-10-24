@@ -31,6 +31,7 @@ function closeHelpPopup() {
   if (poopEndTime > 0) poopEndTime += pausedFor;
   if (ballChaseUntil > 0) ballChaseUntil += pausedFor;
   if (adultAffectionUntil > 0) adultAffectionUntil += pausedFor;
+  if (adultAngryUntil > 0) adultAngryUntil += pausedFor;
   if (Number.isFinite(lastGrowthCareTime)) lastGrowthCareTime += pausedFor;
   if (Number.isFinite(lastBallRewardAt)) lastBallRewardAt += pausedFor;
   if (Number.isFinite(growthStartedAt)) growthStartedAt += pausedFor;
@@ -79,7 +80,7 @@ function helpHeading(title, subtitle) {
 }
 
 function helpDrawAbout() {
-  helpHeading("A little life, in your hands", "Care for Little Rascal and discover each growing stage.");
+  helpHeading("A little life, in your hands", "Care for Little Rascal. Adults may refuse food, petting or play.");
   const stages = [
     { x: 235, img: petNormalImg, label: "LITTLE ONE" },
     { x: 450, img: adultSprites.normal, label: "ADULT" },

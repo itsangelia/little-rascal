@@ -6,6 +6,8 @@ The owner designated two inline reference images as the adult pet on 24 October 
 
 After reviewing the eight-image overview, the owner requested that both later stages be added to the game. The five adult appearances in that overview are now used by `stages.js` and `sketch.js`: original normal and crying PNGs, the outlined unimpressed and angry designs, and the approved open-eye happy design. The original source images remain unchanged. Earlier review notes below describe the design history, not the current integration status.
 
+Adult refusals now reuse the archived teenager behavior: 25% for feeding, 20% for petting or playing. Refusal temporarily uses the adult angry face with the red anger mark; rejected petting hops away and rejected play kicks the toy away on contact. Critical-mood petting remains available. Source PNGs are unchanged.
+
 Normal is the default; low mood below 50 (but at least 30) uses angry, and low energy below 30 uses unimpressed. Feeding, petting, playing and affectionate approaches use happy. Critical mood or smelly waste uses crying. Sleep reuses unimpressed with the existing Z animation. The shared hungry pose still takes priority below 30 hunger.
 
 ## Confirmed appearance

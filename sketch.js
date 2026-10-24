@@ -63,6 +63,10 @@ let adultNextActionAt = 0;
 let adultActionCount = 0;
 let adultAffectionUntil = 0;
 let adultInvitingBall = false;
+// The archived teenager's mischievous refusals now belong to the adult stage.
+const ADULT_REFUSAL = { feed: 0.25, pet: 0.20, play: 0.20 };
+let adultAngryUntil = 0;
+let adultReaction = null;
 
 const GROWTH_RULES = { feeds: 2, care: 2, feedThreshold: 95 };
 let lifeStage = "child";
@@ -802,6 +806,9 @@ function updateStats() {
 // ============================================================
 
 function updateMovement() {
+  if (updateAdultReaction()) return;
+  if (isAdultAngry() &&
+      !isSleeping && !goingToSleep) return;
   if (updateToyPlayAction()) return;
 
 
@@ -1825,6 +1832,7 @@ function getCurrentPetImage() {
   if (isHungryPose()) return hungryPetImg;
   if (lifeStage === "adult") {
     if (isStinkCrying()) return adultSprites.crying;
+    if (isAdultAngry()) return adultSprites.angry;
     if (isSleeping) return adultSprites.sleepy;
     if (isBeingPetted || millis() < adultAffectionUntil) return adultSprites.affectionate;
     if (isEating || isPlaying || toyPlayAction || (millis() < ballChaseUntil && !isPetCrying())) return adultSprites.happy;
@@ -2210,6 +2218,21 @@ function drawPet() {
     targetScaleX = windingUp ? 0.90 : tapping ? 1.15 : 1;
     targetScaleY = windingUp ? 1.08 : tapping ? 0.90 : 1;
     targetAngle = toyPlayAction.direction * (windingUp ? -0.10 : tapping ? 0.12 : 0);
+  }
+
+  if (isAdultAngry()) {
+    targetAngle = sin(millis() * 0.03) * 0.06;
+    if (adultReaction?.kind === "kick") {
+      if (adultReaction.phase === "windup") {
+        targetScaleX = 0.90;
+        targetScaleY = 1.08;
+        targetAngle = -adultReaction.direction * 0.10;
+      } else if (adultReaction.phase === "strike") {
+        targetScaleX = 1.15;
+        targetScaleY = 0.90;
+        targetAngle = adultReaction.direction * 0.12;
+      }
+    }
   }
 
   if (petImg === hungryPetImg) {
@@ -2636,7 +2659,7 @@ function performFeed() {
   const countsForGrowth = hunger <= GROWTH_RULES.feedThreshold &&
     !isEating && !isBeingPetted && !isPlaying && !isPooping &&
     !isSleeping && !goingToSleep && !!nextLifeStage();
-  if (isDead || !preparePetInteraction()) return;
+  if (isDead || !preparePetInteraction("feed")) return;
   if (countsForGrowth) {
     growthFeeds++;
   }
@@ -2709,7 +2732,7 @@ function performFeed() {
 // ============================================================
 
 function performPet() {
-  if (isDead || !preparePetInteraction()) return;
+  if (isDead || !preparePetInteraction("pet")) return;
   if (!isEating && !isBeingPetted && !isPlaying && !isPooping &&
       !isSleeping && !goingToSleep) recordGrowthCare();
 
@@ -2799,7 +2822,7 @@ function performPlay() {
   }
 
 
-  if (!preparePetInteraction()) return;
+  if (!preparePetInteraction("play")) return;
 
   if (!isEating && !isBeingPetted && !isPlaying && !isPooping &&
       !isSleeping && !goingToSleep) recordGrowthCare();
@@ -2931,6 +2954,8 @@ function startSleeping() {
 
   adultApproach = null;
   adultInvitingBall = false;
+  adultReaction = null;
+  adultAngryUntil = 0;
 
   interactionMode =
     "none";
@@ -3055,6 +3080,8 @@ function updatePoopSystem() {
     isBeingPetted ||
 
     isPlaying ||
+
+    adultReaction || isAdultAngry() ||
 
     isPetCrying() ||
 
@@ -5128,6 +5155,8 @@ function updateNeglect(elapsedSeconds = deltaTime / 1000) {
 
 function die(cause) {
   if (isDead) return;
+  adultReaction = null;
+  adultAngryUntil = 0;
   adultApproach = null;
   adultInvitingBall = false;
   toyBall.dragging = false;
@@ -5168,6 +5197,8 @@ function drawDeadPet() {
 }
 
 function restartPet() {
+  adultReaction = null;
+  adultAngryUntil = 0;
   farewell = null;
   elderAgeSeconds = 0;
   resetPetNaming();
@@ -5253,8 +5284,10 @@ function updateGrowth() {
   // Never interrupt a jump, care action, sleep, or waste creation.
   if (isEating || isBeingPetted || isPlaying || isSleeping || goingToSleep ||
       isPooping || toyBall.dragging || toyPlayAction ||
-      movementState === "jump") return;
+      movementState === "jump" || adultReaction || isAdultAngry()) return;
   lifeStage = nextStage;
+  adultReaction = null;
+  adultAngryUntil = 0;
   elderAgeSeconds = 0;
   resetElderMovement();
   growthFeeds = growthCare = 0;
@@ -5344,8 +5377,13 @@ function closeGrowthPopup() {
   cursor(ARROW);
 }
 
-// Prepare a care action without any archived teenage refusal behavior.
-function preparePetInteraction() {
+function isAdultAngry() {
+  // The guide pauses the visible expression as well as the reaction clock.
+  return lifeStage === "adult" && (helpPopupOpen ? helpOpenedAt : millis()) < adultAngryUntil;
+}
+
+// Each adult care attempt rolls independently; younger and older stages accept normally.
+function preparePetInteraction(action, roll) {
   if (!isMatureStage()) return true;
   if (isDead || growthPopupOpen || isSleeping || goingToSleep || isPooping) return false;
   adultApproach = null;
@@ -5354,6 +5392,112 @@ function preparePetInteraction() {
   isEating = isBeingPetted = isPlaying = false;
   actionEndTime = playHopsRemaining = 0;
   ballChaseUntil = 0;
+  if (lifeStage !== "adult") return true;
+  if (adultReaction) stopCurrentMovement();
+  adultReaction = toyPlayAction = null;
+  adultAngryUntil = adultAffectionUntil = 0;
+  // Critical mood must always be recoverable through comforting petting.
+  const needsComfort = action === "pet" && happiness <= CRY_THRESHOLD;
+  const refused = !needsComfort && (roll === undefined ? random() : roll) < (ADULT_REFUSAL[action] || 0);
+  if (!refused) return true;
+  stopCurrentMovement();
+  adultAngryUntil = millis() + 2000;
+  interactionMode = "none";
+  cursor(ARROW);
+  if (action === "pet") startAdultEvade();
+  if (action === "play") startAdultKick();
+  return false;
+}
+
+// Refused petting jumps away; refused play ends in a contact-only angry kick.
+function startAdultEvade() {
+  let awayX = groundX - mouseX;
+  let awayY = (groundY - getPetBody().height / 2) - mouseY;
+  if (abs(awayX) + abs(awayY) < 10) {
+    awayX = groundX < width / 2 ? 1 : -1;
+    awayY = 0.15;
+  }
+  const direction = atan2(awayY, awayX);
+  for (const turn of [0, 0.7, -0.7, 1.4, -1.4, PI]) {
+    const target = ballPosition(groundX + cos(direction + turn) * 110,
+      groundY + sin(direction + turn) * 80);
+    if (!target.blocked && dist(groundX, groundY, target.x, target.y) >= 30) {
+      adultReaction = { kind: "evade", elapsed: 0 };
+      startJumpTo(target.x, target.y, -4.8);
+      return;
+    }
+  }
+}
+
+function startAdultKick() {
+  if (toyBall.dragging) return;
+  toyBall.used = toyBall.demonstrated = true;
+  adultReaction = { kind: "kick", phase: "approach", phaseTime: 0,
+    elapsed: 0, direction: toyBall.x >= groundX ? 1 : -1 };
+}
+
+function finishAdultReaction() {
+  adultReaction = null;
+  adultAngryUntil = millis() + 700;
+  movementState = "pause";
+  pauseTimer = 18;
+}
+
+function updateAdultReaction(elapsedSeconds = deltaTime / 1000) {
+  if (!adultReaction) return false;
+  if (lifeStage !== "adult" || isDead || isSleeping || goingToSleep || isPooping || isPetCrying()) {
+    adultReaction = null;
+    adultAngryUntil = 0;
+    stopCurrentMovement();
+    return false;
+  }
+  const reaction = adultReaction;
+  const seconds = constrain(elapsedSeconds, 0, 0.05);
+  reaction.elapsed += seconds;
+  adultAngryUntil = millis() + 400;
+
+  if (reaction.kind === "evade") {
+    if (movementState === "jump") updatePhysicsJump();
+    if (movementState !== "jump") finishAdultReaction();
+    return true;
+  }
+  if (toyBall.dragging) {
+    // The player can pick up the toy to interrupt the kick safely.
+    stopCurrentMovement();
+    finishAdultReaction();
+    return true;
+  }
+  if (reaction.phase === "approach") {
+    if (movementState === "jump") {
+      updatePhysicsJump();
+    } else if (petTouchesBall()) {
+      reaction.phase = "windup";
+      reaction.phaseTime = 0;
+      reaction.direction = toyBall.x >= groundX ? 1 : -1;
+      toyBall.vx = toyBall.vy = 0;
+      stopCurrentMovement();
+    } else if (reaction.elapsed > 6 || !approachToyBall()) {
+      stopCurrentMovement();
+      finishAdultReaction();
+    }
+  } else if (reaction.phase === "windup") {
+    reaction.phaseTime += seconds;
+    if (reaction.phaseTime >= 0.22) {
+      if (!petTouchesBall()) {
+        reaction.phase = "approach";
+        return true;
+      }
+      // Only actual body contact applies the strong impulse; no play rewards.
+      toyBall.vx = reaction.direction * 280;
+      toyBall.vy = constrain((toyBall.y - groundY) * 2, -70, 70);
+      launchToyBounce(toyBall);
+      reaction.phase = "strike";
+      reaction.phaseTime = 0;
+    }
+  } else {
+    reaction.phaseTime += seconds;
+    if (reaction.phaseTime >= 0.25) finishAdultReaction();
+  }
   return true;
 }
 
@@ -5414,7 +5558,7 @@ function mouseReleased() {
 function requestBallPlay() {
   if (isDead || isSleeping || goingToSleep || isPooping ||
       isEating || isBeingPetted || isPetCrying() || energy <= 10) return;
-  if (!preparePetInteraction()) {
+  if (!preparePetInteraction("play")) {
     ballChaseUntil = 0;
     return;
   }
@@ -5432,7 +5576,7 @@ function requestBallPlay() {
 function updateToyBall() {
   if (toyBall.dragging && !mouseIsPressed) mouseReleased();
   // One early pet-initiated demonstration tells the player this is a toy.
-  if (lifeStage !== "elder" &&
+  if (lifeStage !== "elder" && !adultReaction && !isAdultAngry() &&
       !toyBall.demonstrated && !toyBall.used && companionshipSeconds >= 4 &&
       !isSleeping && !goingToSleep && !isPetCrying() && !isEating &&
       !isBeingPetted && !isPooping && !isPlaying) {
@@ -5693,7 +5837,7 @@ function petRenderFactor(img) {
 // Adults alternate between approaching the player and initiating ball play.
 function updateAdultBehavior() {
   if (!isMatureStage() || isDead || growthPopupOpen) return;
-  if (elderRestPending()) return;
+  if (elderRestPending() || adultReaction || isAdultAngry()) return;
   if (isPetCrying() || isSleeping || goingToSleep || isEating || isBeingPetted ||
       isPlaying || isPooping || toyBall.dragging || millis() < ballChaseUntil) {
     adultApproach = null;
