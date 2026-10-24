@@ -899,6 +899,8 @@ function updateMovement() {
   // JUMP
   // ==========================================================
 
+  if (updateElderRest()) return;
+
   if (
     movementState ===
     "jump"
@@ -973,7 +975,7 @@ function updateMovement() {
       // Sometimes pause
 
       if (
-        random() <
+        lifeStage !== "elder" && random() <
         0.15
       ) {
 
@@ -1044,7 +1046,7 @@ function updatePhysicsJump() {
 
   let frameScale =
     deltaTime /
-    16.6667;
+    16.6667 * petMovementFactor();
 
 
   // ==========================================================
@@ -1066,7 +1068,7 @@ function updatePhysicsJump() {
   // ==========================================================
 
   jumpVelocity +=
-    gravity *
+    gravity * petHopFactor() *
     frameScale;
 
 
@@ -1113,7 +1115,7 @@ function updatePhysicsJump() {
     landTimer =
       isPlaying
         ? 3
-        : 7;
+        : lifeStage === "elder" ? 1 : 7;
 
 
     // ========================================================
@@ -1354,6 +1356,8 @@ function startJumpTo(
 
 ) {
 
+  power *= petHopFactor();
+
   let flightFrames =
 
     (
@@ -1361,7 +1365,7 @@ function startJumpTo(
       power
     ) /
 
-    gravity;
+    (gravity * petHopFactor());
 
 
   flightFrames =
@@ -2305,7 +2309,8 @@ function drawPet() {
 
     groundY +
 
-    jumpOffset - (movementState === "chase" ? abs(sin(ballChaseStride)) * 2.5 : 0);
+    jumpOffset - (movementState === "chase" ? abs(sin(ballChaseStride)) *
+      (lifeStage === "elder" ? 1 : 2.5) : 0);
 
 
 
@@ -5205,6 +5210,7 @@ function drawDeadPet() {
 
 function restartPet() {
   resetPetNaming();
+  resetElderMovement();
   hatchingComplete = false;
   hatchStartedAt = null;
   hatchPhase = "idle";
@@ -5290,6 +5296,7 @@ function updateGrowth() {
       isPooping || toyBall.dragging || toyPlayAction || teenReaction ||
       movementState === "jump") return;
   lifeStage = nextStage;
+  resetElderMovement();
   growthFeeds = growthCare = 0;
   lastGrowthCareTime = -Infinity;
   adultNextActionAt = companionshipSeconds + 12;
@@ -5480,9 +5487,9 @@ function requestBallPlay() {
   playHopsRemaining = 0;
   actionEndTime = 0;
   toyPlayAction = null;
-  ballChaseSpeed = 65;
+  ballChaseSpeed = 65 * petMovementFactor();
   ballChaseSide = 0;
-  ballChaseUntil = millis() + 8000;
+  ballChaseUntil = millis() + ballPursuitMilliseconds();
 }
 
 function updateToyBall() {
@@ -5494,14 +5501,15 @@ function updateToyBall() {
       !isBeingPetted && !isPooping && !isPlaying) {
     toyBall.demonstrated = true;
     ballChaseSide = 0;
-    ballChaseUntil = millis() + 8000;
+    ballChaseUntil = millis() + ballPursuitMilliseconds();
   }
   if (toyBall.dragging) return;
   const dt = constrain(deltaTime / 1000, 0, 0.05);
   const canChase = millis() < ballChaseUntil && !isDead && !isSleeping &&
     !goingToSleep && !isEating && !isBeingPetted && !isPooping && !isPetCrying() && energy > 10 &&
     hunger >= HUNGER_FLATTEN_THRESHOLD && !teenReaction && !toyPlayAction;
-  ballChaseSpeed = canChase ? min(180, ballChaseSpeed + 260 * dt) : 0;
+  const speedFactor = petMovementFactor();
+  ballChaseSpeed = canChase ? min(180 * speedFactor, ballChaseSpeed + 260 * speedFactor * dt) : 0;
   advanceToyBallPhysics(toyBall, dt);
 }
 
@@ -5647,7 +5655,7 @@ function approachToyBall(running = false) {
 function runTowardToyBall(target) {
   const dx = target.x - groundX, dy = target.y - groundY;
   const distance = Math.hypot(dx, dy);
-  const travel = min(distance, max(65, ballChaseSpeed) * constrain(deltaTime / 1000, 0, 0.05));
+  const travel = min(distance, max(65 * petMovementFactor(), ballChaseSpeed) * constrain(deltaTime / 1000, 0, 0.05));
   const steps = max(1, ceil(travel / 5));
   let moved = 0;
   for (let i = 0; i < steps && distance > 0.1; i++) {
@@ -5840,6 +5848,7 @@ function petRenderFactor(img) {
 // Adults alternate between approaching the player and initiating ball play.
 function updateAdultBehavior() {
   if (!isMatureStage() || isDead || growthPopupOpen) return;
+  if (elderRestPending()) return;
   if (isPetCrying() || isSleeping || goingToSleep || isEating || isBeingPetted ||
       isPlaying || isPooping || toyBall.dragging || millis() < ballChaseUntil) {
     adultApproach = null;
@@ -5852,13 +5861,13 @@ function updateAdultBehavior() {
   if (adultActionCount % 2 === 0) {
     adultInvitingBall = true;
     ballChaseSide = 0;
-    ballChaseUntil = millis() + 8000;
+    ballChaseUntil = millis() + ballPursuitMilliseconds();
     return;
   }
   if (mouseY < FLOOR_TOP + 24 || mouseY > FLOOR_BOTTOM - 22) return;
   const target = ballPosition(mouseX, mouseY);
   if (!target.blocked && dist(groundX, groundY, target.x, target.y) > 50) {
-    adultApproach = { x: target.x, y: target.y, until: companionshipSeconds + 6 };
+    adultApproach = { x: target.x, y: target.y, until: companionshipSeconds + 6 / petMovementFactor() };
   }
 }
 

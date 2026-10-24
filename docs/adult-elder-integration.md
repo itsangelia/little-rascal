@@ -10,6 +10,7 @@ The owner approved the current adult/elderly appearance overview and requested b
 - The elder uses the approved kind, tired and happy images. Sleep, low energy and chasing the ball use tired/sigh; reaching and kicking the ball uses happy. Crying retains the elderly tired body and adds the existing falling tears. Smelly-waste crying ends after the smelly piles are cleaned.
 - Hunger below 30 still uses the shared flat pose. Existing hunger/mood deaths at eight seconds, flies after six seconds and fatal illness after seven more seconds are preserved. The elder is the final growth stage. Death from natural aging is not introduced.
 - Both mature stages retain the existing autonomous approaches, ball invitations, care actions and physical ball kick. Death/restart returns to a new egg and naming sequence.
+- The senior now moves at 40% speed with lower hops. Approximately 30% of free autonomous activity is spent resting on the floor, after completing the current hop. Care actions, sleep and an explicit ball pursuit take priority over these rests. Senior pursuit allows 20 seconds (younger stages retain eight seconds), and autonomous approaches allow proportionally more time. The toy's bounce, roll and gentle kick impulse remain unchanged.
 
 ## Files
 
@@ -31,3 +32,5 @@ The owner approved the current adult/elderly appearance overview and requested b
 ## Automated browser validation
 
 Chromium/Playwright checks exercised real egg/naming/music controls, all three care-and-waking transitions, growth-popup pausing, stage expression selection, adult and elder native feed/pet controls, elder sleep/odor/cleaning, all four hungry hitboxes, mature contact-based kicks, neglect deaths and egg restart. Existing teen refusal/evade/kick and toy speed/bounce/reward-cooldown regressions were also checked. A synthetic closed-outline image verified that exterior paper clearing preserves enclosed white and the black contour. Original PNG SHA-256 checks verify source preservation.
+
+Senior movement checks compare actual floor displacement and hop height with the three younger stages, sample stationary time at different frame intervals, and verify that rest never freezes a pet in midair. Native drag/release checks verify sighing during the slower chase and a happy contact-timed kick afterward. Care and sleep remain usable during a scheduled rest, and restarting clears the rest clocks.

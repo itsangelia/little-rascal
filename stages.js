@@ -92,11 +92,60 @@ function isMatureArtwork(img) {
   return Object.values(adultSprites).includes(img) || Object.values(elderSprites).includes(img);
 }
 
+const ELDER_MOVEMENT = { speedFactor: 0.4, hopHeightFactor: 0.45, restFraction: 0.30, activeSeconds: 7 };
+let elderActiveSeconds = 0;
+let elderRestRemaining = 0;
+
+function petMovementFactor() {
+  return lifeStage === "elder" ? ELDER_MOVEMENT.speedFactor : 1;
+}
+
+function petHopFactor() {
+  return lifeStage === "elder" ? ELDER_MOVEMENT.hopHeightFactor : 1;
+}
+
+function ballPursuitMilliseconds() {
+  // A slower senior still needs enough time to reach a toy across the room.
+  return lifeStage === "elder" ? 20000 : 8000;
+}
+
+function resetElderMovement() {
+  elderActiveSeconds = elderRestRemaining = 0;
+}
+
+function elderRestPending() {
+  return lifeStage === "elder" &&
+    (elderRestRemaining > 0 || elderActiveSeconds >= ELDER_MOVEMENT.activeSeconds);
+}
+
+function updateElderRest() {
+  if (lifeStage !== "elder" || hunger < HUNGER_FLATTEN_THRESHOLD ||
+      goingToSleep || isPlaying || toyBall.dragging ||
+      millis() < ballChaseUntil) return false;
+  const seconds = constrain(deltaTime / 1000, 0, 0.05);
+  if (elderRestRemaining <= 0) {
+    elderActiveSeconds += seconds;
+    if (elderActiveSeconds < ELDER_MOVEMENT.activeSeconds || movementState === "jump") return false;
+    // Finish the current hop before resting. Account for that extra active time,
+    // so rest is 30% of autonomous activity instead of a 30% per-frame dice roll.
+    elderRestRemaining = elderActiveSeconds * ELDER_MOVEMENT.restFraction /
+      (1 - ELDER_MOVEMENT.restFraction);
+    elderActiveSeconds = 0;
+  }
+  if (movementState === "jump") return false;
+  elderRestRemaining = Math.max(0, elderRestRemaining - seconds);
+  floorVX = floorVY = jumpOffset = jumpVelocity = 0;
+  movementState = "pause";
+  pauseTimer = 1;
+  return true;
+}
+
 // Dedicated review pages start at a stage; normal visits still begin with the egg.
 function initializeStagePreview() {
   const stage = document.body.dataset.previewStage;
   if (stage !== "adult" && stage !== "elder") return;
   lifeStage = stage;
+  resetElderMovement();
   hatchingComplete = petHasBeenNamed = helpHasBeenShown = true;
   hatchPhase = "complete";
   adultNextActionAt = companionshipSeconds + 12;
