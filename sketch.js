@@ -1,24 +1,4 @@
-// BACKGROUND MUSIC
-let bgm;
-let musicButton;
-let musicMuted = false;
-
-function startBGM() {
-  if (bgm && !musicMuted && bgm.paused) {
-    bgm.play().catch(() => {});
-  }
-}
-
-function toggleBGM() {
-  musicMuted = !musicMuted;
-  bgm.muted = musicMuted;
-
-  musicButton.html(musicMuted ? "Music: OFF" : "Music: ON");
-
-  if (!musicMuted) {
-    startBGM();
-  }
-}// ============================================================
+// ============================================================
 // LITTLE RASCAL
 // COMPLETE TERRARIUM VERSION
 // p5.js 2.0
@@ -49,10 +29,70 @@ function toggleBGM() {
 // ============================================================
 
 let mapImg;
+let poopImg;
+let toyBallImg;
+let deathImg;
+
+// Neglect timers use active game seconds, not wall-clock time in hidden tabs.
+const DEATH_RULES = {
+  starvationSeconds: 8,
+  sadnessSeconds: 8,
+  poopSmellSeconds: 6,
+  poopFatalSeconds: 13
+};
+let isDead = false;
+let deathCause = "";
+let starvationTime = 0;
+let sadnessTime = 0;
+let deathTime = 0;
+let companionshipSeconds = 0;
+const DEATH_ART = { x: 281, y: 190, width: 1261, height: 563 };
+
+// Visible artwork bounds inside the original transparent image.
+const POOP_ART = { x: 1010, y: 884, width: 341, height: 230 };
 
 let petNormalImg;
 let petHappyImg;
 let petCryImg;
+let hungryPetImg;
+const HUNGRY_ART = { x: 116, y: 100, width: 1305, height: 813 };
+let adultSprites = {};
+let elderSprites = {};
+let adultApproach = null;
+let adultNextActionAt = 0;
+let adultActionCount = 0;
+let adultAffectionUntil = 0;
+let adultInvitingBall = false;
+// The archived teenager's mischievous refusals now belong to the adult stage.
+const ADULT_REFUSAL = { feed: 0.25, pet: 0.25, play: 0.25 };
+const YOUTH_BOREDOM = { resetSeconds: 8 };
+const YOUTH_REFUSAL_MOOD_LOSS = { bored: 3, angry: 5 };
+// Treat rounded-full bars as full despite one frame of passive drain.
+const YOUTH_FULL_THRESHOLD = 99.5;
+let youthInteractionClock = 0;
+let youthInteractionStreak = { action: null, count: 0, limit: 0, lastAt: -Infinity };
+let adultRefusalMood = "angry";
+let adultAngryUntil = 0;
+let adultReaction = null;
+
+const GROWTH_RULES = { feeds: 2, care: 2, feedThreshold: 95 };
+let lifeStage = "child";
+let growthFeeds = 0;
+let growthCare = 0;
+let lastGrowthCareTime = -Infinity;
+let growthStartedAt = -Infinity;
+let growthSleepPending = false;
+let growthWakeReady = false;
+let growthPopupOpen = false;
+let growthPopupOpenedAt = 0;
+let toyBall = makeToyBall();
+let ballChaseUntil = 0;
+let ballChaseSpeed = 0;
+let ballChaseStride = 0;
+let ballChaseFacing = 1;
+let ballChaseSide = 0;
+let toyPlayAction = null;
+let lastBallRewardAt = -Infinity;
 
 
 
@@ -71,6 +111,8 @@ const CANVAS_H = 640;
 
 let BASE_PET_WIDTH = 300
   ;
+// Keep the approved mature width independent of archived stage assets.
+const GROWN_MODEL_WIDTH_FACTOR = 771 / 2732;
 
 
 
@@ -191,9 +233,10 @@ let energy = 85;
 
 let hungerDrain = 0.90;
 
-let happinessDrain = 0.45;
+let happinessDrain = 0.5175;
 
-let energyDrain = 0.30;
+let energyDrain = 0.345;
+const PLAY_ENERGY_COST = { button: 32, toy: 5 };
 
 
 
@@ -205,12 +248,23 @@ let energyDrain = 0.30;
 // Mood falls faster.
 
 const LOW_HUNGER_THRESHOLD = 35;
+const HUNGER_FLATTEN_THRESHOLD = 30;
+let helpHasBeenShown = false;
+
+// Hunger selects its artwork independently of sleep, care and neglect timers.
+function isHungryPose() {
+  return !!hungryPetImg && !isDead && hunger < HUNGER_FLATTEN_THRESHOLD;
+}
 
 
-// Below 30 mood:
-// Pet cries and stops moving.
+// Youth cries below 25 mood; the other stages retain their threshold of 30.
 
 const CRY_THRESHOLD = 30;
+const YOUTH_MOOD = { cry: 25, angry: 40 };
+
+function getCryThreshold() {
+  return lifeStage === "adult" ? YOUTH_MOOD.cry : CRY_THRESHOLD;
+}
 
 
 // Extra mood loss when hungry
@@ -397,6 +451,21 @@ async function setup() {
     );
 
 
+  hungryPetImg = await loadImage("assets/hungry-pet-a.png");
+
+  const stageArtwork = await loadApprovedStageArtwork();
+  adultSprites = stageArtwork.adult;
+  elderSprites = stageArtwork.elder;
+
+  toyBallImg = trimToyBallArtwork(await loadImage("assets/toyball.png"));
+  poopImg = await loadImage("shit.png");
+  deathImg = await loadImage("design-options/death-a3-cross-eyes.png");
+  await initializeHatching();
+  await initializeFarewellArtwork();
+  initializeStagePreview();
+  initializeFarewellPreview();
+
+
   // First random poop
 
   nextPoopTime =
@@ -405,6 +474,8 @@ async function setup() {
       18000,
       30000
     );
+
+
 
 }
 
@@ -415,6 +486,49 @@ async function setup() {
 // ============================================================
 
 function draw() {
+  drawGameFrame();
+  // Keep one music control available across the egg, dialogs and gameplay.
+  drawMusicButton();
+}
+
+function drawGameFrame() {
+  if (!hatchingComplete) {
+    drawHatchingIntro();
+    if (hatchingComplete && !petHasBeenNamed) openNamingPopup();
+    return;
+  }
+  if (namingPopupOpen) {
+    imageMode(CENTER);
+    image(mapImg, width / 2, height / 2, width, height);
+    drawWorld();
+    drawNamingPopup();
+    return;
+  }
+  if (helpPopupOpen) {
+    imageMode(CENTER);
+    image(mapImg, width / 2, height / 2, width, height);
+    drawWorld();
+    drawStats();
+    drawPetNameLabel();
+    drawToolbar();
+    drawHelpButton();
+    drawHelpPopup();
+    return;
+  }
+  if (growthPopupOpen && !isDead) {
+    imageMode(CENTER);
+    image(mapImg, width / 2, height / 2, width, height);
+    drawWorld();
+    drawStats();
+    drawPetNameLabel();
+    drawToolbar();
+    drawGrowthPopup();
+    return;
+  }
+  if (isDead) {
+    drawDeathEnding();
+    return;
+  }
 
 
   // ==========================================================
@@ -437,14 +551,28 @@ function draw() {
   // LOGIC
   // ==========================================================
 
-  updateStats();
+  if (!isDead) {
+    companionshipSeconds += constrain(deltaTime / 1000, 0, 0.25);
+    if (lifeStage === "adult" && !document.hidden) {
+      youthInteractionClock += constrain(deltaTime / 1000, 0, 0.25);
+    }
+    updateStats();
+    updateNeglect();
+    if (!isDead) updateNaturalAging();
+    if (!isDead) {
+      updateToyBall();
+      updateAdultBehavior();
+      updateMovement();
+      updateActionTimer();
+      updatePoopSystem();
+      updateGrowth();
+    }
+  }
 
-  updateMovement();
-
-  updateActionTimer();
-
-  updatePoopSystem();
-
+  if (isDead) {
+    drawDeathEnding();
+    return;
+  }
 
   // ==========================================================
   // DEBUG
@@ -463,7 +591,10 @@ function draw() {
 
   drawWorld();
 
-  drawEffects();
+  if (!isDead) {
+    drawEffects();
+    drawGrowthEffect();
+  }
 
 
   // ==========================================================
@@ -472,11 +603,17 @@ function draw() {
 
   drawStats();
 
-  drawInstruction();
 
   drawToolbar();
 
   drawCustomCursor();
+  drawHelpButton();
+  drawPetNameLabel();
+  if (interactionMode === "none" && !growthPopupOpen) {
+    cursor(toyBall.dragging || isOverToyBall() || isOverHelpButton() ? HAND : ARROW);
+  }
+  drawElderPetRequest();
+  if (growthPopupOpen) drawGrowthPopup();
 
 }
 
@@ -486,11 +623,17 @@ function draw() {
 // IS PET CRYING?
 // ============================================================
 
+function isStinkCrying() {
+  return !isDead && !isSleeping && !goingToSleep &&
+    poops.some(poop => (poop.ageSeconds || 0) >= DEATH_RULES.poopSmellSeconds);
+}
+
 function isPetCrying() {
+  if (isStinkCrying()) return true;
 
   return (
 
-    happiness < CRY_THRESHOLD &&
+    happiness < getCryThreshold() &&
 
     !isSleeping &&
 
@@ -512,9 +655,7 @@ function isPetCrying() {
 
 function updateStats() {
 
-  let seconds =
-    deltaTime /
-    1000;
+  let seconds = constrain(deltaTime / 1000, 0, 0.25);
 
 
   // ==========================================================
@@ -598,6 +739,10 @@ function updateStats() {
 
 
       isSleeping = false;
+      growthWakeReady = growthWakeReady || growthSleepPending ||
+        (nextLifeStage() && growthFeeds >= GROWTH_RULES.feeds &&
+         growthCare >= GROWTH_RULES.care);
+      growthSleepPending = false;
 
 
       movementState =
@@ -676,6 +821,24 @@ function updateStats() {
 // ============================================================
 
 function updateMovement() {
+  // An awake youth below 25 mood stops even midway through a chase or bed route.
+  if (lifeStage === "adult" && happiness < YOUTH_MOOD.cry && !isSleeping) {
+    if (goingToSleep) growthSleepPending = false;
+    goingToSleep = false;
+    adultApproach = null;
+    adultInvitingBall = false;
+    adultReaction = null;
+    adultAngryUntil = 0;
+    stopCurrentMovement();
+    isPlaying = false;
+    playHopsRemaining = 0;
+    movementState = "pause";
+    return;
+  }
+  if (updateAdultReaction()) return;
+  if (isAdultAngry() &&
+      !isSleeping && !goingToSleep) return;
+  if (updateToyPlayAction()) return;
 
 
   // ==========================================================
@@ -764,6 +927,8 @@ function updateMovement() {
   // JUMP
   // ==========================================================
 
+  if (updateElderRest()) return;
+
   if (
     movementState ===
     "jump"
@@ -806,6 +971,18 @@ function updateMovement() {
   }
 
 
+  // A hungry pet rests on the floor; explicit care and play still work above.
+  if (hunger < HUNGER_FLATTEN_THRESHOLD) {
+    floorVX = floorVY = 0;
+    movementState = "pause";
+    pauseTimer = 30;
+    adultApproach = null;
+    return;
+  }
+
+  if (updateAdultApproach()) return;
+  if (updateBallChase()) return;
+
   // ==========================================================
   // LAND
   // ==========================================================
@@ -826,7 +1003,7 @@ function updateMovement() {
       // Sometimes pause
 
       if (
-        random() <
+        lifeStage !== "elder" && random() <
         0.15
       ) {
 
@@ -966,7 +1143,19 @@ function updatePhysicsJump() {
     landTimer =
       isPlaying
         ? 3
-        : 7;
+        : lifeStage === "elder" ? 1 : 7;
+
+    if (lifeStage === "elder" && !goingToSleep) {
+      elderHopPauseRemaining = ELDER_MOVEMENT.betweenHopSeconds;
+    }
+    if (lifeStage === "elder" && !goingToSleep && !isPlaying && millis() >= ballChaseUntil) {
+      elderHopsInBurst++;
+      if (elderHopsInBurst >= ELDER_MOVEMENT.hopsPerBurst) {
+        elderRestRemaining = ELDER_MOVEMENT.restSeconds;
+        elderHopPauseRemaining = 0;
+        elderHopsInBurst = 0;
+      }
+    }
 
 
     // ========================================================
@@ -1059,19 +1248,19 @@ function findRandomWalkableTarget(
 
 
   let minimumDistance =
-    fast
+    lifeStage === "elder" ? 12 : fast
       ? 55
       : 70;
 
 
   let maximumXDistance =
-    fast
+    lifeStage === "elder" ? (fast ? 30 : 22) : fast
       ? 140
       : 120;
 
 
   let maximumYDistance =
-    fast
+    lifeStage === "elder" ? (fast ? 20 : 14) : fast
       ? 95
       : 80;
 
@@ -1206,6 +1395,8 @@ function startJumpTo(
     normalJumpPower
 
 ) {
+
+  power *= petHopFactor();
 
   let flightFrames =
 
@@ -1417,7 +1608,7 @@ function continueGoingToBed() {
   let stepDistance =
     min(
       distanceToBed,
-      100
+      lifeStage === "elder" ? 20 : 100
     );
 
 
@@ -1667,105 +1858,53 @@ function getScaleAtY(y) {
 // ============================================================
 
 function getCurrentPetImage() {
-
-
-  // ==========================================================
-  // POSITIVE INTERACTION
-  // ==========================================================
-
-  if (
-
-    isEating ||
-
-    isBeingPetted ||
-
-    isPlaying
-
-  ) {
-
-    return petHappyImg;
-
+  if (isHungryPose()) return hungryPetImg;
+  if (lifeStage === "adult") {
+    if (isStinkCrying()) return adultSprites.crying;
+    if (isSleeping) return adultSprites.sleepy;
+    if (happiness < YOUTH_MOOD.cry) return adultSprites.crying;
+    if (isAdultAngry()) return adultRefusalMood === "bored" ? adultSprites.unimpressed : adultSprites.angry;
+    if (happiness < YOUTH_MOOD.angry) return adultSprites.angry;
+    if (isBeingPetted || millis() < adultAffectionUntil) return adultSprites.affectionate;
+    if (isEating || isPlaying || toyPlayAction || (millis() < ballChaseUntil && !isPetCrying())) return adultSprites.happy;
+    return energy < 30 ? adultSprites.unimpressed : adultSprites.normal;
   }
-
-
-  // ==========================================================
-  // CRY
-  // ==========================================================
-
-  if (
-    happiness <
-    CRY_THRESHOLD
-  ) {
-
-    return petCryImg;
-
+  if (lifeStage === "elder") {
+    // Keep the elderly silhouette and creases even during distress or sleep.
+    // Existing falling tears communicate crying without borrowing a younger body.
+    if (isStinkCrying() || isPetCrying() || isSleeping) return elderSprites.tired;
+    // Seniors sigh while pursuing the ball, then brighten up for the actual kick.
+    if (!toyBall.dragging && millis() < ballChaseUntil) return elderSprites.tired;
+    if (isEating || isBeingPetted || isPlaying || toyPlayAction ||
+        millis() < adultAffectionUntil) return elderSprites.happy;
+    return energy < 30 ? elderSprites.tired : elderSprites.normal;
   }
-
-
-  return petNormalImg;
-
+  // The first stage keeps its existing care, play and crying responses.
+  if (isStinkCrying()) return petCryImg;
+  if (millis() < ballChaseUntil && !isSleeping && !goingToSleep && !isPetCrying()) return petHappyImg;
+  if (isEating || isBeingPetted || isPlaying || toyPlayAction) return petHappyImg;
+  return happiness < getCryThreshold() ? petCryImg : petNormalImg;
 }
 
-
-
-// ============================================================
-// DRAW WORLD
-// ============================================================
-
+// Draw room objects in floor-depth order.
 function drawWorld() {
-
-
-  // Poop behind pet
-
-  for (
-    let poop of poops
-  ) {
-
-    if (
-      poop.y <=
-      groundY
-    ) {
-
-      drawPoop(
-        poop
-      );
-
-    }
-
-  }
-
-
-  drawPet();
-
-
-  // Poop in front
-
-  for (
-    let poop of poops
-  ) {
-
-    if (
-      poop.y >
-      groundY
-    ) {
-
-      drawPoop(
-        poop
-      );
-
-    }
-
-  }
-
+  const objects = poops.map(poop => ({ y: poop.y, draw: () => drawPoop(poop) }));
+  objects.push({ y: groundY, draw: drawPet });
+  if (!toyBall.dragging) objects.push({ y: toyBall.y, draw: drawToyBall });
+  objects.sort((a, b) => a.y - b.y);
+  for (const object of objects) object.draw();
+  if (toyBall.dragging) drawToyBall();
 }
-
-
 
 // ============================================================
 // DRAW PET
 // ============================================================
 
 function drawPet() {
+  if (isDead) {
+    drawDeadPet();
+    return;
+  }
 
 
   let petImg =
@@ -1777,6 +1916,9 @@ function drawPet() {
       groundY
     );
 
+
+  const art = getPetArtwork(petImg);
+  const bodyWidth = art.width * petRenderFactor(petImg);
 
   let jumpHeight =
     -jumpOffset;
@@ -1795,9 +1937,9 @@ function drawPet() {
 
       80,
 
-      112,
+      bodyWidth * 0.85,
 
-      66
+      bodyWidth * 0.50
 
     );
 
@@ -1807,9 +1949,9 @@ function drawPet() {
 
       shadowWidth,
 
-      66,
+      bodyWidth * 0.50,
 
-      112
+      bodyWidth * 0.85
 
     );
 
@@ -1855,13 +1997,13 @@ function drawPet() {
 
     groundX,
 
-    groundY + 8,
+    groundY + 4,
 
     shadowWidth *
     depthScale,
 
     17 *
-    depthScale
+    depthScale * getPetModelScale()
 
   );
 
@@ -2075,6 +2217,61 @@ function drawPet() {
 
 
 
+  if (movementState === "chase") {
+    targetScaleX = 1.04 + sin(ballChaseStride) * 0.025;
+    targetScaleY = 0.97 - sin(ballChaseStride) * 0.025;
+    targetAngle = ballChaseFacing * 0.025;
+  }
+
+  if (lifeStage === "elder" && movementState === "jump") {
+    const lift = constrain(-jumpOffset / 30, 0, 1);
+    targetScaleX = 1 - lift * 0.025;
+    targetScaleY = 1 + lift * 0.025;
+    targetAngle = Math.sign(floorVX) * lift * 0.015;
+  }
+  if (lifeStage === "elder" && movementState === "land" && !isPlaying) {
+    targetScaleX = targetScaleY = 1;
+    targetAngle = 0;
+  }
+
+  if (lifeStage === "elder" && elderHopPauseRemaining > 0 &&
+      elderHopPauseRemaining < 0.18 && !isPetCrying() && !isPooping && !isSleeping) {
+    targetScaleX = 1.035;
+    targetScaleY = 0.965;
+    targetAngle = 0;
+  }
+
+  if (toyPlayAction) {
+    const windingUp = toyPlayAction.phase === "windup";
+    const tapping = toyPlayAction.phase === "release";
+    targetScaleX = windingUp ? 0.90 : tapping ? 1.15 : 1;
+    targetScaleY = windingUp ? 1.08 : tapping ? 0.90 : 1;
+    targetAngle = toyPlayAction.direction * (windingUp ? -0.10 : tapping ? 0.12 : 0);
+  }
+
+  if (isAdultAngry()) {
+    targetAngle = adultRefusalMood === "bored" ? 0 : sin(millis() * 0.03) * 0.06;
+    if (adultRefusalMood === "bored") targetScaleX = targetScaleY = 1;
+    if (adultReaction?.kind === "kick") {
+      if (adultReaction.phase === "windup") {
+        targetScaleX = 0.90;
+        targetScaleY = 1.08;
+        targetAngle = -adultReaction.direction * 0.10;
+      } else if (adultReaction.phase === "strike") {
+        targetScaleX = 1.15;
+        targetScaleY = 0.90;
+        targetAngle = adultReaction.direction * 0.12;
+      }
+    }
+  }
+
+  if (petImg === hungryPetImg) {
+    // The new artwork is already flat: retain its proportions and add quiet breathing.
+    targetScaleX = 1;
+    targetScaleY = 1 + sin(millis() * 0.002) * 0.008;
+    targetAngle = 0;
+  }
+
   // ==========================================================
   // SMOOTH BODY
   // ==========================================================
@@ -2120,38 +2317,16 @@ function drawPet() {
   // IMAGE SIZE
   // ==========================================================
 
-  let ratio =
-
-    petImg.height /
-
-    petImg.width;
-
-
-  let drawWidth =
-
-    BASE_PET_WIDTH *
-
-    depthScale *
-
-    squashX;
-
-
-  let drawHeight =
-
-    BASE_PET_WIDTH *
-
-    ratio *
-
-    depthScale *
-
-    squashY;
-
+  // Draw only visible pixels, preserving their existing on-screen scale.
+  const drawWidth = art.width * petRenderFactor(petImg) * depthScale * squashX;
+  const drawHeight = art.height * petRenderFactor(petImg) * depthScale * squashY;
 
   let characterBottomY =
 
     groundY +
 
-    jumpOffset;
+    jumpOffset - (movementState === "chase" ? abs(sin(ballChaseStride)) *
+      (lifeStage === "elder" ? 0 : 2.5) : 0);
 
 
 
@@ -2164,7 +2339,7 @@ function drawPet() {
 
   translate(
 
-    groundX,
+    groundX + toyKickOffsetX(),
 
     characterBottomY
 
@@ -2203,10 +2378,20 @@ function drawPet() {
 
     drawWidth,
 
-    drawHeight
+    drawHeight,
+
+    art.x, art.y, art.width, art.height
 
   );
 
+  if (petImg === hungryPetImg && isMatureStage()) {
+    // The adult's star is beside the cheek; the elderly star sits lower down.
+    fill(255, 225, 145);
+    stroke(190, 140, 70);
+    strokeWeight(0.9);
+    strokeJoin(ROUND);
+    drawStar(drawWidth * 0.35, -drawHeight * (lifeStage === "adult" ? 0.38 : 0.13), drawWidth * 0.05);
+  }
 
   pop();
 
@@ -2401,7 +2586,7 @@ function drawCryingTears(
     topY +
 
     drawHeight *
-    0.47;
+    (isHungryPose() ? 0.70 : isMatureStage() ? 0.61 : 0.47);
 
 
   noStroke();
@@ -2421,7 +2606,7 @@ function drawCryingTears(
 
     groundX -
     drawWidth *
-    0.17,
+    (isHungryPose() ? 0.11 : 0.17),
 
     tearStartY +
     fall1 *
@@ -2443,7 +2628,7 @@ function drawCryingTears(
 
     groundX +
     drawWidth *
-    0.17,
+    (isHungryPose() ? 0.21 : 0.17),
 
     tearStartY +
     fall2 *
@@ -2470,6 +2655,9 @@ function drawCryingTears(
 // ============================================================
 
 function stopCurrentMovement() {
+  // Care and sleep cancel a pending toy pursuit as well as its kick pose.
+  toyPlayAction = null;
+  ballChaseUntil = ballChaseSpeed = ballChaseSide = 0;
 
   jumpOffset = 0;
 
@@ -2498,6 +2686,13 @@ function stopCurrentMovement() {
 // ============================================================
 
 function performFeed() {
+  const countsForGrowth = hunger <= GROWTH_RULES.feedThreshold &&
+    !isEating && !isBeingPetted && !isPlaying && !isPooping &&
+    !isSleeping && !goingToSleep && !!nextLifeStage();
+  if (isDead || !preparePetInteraction("feed")) return;
+  if (countsForGrowth) {
+    growthFeeds++;
+  }
 
   interactionMode =
     "none";
@@ -2567,6 +2762,10 @@ function performFeed() {
 // ============================================================
 
 function performPet() {
+  if (isDead || !preparePetInteraction("pet")) return;
+  fulfillElderPetRequest();
+  if (!isEating && !isBeingPetted && !isPlaying && !isPooping &&
+      !isSleeping && !goingToSleep) recordGrowthCare();
 
   interactionMode =
     "none";
@@ -2617,6 +2816,7 @@ function performPet() {
 // ============================================================
 
 function performPlay() {
+  if (isDead) return;
 
 
   interactionMode =
@@ -2634,13 +2834,18 @@ function performPlay() {
 
   if (
     happiness <
-    CRY_THRESHOLD
+    getCryThreshold()
   ) {
 
     return;
 
   }
 
+
+  if (lifeStage === "adult" && isYouthNeedFull("play")) {
+    preparePetInteraction("play");
+    return;
+  }
 
   if (
     energy <= 10
@@ -2652,6 +2857,11 @@ function performPlay() {
 
   }
 
+
+  if (!preparePetInteraction("play")) return;
+
+  if (!isEating && !isBeingPetted && !isPlaying && !isPooping &&
+      !isSleeping && !goingToSleep) recordGrowthCare();
 
   stopCurrentMovement();
 
@@ -2669,7 +2879,7 @@ function performPlay() {
 
 
   energy -=
-    26;
+    PLAY_ENERGY_COST.button;
 
 
   hunger -=
@@ -2751,7 +2961,8 @@ function updateActionTimer() {
 // SLEEP
 // ============================================================
 
-function startSleeping() {
+function startSleeping(playerRequested = false) {
+  if (isDead) return;
 
 
   if (
@@ -2764,18 +2975,32 @@ function startSleeping() {
   }
 
 
+  if (playerRequested && lifeStage === "adult" && isYouthNeedFull("sleep")) {
+    if (isPooping || growthPopupOpen) return;
+    resetYouthInteractionStreak();
+    refuseYouthInteraction("sleep", "bored");
+    return;
+  }
+
   // Too sad:
   // stay crying instead of automatically sleeping.
 
   if (
     happiness <
-    CRY_THRESHOLD
+    getCryThreshold()
   ) {
 
     return;
 
   }
 
+
+  adultApproach = null;
+  adultInvitingBall = false;
+  adultReaction = null;
+  adultAngryUntil = 0;
+  adultRefusalMood = "angry";
+  resetYouthInteractionStreak();
 
   interactionMode =
     "none";
@@ -2812,6 +3037,9 @@ function startSleeping() {
 
   stopCurrentMovement();
 
+
+  growthSleepPending = !!nextLifeStage() &&
+    growthFeeds >= GROWTH_RULES.feeds && growthCare >= GROWTH_RULES.care;
 
   goingToSleep =
     true;
@@ -2898,7 +3126,10 @@ function updatePoopSystem() {
 
     isPlaying ||
 
+    adultReaction || isAdultAngry() ||
+
     isPetCrying() ||
+
 
     movementState ===
     "jump"
@@ -3065,7 +3296,9 @@ function createPoop() {
 
     x: poopX,
 
-    y: poopY
+    y: poopY,
+
+    ageSeconds: 0
 
   });
 
@@ -3081,15 +3314,7 @@ function drawPoop(
   poop
 ) {
 
-  let scaleAmount =
-
-    getScaleAtY(
-      poop.y
-    ) *
-
-    0.75;
-
-
+  // Waste keeps a fixed size at every floor depth.
   push();
 
 
@@ -3099,9 +3324,6 @@ function drawPoop(
   );
 
 
-  scale(
-    scaleAmount
-  );
 
 
   // Shadow
@@ -3125,57 +3347,26 @@ function drawPoop(
   );
 
 
-  // Poop
-
-  fill(
-    123,
-    80,
-    52
+  // Render the hand-drawn asset without its transparent outer padding.
+  // Keep its artwork proportions and align its base with the ground shadow.
+  const artWidth = 36 * 1.30 * 2 * 0.70;
+  const artHeight = artWidth * POOP_ART.height / POOP_ART.width;
+  imageMode(CORNER);
+  image(
+    poopImg,
+    -artWidth / 2,
+    8 - artHeight,
+    artWidth,
+    artHeight,
+    POOP_ART.x,
+    POOP_ART.y,
+    POOP_ART.width,
+    POOP_ART.height
   );
 
-
-  ellipse(
-    0,
-    2,
-    28,
-    15
-  );
-
-
-  ellipse(
-    0,
-    -6,
-    22,
-    15
-  );
-
-
-  ellipse(
-    1,
-    -13,
-    14,
-    12
-  );
-
-
-  // Highlight
-
-  fill(
-    180,
-    130,
-    92,
-    150
-  );
-
-
-  ellipse(
-    -4,
-    -10,
-    5,
-    4
-  );
-
-
+  if ((poop.ageSeconds || 0) >= DEATH_RULES.poopSmellSeconds) {
+    drawPoopStink();
+  }
   pop();
 
 }
@@ -3187,6 +3378,7 @@ function drawPoop(
 // ============================================================
 
 function cleanPoopAtMouse() {
+  if (isDead) return false;
 
   for (
 
@@ -3203,12 +3395,6 @@ function cleanPoopAtMouse() {
       poops[i];
 
 
-    let scaleAmount =
-      getScaleAtY(
-        poop.y
-      );
-
-
     if (
 
       dist(
@@ -3223,8 +3409,7 @@ function cleanPoopAtMouse() {
 
       ) <
 
-      30 *
-      scaleAmount
+      42
 
     ) {
 
@@ -3236,6 +3421,9 @@ function cleanPoopAtMouse() {
 
       );
 
+
+      recordGrowthCare();
+      if (lifeStage === "adult") resetYouthInteractionStreak();
 
       poops.splice(
         i,
@@ -4421,226 +4609,128 @@ function drawToolbarIcon(
 // INSTRUCTION
 // ============================================================
 
-function drawInstruction() {
-
-  let message = "";
-
-
-  // ==========================================================
-  // CRYING
-  // ==========================================================
-
-  if (
-    isPetCrying()
-  ) {
-
-
-    if (
-      hunger <
-      LOW_HUNGER_THRESHOLD
-    ) {
-
-      message =
-        "Little Rascal is hungry and upset...";
-
-    }
-
-    else {
-
-      message =
-        "Little Rascal is feeling sad...";
-
-    }
-
-  }
-
-
-  else if (
-    isSleeping
-  ) {
-
-    message =
-      "Little Rascal is sleeping...";
-
-  }
-
-
-  else if (
-    goingToSleep
-  ) {
-
-    message =
-      "Little Rascal is going to bed...";
-
-  }
-
-
-  else if (
-    isPooping
-  ) {
-
-    message =
-      "...";
-
-  }
-
-
-  else if (
-    interactionMode ===
-    "feed"
-  ) {
-
-    message =
-      "Click Little Rascal to feed";
-
-  }
-
-
-  else if (
-    interactionMode ===
-    "pet"
-  ) {
-
-    message =
-      "Click Little Rascal to pet";
-
-  }
-
-
-  else if (
-    interactionMode ===
-    "play"
-  ) {
-
-    message =
-      "Click Little Rascal to play";
-
-  }
-
-
-  else if (
-    interactionMode ===
-    "clean"
-  ) {
-
-
-    if (
-      poops.length > 0
-    ) {
-
-      message =
-        "Click poop to clean";
-
-    }
-
-    else {
-
-      message =
-        "Everything is clean!";
-
-    }
-
-  }
-
-
-  if (
-    message === ""
-  ) {
-
-    return;
-
-  }
-
-
+// The result screen uses the same canvas and the selected hand-drawn death asset.
+function drawDeathSummary() {
   push();
-
-
-  textAlign(
-    CENTER,
-    CENTER
-  );
-
-
-  textSize(
-    11
-  );
-
-
-  let messageWidth =
-
-    textWidth(
-      message
-    ) +
-
-    34;
-
-
+  background(250, 247, 235);
   noStroke();
+  // Subtle radial rays echo the reference without replacing the watercolor palette.
+  for (let i = 0; i < 40; i++) {
+    const angle = i * TWO_PI / 40;
+    const spread = 0.035;
+    fill(203, 214, 180, 55);
+    triangle(width / 2, 330,
+      width / 2 + cos(angle - spread) * 1200, 330 + sin(angle - spread) * 1200,
+      width / 2 + cos(angle + spread) * 1200, 330 + sin(angle + spread) * 1200);
+  }
+  noFill();
+  stroke(191, 169, 123);
+  strokeWeight(2);
+  rectMode(CORNER);
+  rect(22, 20, width - 44, height - 40, 24);
 
+  textFont("Arial");
+  textAlign(CENTER, CENTER);
+  textStyle(BOLD);
+  stroke(112, 89, 60);
+  strokeWeight(3);
+  fill(255, 253, 241);
+  drawFittedPetText(petName, width / 2, 88, 760, 48);
+  noStroke();
+  fill(112, 89, 60);
+  textSize(36);
+  text("HAS DIED", width / 2, 143);
 
-  fill(
-    255,
-    255,
-    255,
-    215
-  );
+  const causes = {
+    starvation: "Starvation",
+    sadness: "A broken heart",
+    illness: "Illness from uncleaned poop"
+  };
+  textStyle(NORMAL);
+  textSize(21);
+  fill(101, 115, 83);
+  text("Cause: " + causes[deathCause], width / 2, 204);
 
+  const artWidth = 340;
+  const artHeight = artWidth * DEATH_ART.height / DEATH_ART.width;
+  fill(117, 99, 63, 22);
+  ellipse(width / 2, 394, 310, 20);
+  imageMode(CORNER);
+  image(deathImg, (width - artWidth) / 2, 390 - artHeight, artWidth, artHeight,
+    DEATH_ART.x, DEATH_ART.y, DEATH_ART.width, DEATH_ART.height);
 
-  rectMode(
-    CENTER
-  );
+  const totalSeconds = floor(companionshipSeconds);
+  const minutes = floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  fill(112, 89, 60);
+  textSize(18);
+  text("Time together: " + minutes + "m " + seconds + "s", width / 2, 452);
 
-
-  rect(
-
-    width / 2,
-
-    550,
-
-    messageWidth,
-
-    26,
-
-    13
-
-  );
-
-
-  fill(
-    74,
-    72,
-    67
-  );
-
-
-  text(
-
-    message,
-
-    width / 2,
-
-    550
-
-  );
-
-
-  rectMode(
-    CORNER
-  );
-
-
+  const ready = millis() - deathTime >= 1000;
+  const hover = mouseX >= 340 && mouseX <= 560 && mouseY >= 522 && mouseY <= 574;
+  cursor(ready && hover ? HAND : ARROW);
+  stroke(183, 145, 72);
+  strokeWeight(2);
+  fill(ready && hover ? color(250, 224, 145) : color(242, 218, 158));
+  rect(340, 522, 220, 52, 23);
+  noStroke();
+  fill(100, 78, 49);
+  textStyle(BOLD);
+  textSize(18);
+  text("START AGAIN", width / 2, 548);
   pop();
-
 }
 
-
-
-// ============================================================
-// MOUSE
-// ============================================================
-
+// Mouse input is shared by the existing tools and the result screen.
 function mousePressed() {
+  if (handleMusicClick()) return;
+  // Audio gestures work immediately; game hit tests wait for image loading.
+  if (!deathImg || namingPopupOpen) return;
+  if (helpPopupOpen) {
+    handleHelpClick();
+    return;
+  }
+  if (!hatchingComplete) {
+    handleHatchingClick();
+    return;
+  }
+  if (growthPopupOpen && !isDead) {
+    if (mouseX >= 340 && mouseX <= 560 && mouseY >= 455 && mouseY <= 507 &&
+        millis() - growthPopupOpenedAt >= 500) closeGrowthPopup();
+    return;
+  }
+  if (isDead) {
+    if (deathCause === "oldAge") handleFarewellClick();
+    else if (millis() - deathTime >= 1000 && mouseX >= 340 && mouseX <= 560 &&
+        mouseY >= 522 && mouseY <= 574) restartPet();
+    return;
+  }
 
+
+  if (handleElderPetRequestClick()) return;
+
+  if (isOverHelpButton()) {
+    openHelpPopup();
+    return;
+  }
+
+  if (isOverToyBall()) {
+    toyPlayAction = null;
+    toyBall.dragHeight = max(16, toyBall.height || 0);
+    toyBall.height = toyBall.verticalSpeed = toyBall.impact = 0;
+    toyBall.dragging = true;
+    toyBall.moved = false;
+    toyBall.used = true;
+    toyBall.startX = mouseX;
+    toyBall.startY = mouseY;
+    toyBall.offsetX = toyBall.x - mouseX;
+    toyBall.offsetY = toyBall.y - mouseY;
+    toyBall.lastPointerAt = millis();
+    toyBall.vx = toyBall.vy = 0;
+    interactionMode = "none";
+    cursor(HAND);
+    return;
+  }
 
   // ==========================================================
   // TOOLBAR
@@ -4791,6 +4881,13 @@ function getClickedToolbarButton() {
 function handleToolbarButton(
   type
 ) {
+  if (isDead) return;
+  // Cleaning remains available during sleep and other stationary actions.
+  if (type === "clean") {
+    selectInteraction(type);
+    return;
+  }
+
 
 
   // ==========================================================
@@ -4809,7 +4906,7 @@ function handleToolbarButton(
 
     ) {
 
-      startSleeping();
+      startSleeping(true);
 
     }
 
@@ -4885,77 +4982,16 @@ function selectInteraction(
 // ============================================================
 
 function mouseOverPet() {
-
-  let depthScale =
-    getScaleAtY(
-      groundY
-    );
-
-
-  let petImg =
-    getCurrentPetImage();
-
-
-  let ratio =
-
-    petImg.height /
-
-    petImg.width;
-
-
-  let approximateWidth =
-
-    BASE_PET_WIDTH *
-
-    depthScale;
-
-
-  let approximateHeight =
-
-    BASE_PET_WIDTH *
-
-    ratio *
-
-    depthScale;
-
-
-  let centerY =
-
-    groundY +
-
-    jumpOffset -
-
-    approximateHeight /
-    2;
-
-
-  return (
-
-    abs(
-      mouseX -
-      groundX
-    ) <
-
-    approximateWidth *
-    0.48
-
-
-    &&
-
-
-    abs(
-      mouseY -
-      centerY
-    ) <
-
-    approximateHeight *
-    0.48
-
-  );
-
+  const body = getPetBody();
+  // Invert the same rotation used for drawing around the ground anchor.
+  const angle = isSleeping ? 0.16 : petAngle;
+  const dx = mouseX - (groundX + toyKickOffsetX());
+  const dy = mouseY - (groundY + jumpOffset);
+  const localX = dx * cos(angle) + dy * sin(angle);
+  const localY = -dx * sin(angle) + dy * cos(angle);
+  return abs(localX) <= body.width / 2 + 4 &&
+    localY >= -body.height - 4 && localY <= 4;
 }
-
-
 
 // ============================================================
 // CUSTOM CURSOR
@@ -5140,28 +5176,849 @@ function drawDebugFloor() {
 
   pop();
 
-}(() => {
-  const bgm = new Audio("bgm.mp3");
+}
+// ============================================================
+// NEGLECT, DEATH AND RESTART
+// ============================================================
 
-  bgm.loop = true;
-  bgm.volume = 0.3;
-  bgm.autoplay = true;
+function updateNeglect(elapsedSeconds = deltaTime / 1000) {
+  if (isDead) return;
+  // A background tab must not kill the pet with one oversized frame.
+  const seconds = constrain(elapsedSeconds, 0, 0.25);
+  starvationTime = hunger <= 0 ? starvationTime + seconds : 0;
+  sadnessTime = happiness <= 0 ? sadnessTime + seconds : 0;
 
-  function startMusic() {
-    if (bgm.paused) {
-      bgm.play().catch(() => {
-        console.log("Waiting for browser audio permission");
-      });
-    }
+  // Each pile has its own clock. Cleaning one never resets another pile.
+  for (const poop of poops) {
+    poop.ageSeconds = (poop.ageSeconds || 0) + seconds;
   }
 
-  // Try playing immediately
-  startMusic();
+  // Stable priority makes simultaneous causes deterministic.
+  if (starvationTime >= DEATH_RULES.starvationSeconds) die("starvation");
+  else if (sadnessTime >= DEATH_RULES.sadnessSeconds) die("sadness");
+  else if (poops.some(poop => poop.ageSeconds >= DEATH_RULES.poopFatalSeconds)) {
+    die("illness");
+  }
+}
 
-  // Retry automatically when audio becomes available
-  bgm.addEventListener("canplaythrough", startMusic);
+function die(cause) {
+  if (isDead) return;
+  elderPetRequests.active = null;
+  adultReaction = null;
+  adultAngryUntil = 0;
+  adultRefusalMood = "angry";
+  resetYouthInteractionStreak();
+  adultApproach = null;
+  adultInvitingBall = false;
+  toyBall.dragging = false;
+  toyBall.vx = toyBall.vy = 0;
+  ballChaseUntil = 0;
+  isDead = true;
+  growthPopupOpen = false;
+  deathCause = cause;
+  deathTime = millis();
+  stopCurrentMovement();
+  isEating = isBeingPetted = isPlaying = isPooping = false;
+  isSleeping = goingToSleep = false;
+  playHopsRemaining = 0;
+  actionEndTime = mealPoopTime = poopEndTime = 0;
+  poopCreatedThisTime = false;
+  interactionMode = "none";
+  hearts.length = sparkles.length = 0;
+  cursor(ARROW);
+  if (cause === "oldAge") startFarewell();
+  else farewell = null;
+}
 
-  // Fallback for browser autoplay restrictions
-  document.addEventListener("pointerdown", startMusic);
-  document.addEventListener("keydown", startMusic);
-})();
+function drawDeadPet() {
+  const depth = getScaleAtY(groundY);
+  const stageScale = getPetModelScale();
+  // Match the current stage size and baseline without changing the original art.
+  const artWidth = BASE_PET_WIDTH * depth * (651 / 2732) * stageScale;
+  const artHeight = artWidth * DEATH_ART.height / DEATH_ART.width;
+  const bottomY = groundY;
+  push();
+  noStroke();
+  fill(0, 25);
+  ellipse(groundX, groundY + 8, 112 * depth * stageScale, 17 * depth * stageScale);
+  imageMode(CORNER);
+  image(deathImg, groundX - artWidth / 2, bottomY - artHeight,
+    artWidth, artHeight, DEATH_ART.x, DEATH_ART.y, DEATH_ART.width, DEATH_ART.height);
+  pop();
+}
+
+function restartPet() {
+  adultReaction = null;
+  adultAngryUntil = 0;
+  adultRefusalMood = "angry";
+  resetYouthInteractionStreak();
+  farewell = null;
+  elderAgeSeconds = 0;
+  resetPetNaming();
+  resetElderMovement();
+  resetElderPetRequests();
+  hatchingComplete = false;
+  hatchStartedAt = null;
+  hatchPhase = "idle";
+  adultApproach = null;
+  adultNextActionAt = adultActionCount = adultAffectionUntil = 0;
+  adultInvitingBall = false;
+  toyBall = makeToyBall();
+  ballChaseUntil = 0;
+  ballChaseSpeed = ballChaseStride = 0;
+  toyPlayAction = null;
+  lastBallRewardAt = -Infinity;
+  lifeStage = "child";
+  growthFeeds = growthCare = 0;
+  lastGrowthCareTime = growthStartedAt = -Infinity;
+  growthSleepPending = growthWakeReady = growthPopupOpen = false;
+  growthPopupOpenedAt = 0;
+  isDead = false;
+  deathCause = "";
+  deathTime = starvationTime = sadnessTime = companionshipSeconds = 0;
+  hunger = happiness = energy = 85;
+  groundX = 450;
+  groundY = 420;
+  stopCurrentMovement();
+  jumpTargetX = groundX;
+  jumpTargetY = groundY;
+  movementState = "land";
+  landTimer = 8;
+  pauseTimer = 0;
+  squashX = squashY = 1;
+  petAngle = 0;
+  isEating = isBeingPetted = isPlaying = isPooping = false;
+  isSleeping = goingToSleep = false;
+  actionEndTime = playHopsRemaining = mealPoopTime = poopEndTime = 0;
+  poopCreatedThisTime = false;
+  interactionMode = "none";
+  poops.length = hearts.length = sparkles.length = 0;
+  nextPoopTime = millis() + random(18000, 30000);
+  cursor(ARROW);
+}
+
+// Simple hand-drawn odor trails and orbiting flies for each rotten pile.
+function drawPoopStink() {
+  const time = isDead ? deathTime / 1000 : millis() / 1000;
+  push();
+  scale(0.70);
+  noFill();
+  stroke(117, 139, 82, 170);
+  strokeWeight(2);
+  for (let i = 0; i < 3; i++) {
+    const x = -23 + i * 23;
+    const sway = sin(time * 2 + i) * 4;
+    bezier(x, -48, x - 10 + sway, -60, x + 10 + sway, -70, x + sway, -82);
+  }
+  for (let i = 0; i < 3; i++) {
+    const angle = time * 3 + i * TWO_PI / 3;
+    const x = cos(angle) * 42;
+    const y = -38 + sin(angle * 1.3) * 15;
+    noStroke();
+    fill(238, 241, 221, 210);
+    ellipse(x - 3, y - 3, 7, 4);
+    ellipse(x + 3, y - 3, 7, 4);
+    fill(62, 57, 45);
+    ellipse(x, y, 5, 7);
+  }
+  pop();
+}
+
+// Care contributes to growth only once per completed interaction interval.
+function recordGrowthCare() {
+  if (!nextLifeStage() || isDead || millis() - lastGrowthCareTime < 1300) return;
+  growthCare++;
+  lastGrowthCareTime = millis();
+}
+
+function updateGrowth() {
+  const nextStage = nextLifeStage();
+  if (isDead || !growthWakeReady || !nextStage || growthFeeds < GROWTH_RULES.feeds ||
+      growthCare < GROWTH_RULES.care) return;
+  // Never interrupt a jump, care action, sleep, or waste creation.
+  if (isEating || isBeingPetted || isPlaying || isSleeping || goingToSleep ||
+      isPooping || toyBall.dragging || toyPlayAction ||
+      movementState === "jump" || adultReaction || isAdultAngry()) return;
+  lifeStage = nextStage;
+  adultReaction = null;
+  adultAngryUntil = 0;
+  adultRefusalMood = "angry";
+  resetYouthInteractionStreak();
+  elderAgeSeconds = 0;
+  resetElderMovement();
+  resetElderPetRequests();
+  growthFeeds = growthCare = 0;
+  lastGrowthCareTime = -Infinity;
+  adultNextActionAt = companionshipSeconds + 12;
+  adultApproach = null;
+  adultInvitingBall = false;
+  adultAffectionUntil = 0;
+  stopCurrentMovement();
+  growthSleepPending = false;
+  growthWakeReady = false;
+  growthStartedAt = millis();
+  growthPopupOpen = true;
+  growthPopupOpenedAt = millis();
+  interactionMode = "none";
+  cursor(ARROW);
+  createSparkles(groundX, groundY - 95 * getScaleAtY(groundY));
+}
+
+function drawGrowthEffect() {
+  const elapsed = millis() - growthStartedAt;
+  if (isDead || elapsed < 0 || elapsed >= 1500) return;
+  const progress = elapsed / 1500;
+  const depth = getScaleAtY(groundY);
+  push();
+  noFill();
+  stroke(246, 214, 118, 180 * (1 - progress));
+  strokeWeight(3 * (1 - progress));
+  ellipse(groundX, groundY - 95 * depth,
+    (75 + 65 * progress) * depth, (75 + 65 * progress) * depth);
+  pop();
+}
+
+// Pause all game updates while the player reads the growth announcement.
+function drawGrowthPopup() {
+  push();
+  rectMode(CORNER);
+  noStroke();
+  fill(62, 58, 43, 85);
+  rect(0, 0, width, height);
+  stroke(190, 165, 111);
+  strokeWeight(2);
+  fill(251, 248, 232);
+  rect(185, 135, 530, 400, 26);
+  noStroke();
+  textFont("Arial");
+  textAlign(CENTER, CENTER);
+  textStyle(BOLD);
+  textSize(32);
+  fill(112, 89, 60);
+  text(lifeStage === "elder" ? "GROWING OLDER!" : "GROWING UP!", width / 2, 190);
+  // Source bounds remove padding without changing the illustration proportions.
+  imageMode(CORNER);
+  const spriteWidth = 155;
+  const grownImage = lifeStage === "elder" ? elderSprites.happy : adultSprites.happy;
+  const art = getPetArtwork(grownImage);
+  const spriteHeight = spriteWidth * art.height / art.width;
+  image(grownImage, (width - spriteWidth) / 2, 225, spriteWidth, spriteHeight,
+    art.x, art.y, art.width, art.height);
+  textStyle(NORMAL);
+  textSize(20);
+  fill(101, 115, 83);
+  const growthMessage = petName + " has reached the " + LIFE_STAGE_LABELS[lifeStage].toLowerCase() + " stage.";
+  drawFittedPetText(growthMessage, width / 2, 395, 470, 20);
+  textSize(16);
+  text("Your care helped them grow.", width / 2, 425);
+  const hover = mouseX >= 340 && mouseX <= 560 && mouseY >= 455 && mouseY <= 507;
+  cursor(hover ? HAND : ARROW);
+  stroke(183, 145, 72);
+  fill(hover ? color(250, 224, 145) : color(242, 218, 158));
+  rect(340, 455, 220, 52, 23);
+  noStroke();
+  fill(100, 78, 49);
+  textStyle(BOLD);
+  textSize(18);
+  text("CONTINUE", width / 2, 481);
+  pop();
+}
+
+function closeGrowthPopup() {
+  const pausedFor = millis() - growthPopupOpenedAt;
+  // Absolute event deadlines must also move forward when gameplay resumes.
+  nextPoopTime += pausedFor;
+  if (mealPoopTime > 0) mealPoopTime += pausedFor;
+  growthPopupOpen = false;
+  growthStartedAt = millis();
+  cursor(ARROW);
+}
+
+function resetYouthInteractionStreak() {
+  youthInteractionClock = 0;
+  youthInteractionStreak = { action: null, count: 0, limit: 0, lastAt: -Infinity };
+}
+
+function recordYouthInteraction(action) {
+  if (!(action in ADULT_REFUSAL)) return false;
+  // Active gameplay time excludes the guide, growth popups and hidden-tab gaps.
+  const now = youthInteractionClock;
+  const streak = youthInteractionStreak;
+  if (streak.action !== action || now - streak.lastAt >= YOUTH_BOREDOM.resetSeconds || now < streak.lastAt) {
+    streak.action = action;
+    streak.count = 0;
+    streak.limit = random() < 0.5 ? 1 : 2;
+  }
+  // The first request is not a repetition. Count one or two further repeats.
+  streak.count = min(streak.limit + 1, streak.count + 1);
+  streak.lastAt = now;
+  return streak.count > streak.limit;
+}
+
+function isAdultAngry() {
+  // The guide pauses the visible expression as well as the reaction clock.
+  return lifeStage === "adult" && (helpPopupOpen ? helpOpenedAt : millis()) < adultAngryUntil;
+}
+
+function isYouthNeedFull(action) {
+  if (action === "feed") return hunger >= YOUTH_FULL_THRESHOLD;
+  if (action === "pet" || action === "play") return happiness >= YOUTH_FULL_THRESHOLD;
+  if (action === "sleep") return energy >= YOUTH_FULL_THRESHOLD;
+  return false;
+}
+
+function refuseYouthInteraction(action, mood) {
+  stopCurrentMovement();
+  adultApproach = null;
+  adultInvitingBall = false;
+  adultNextActionAt = companionshipSeconds + 12;
+  adultReaction = null;
+  adultAffectionUntil = 0;
+  isEating = isBeingPetted = isPlaying = false;
+  actionEndTime = playHopsRemaining = 0;
+  adultAngryUntil = millis() + 2000;
+  adultRefusalMood = mood;
+  // Charge once per refused request, never per frame or reaction phase.
+  happiness = constrain(happiness - YOUTH_REFUSAL_MOOD_LOSS[mood], 0, 100);
+  hearts.length = 0;
+  interactionMode = "none";
+  cursor(ARROW);
+  if (mood === "bored") {
+    // Unimpressed means staying still; only actual anger evades or kicks.
+    squashX = squashY = 1;
+    petAngle = 0;
+  } else {
+    if (action === "pet") startAdultEvade();
+    if (action === "play") startAdultKick();
+  }
+  return false;
+}
+
+// Youth may randomly refuse, or become bored by repeating the same interaction.
+function preparePetInteraction(action, roll) {
+  if (!isMatureStage()) return true;
+  if (isDead || growthPopupOpen || isSleeping || goingToSleep || isPooping) return false;
+  adultApproach = null;
+  adultInvitingBall = false;
+  adultNextActionAt = companionshipSeconds + 12;
+  isEating = isBeingPetted = isPlaying = false;
+  actionEndTime = playHopsRemaining = 0;
+  ballChaseUntil = 0;
+  if (lifeStage !== "adult") return true;
+  if (adultReaction) stopCurrentMovement();
+  adultReaction = toyPlayAction = null;
+  adultAngryUntil = adultAffectionUntil = 0;
+  adultRefusalMood = "angry";
+  // Critical mood must always be recoverable through comforting petting.
+  const needsComfort = action === "pet" && happiness <= getCryThreshold();
+  let repetitive = false;
+  if (needsComfort) resetYouthInteractionStreak();
+  else repetitive = recordYouthInteraction(action);
+  if (needsComfort) return true;
+  if (isYouthNeedFull(action)) return refuseYouthInteraction(action, "bored");
+  // An eligible random angry refusal must remain reachable even during repetition.
+  if ((roll === undefined ? random() : roll) < (ADULT_REFUSAL[action] || 0)) {
+    return refuseYouthInteraction(action, "angry");
+  }
+  if (repetitive) return refuseYouthInteraction(action, "bored");
+  return true;
+}
+
+// Angry refusals jump away or kick on contact; bored refusals stay still.
+function startAdultEvade() {
+  let awayX = groundX - mouseX;
+  let awayY = (groundY - getPetBody().height / 2) - mouseY;
+  if (abs(awayX) + abs(awayY) < 10) {
+    awayX = groundX < width / 2 ? 1 : -1;
+    awayY = 0.15;
+  }
+  const direction = atan2(awayY, awayX);
+  for (const turn of [0, 0.7, -0.7, 1.4, -1.4, PI]) {
+    const target = ballPosition(groundX + cos(direction + turn) * 110,
+      groundY + sin(direction + turn) * 80);
+    if (!target.blocked && dist(groundX, groundY, target.x, target.y) >= 30) {
+      adultReaction = { kind: "evade", elapsed: 0 };
+      startJumpTo(target.x, target.y, -4.8);
+      return;
+    }
+  }
+}
+
+function startAdultKick() {
+  if (toyBall.dragging) return;
+  toyBall.used = toyBall.demonstrated = true;
+  adultReaction = { kind: "kick", phase: "approach", phaseTime: 0,
+    elapsed: 0, direction: toyBall.x >= groundX ? 1 : -1 };
+}
+
+function finishAdultReaction() {
+  adultReaction = null;
+  adultAngryUntil = millis() + 700;
+  movementState = "pause";
+  pauseTimer = 18;
+}
+
+function updateAdultReaction(elapsedSeconds = deltaTime / 1000) {
+  if (!adultReaction) return false;
+  if (lifeStage !== "adult" || isDead || isSleeping || goingToSleep || isPooping || isPetCrying()) {
+    adultReaction = null;
+    adultAngryUntil = 0;
+    stopCurrentMovement();
+    return false;
+  }
+  const reaction = adultReaction;
+  const seconds = constrain(elapsedSeconds, 0, 0.05);
+  reaction.elapsed += seconds;
+  adultAngryUntil = millis() + 400;
+
+  if (reaction.kind === "evade") {
+    if (movementState === "jump") updatePhysicsJump();
+    if (movementState !== "jump") finishAdultReaction();
+    return true;
+  }
+  if (toyBall.dragging) {
+    // The player can pick up the toy to interrupt the kick safely.
+    stopCurrentMovement();
+    finishAdultReaction();
+    return true;
+  }
+  if (reaction.phase === "approach") {
+    if (movementState === "jump") {
+      updatePhysicsJump();
+    } else if (petTouchesBall()) {
+      reaction.phase = "windup";
+      reaction.phaseTime = 0;
+      reaction.direction = toyBall.x >= groundX ? 1 : -1;
+      toyBall.vx = toyBall.vy = 0;
+      stopCurrentMovement();
+    } else if (reaction.elapsed > 6 || !approachToyBall()) {
+      stopCurrentMovement();
+      finishAdultReaction();
+    }
+  } else if (reaction.phase === "windup") {
+    reaction.phaseTime += seconds;
+    if (reaction.phaseTime >= 0.22) {
+      if (!petTouchesBall()) {
+        reaction.phase = "approach";
+        return true;
+      }
+      // Only actual body contact applies the strong impulse; no play rewards.
+      toyBall.vx = reaction.direction * 280;
+      toyBall.vy = constrain((toyBall.y - groundY) * 2, -70, 70);
+      launchToyBounce(toyBall);
+      reaction.phase = "strike";
+      reaction.phaseTime = 0;
+    }
+  } else {
+    reaction.phaseTime += seconds;
+    if (reaction.phaseTime >= 0.25) finishAdultReaction();
+  }
+  return true;
+}
+
+// ============================================================
+// ROOM TOY: CLICK, DRAG, ROLL AND CHASE
+// ============================================================
+function makeToyBall() {
+  return { x: 560, y: 470, vx: 0, vy: 0, angle: 0, radius: 20.7,
+    height: 0, verticalSpeed: 0, impact: 0, dragHeight: 16,
+    dragging: false, moved: false, used: false, demonstrated: false };
+}
+
+function isOverToyBall() {
+  const lift = getToyBallVisual(toyBall).lift * getScaleAtY(toyBall.y);
+  const radius = toyBall.radius * getScaleAtY(toyBall.y);
+  return dist(mouseX, mouseY, toyBall.x, toyBall.y - radius - lift) <=
+    toyBall.radius * getScaleAtY(toyBall.y) + 8;
+}
+
+function ballPosition(x, y) {
+  y = constrain(y, FLOOR_TOP + 24, FLOOR_BOTTOM - 22);
+  const bounds = getFloorBounds(y);
+  x = constrain(x, bounds.left + 24, bounds.right - 24);
+  return { x, y, blocked: isBlockedPosition(x, y) };
+}
+
+function mouseDragged() {
+  if (!toyBall.dragging || isDead || growthPopupOpen || helpPopupOpen || namingPopupOpen) return;
+  const position = ballPosition(mouseX + toyBall.offsetX, mouseY + toyBall.offsetY);
+  const dt = max((millis() - toyBall.lastPointerAt) / 1000, 0.016);
+  if (!position.blocked) {
+    toyBall.vx = lerp(toyBall.vx, constrain((position.x - toyBall.x) / dt, -430, 430), 0.65);
+    toyBall.vy = lerp(toyBall.vy, constrain((position.y - toyBall.y) / dt, -300, 300), 0.65);
+    toyBall.x = position.x;
+    toyBall.y = position.y;
+  }
+  toyBall.lastPointerAt = millis();
+  if (dist(mouseX, mouseY, toyBall.startX, toyBall.startY) > 5) toyBall.moved = true;
+  return false;
+}
+
+function mouseReleased() {
+  if (namingPopupOpen || helpPopupOpen || !toyBall.dragging) return;
+  toyBall.dragging = false;
+  if (isDead || growthPopupOpen) return;
+  if (!toyBall.moved) {
+    // A simple click works too, so discovering drag is not a prerequisite.
+    toyBall.vx = toyBall.x > width / 2 ? -100 : 100;
+    toyBall.vy = -25;
+  } else if (millis() - toyBall.lastPointerAt > 150) {
+    toyBall.vx = toyBall.vy = 0;
+  }
+  toyBall.height = toyBall.dragHeight;
+  launchToyBounce(toyBall);
+  requestBallPlay();
+}
+
+function requestBallPlay() {
+  if (isDead || isSleeping || goingToSleep || isPooping ||
+      isEating || isBeingPetted || isPetCrying()) return;
+  if (energy <= 10 && !(lifeStage === "adult" && isYouthNeedFull("play"))) return;
+  if (!preparePetInteraction("play")) {
+    ballChaseUntil = 0;
+    return;
+  }
+  // A thrown toy takes priority over the toolbar's remaining random play hops.
+  if (lifeStage === "elder") elderHopPauseRemaining = 0;
+  isPlaying = false;
+  playHopsRemaining = 0;
+  actionEndTime = 0;
+  toyPlayAction = null;
+  ballChaseSpeed = 65 * petMovementFactor();
+  ballChaseSide = 0;
+  ballChaseUntil = millis() + ballPursuitMilliseconds();
+}
+
+function updateToyBall() {
+  if (toyBall.dragging && !mouseIsPressed) mouseReleased();
+  // One early pet-initiated demonstration tells the player this is a toy.
+  if (lifeStage !== "elder" && !adultReaction && !isAdultAngry() &&
+      !toyBall.demonstrated && !toyBall.used && companionshipSeconds >= 4 &&
+      !isSleeping && !goingToSleep && !isPetCrying() && !isEating &&
+      !isBeingPetted && !isPooping && !isPlaying) {
+    toyBall.demonstrated = true;
+    ballChaseSide = 0;
+    ballChaseUntil = millis() + ballPursuitMilliseconds();
+  }
+  if (toyBall.dragging) return;
+  const dt = constrain(deltaTime / 1000, 0, 0.05);
+  const canChase = millis() < ballChaseUntil && !isDead && !isSleeping &&
+    !goingToSleep && !isEating && !isBeingPetted && !isPooping && !isPetCrying() && energy > 10 &&
+    hunger >= HUNGER_FLATTEN_THRESHOLD && !toyPlayAction;
+  const speedFactor = petMovementFactor();
+  ballChaseSpeed = canChase ? min(180 * speedFactor, ballChaseSpeed + 260 * speedFactor * dt) : 0;
+  advanceToyBallPhysics(toyBall, dt);
+}
+
+function updateBallChase() {
+  if (millis() >= ballChaseUntil || toyBall.dragging || energy <= 10) {
+    ballChaseSpeed = ballChaseSide = 0;
+    if (movementState === "chase") { movementState = "pause"; pauseTimer = 12; }
+    return false;
+  }
+  if (isInFriendlyToyReach()) {
+    // Wait beside the ball's floor position, without circling underneath a bounce.
+    if (toyBall.height <= 1 && petTouchesBall()) {
+      stopCurrentMovement();
+      movementState = "pause";
+      toyBall.vx = toyBall.vy = toyBall.verticalSpeed = toyBall.height = 0;
+      toyPlayAction = { phase: "windup", elapsed: 0, kicked: false,
+        direction: toyBall.x >= groundX ? 1 : -1 };
+    }
+    movementState = "pause";
+    pauseTimer = 12;
+    return true;
+  }
+  if (approachToyBall(lifeStage !== "elder")) return true;
+  ballChaseUntil = 0;
+  return false;
+}
+
+// Each successful chase ends with a short preparation, one tap, and a rest.
+function updateToyPlayAction() {
+  if (!toyPlayAction) return false;
+  if (isDead || toyBall.dragging || isSleeping || goingToSleep || isPooping ||
+      isEating || isBeingPetted || isPetCrying() ||
+      energy <= 10 || hunger < HUNGER_FLATTEN_THRESHOLD) {
+    toyPlayAction = null;
+    ballChaseUntil = ballChaseSpeed = 0;
+    movementState = "pause";
+    pauseTimer = 12;
+    return false;
+  }
+  const action = toyPlayAction;
+  action.elapsed += constrain(deltaTime / 1000, 0, 0.05);
+  floorVX = floorVY = jumpOffset = jumpVelocity = 0;
+  movementState = "pause";
+  if (action.phase === "windup" && action.elapsed >= 0.22) {
+    action.phase = "release";
+    action.elapsed = 0;
+  } else if (action.phase === "release" && !action.kicked && action.elapsed >= 0.06) {
+    // Apply the impulse as the pet leans forward, rather than before its kick.
+    if (!petTouchesBall()) {
+      toyPlayAction = null;
+      ballChaseUntil = ballChaseSpeed = 0;
+      return false;
+    }
+    let dx = toyBall.x - (groundX + toyKickOffsetX());
+    let dy = (toyBall.y - groundY) * 0.6;
+    if (isMatureStage() && adultInvitingBall) {
+      dx = (mouseY >= FLOOR_TOP && mouseY <= FLOOR_BOTTOM ? mouseX : width / 2) - toyBall.x;
+      dy = 0;
+    }
+    if (Math.hypot(dx, dy) < 1) dx = action.direction;
+    const length = Math.hypot(dx, dy);
+    toyBall.vx = dx / length * 55;
+    toyBall.vy = dy / length * 55;
+    toyBall.height = 0;
+    toyBall.verticalSpeed = 40;
+    toyBall.impact = 0.12;
+    // Every throw can receive a physical tap; rewards keep their existing cooldown.
+    if (millis() - lastBallRewardAt >= 1500) {
+      lastBallRewardAt = millis();
+      happiness = constrain(happiness + 4, 0, 100);
+      energy = constrain(energy - PLAY_ENERGY_COST.toy, 0, 100);
+      hunger = constrain(hunger - 0.5, 0, 100);
+      // A completed player-started ball interaction is care too; idle demos are not.
+      if (toyBall.used && !adultInvitingBall) recordGrowthCare();
+      createHeart();
+    }
+    ballChaseUntil = ballChaseSpeed = 0;
+    adultInvitingBall = false;
+    action.kicked = true;
+  } else if (action.phase === "release" && action.elapsed >= 0.25) {
+    action.phase = "rest";
+    action.elapsed = 0;
+  } else if (action.phase === "rest" && action.elapsed >= 0.7) {
+    toyPlayAction = null;
+    pauseTimer = 45;
+  }
+  return true;
+}
+
+// A small body lunge makes the existing squash-and-lean kick readable.
+function toyKickOffsetX() {
+  if (!toyPlayAction) return 0;
+  const action = toyPlayAction;
+  if (action.phase === "windup") return -action.direction * 2 * constrain(action.elapsed / 0.22, 0, 1);
+  if (action.phase === "release") return action.direction * 6 * sin(constrain(action.elapsed / 0.25, 0, 1) * PI);
+  return 0;
+}
+
+function isInFriendlyToyReach() {
+  if (toyBall.dragging || movementState === "jump" || abs(jumpOffset) > 1) return false;
+  const body = getPetBody();
+  return abs(toyBall.y - groundY) <= max(16, body.height * 0.4) &&
+    abs(toyBall.x - groundX) >= body.width * 0.20 && petToyOverlap(0, 0.82);
+}
+
+function approachToyBall(running = false) {
+  // Running follows the moving ball; refusal kicks retain their existing hops.
+  const body = getPetBody();
+  const ballRadius = toyBall.radius * getScaleAtY(toyBall.y);
+  const approach = body.width * 0.35 + ballRadius - 6;
+  const targetY = toyBall.y + body.height / 2 - ballRadius;
+  if (running) {
+    // Choose one side for this chase; do not swap left and right every frame.
+    if (!ballChaseSide) ballChaseSide = groundX <= toyBall.x ? -1 : 1;
+    let target = ballPosition(toyBall.x + ballChaseSide * approach, targetY);
+    if (target.blocked || abs(target.x - toyBall.x) < body.width * 0.20) {
+      const opposite = ballPosition(toyBall.x - ballChaseSide * approach, targetY);
+      if (opposite.blocked || abs(opposite.x - toyBall.x) < body.width * 0.20) return false;
+      ballChaseSide *= -1;
+      target = opposite;
+    }
+    return runTowardToyBall(target);
+  }
+  const side = groundX <= toyBall.x ? -1 : 1;
+  for (const offset of [side * approach, -side * approach, side * approach * 0.8, -side * approach * 0.8]) {
+    const target = ballPosition(toyBall.x + offset, targetY);
+    if (!target.blocked) {
+      const dx = target.x - groundX;
+      const dy = target.y - groundY;
+      const ratio = min(1, (lifeStage === "elder" ? 18 : 95) / max(sqrt(dx * dx + dy * dy), 1));
+      const step = ballPosition(groundX + dx * ratio, groundY + dy * ratio);
+      if (!step.blocked) {
+        startJumpTo(step.x, step.y, normalJumpPower);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Small floor steps allow acceleration and steering without a remote kick.
+function runTowardToyBall(target) {
+  const dx = target.x - groundX, dy = target.y - groundY;
+  const distance = Math.hypot(dx, dy);
+  const seconds = constrain(deltaTime / 1000, 0, 0.05);
+  const travel = min(distance, max(65 * petMovementFactor(), ballChaseSpeed) * seconds);
+  const steps = max(1, ceil(travel / 5));
+  let moved = 0;
+  for (let i = 0; i < steps && distance > 0.1; i++) {
+    const sx = dx / distance * travel / steps, sy = dy / distance * travel / steps;
+    let next = ballPosition(groundX + sx, groundY + sy);
+    if (next.blocked) {
+      const alternatives = [ballPosition(groundX + sx, groundY), ballPosition(groundX, groundY + sy)]
+        .filter(point => !point.blocked)
+        .sort((a, b) => dist(a.x, a.y, target.x, target.y) - dist(b.x, b.y, target.x, target.y));
+      if (!alternatives.length) break;
+      next = alternatives[0];
+    }
+    moved += dist(groundX, groundY, next.x, next.y);
+    groundX = next.x;
+    groundY = next.y;
+  }
+  floorVX = floorVY = jumpOffset = jumpVelocity = 0;
+  if (abs(dx) > 4) ballChaseFacing = dx > 0 ? 1 : -1;
+  ballChaseStride += moved * TWO_PI / 42;
+  movementState = moved > 0.01 ? "chase" : "pause";
+  pauseTimer = 8;
+  return true;
+}
+
+function drawToyBall() {
+  const depth = getScaleAtY(toyBall.y);
+  const visual = getToyBallVisual(toyBall);
+  push();
+  translate(toyBall.x, toyBall.y);
+  noStroke();
+  fill(76, 66, 43, visual.shadowAlpha);
+  ellipse(0, 4 * depth, toyBall.radius * 1.89 * depth * visual.shadowScale,
+    toyBall.radius * 0.5 * depth * visual.shadowScale);
+  translate(0, -visual.lift * depth);
+  scale(depth);
+  if (isOverToyBall() || (!toyBall.used && floor(companionshipSeconds) % 5 === 0)) {
+    noFill();
+    stroke(244, 206, 94, 150);
+    strokeWeight(2);
+    circle(0, -toyBall.radius, toyBall.radius * 2 + 11);
+  }
+  // Deform around the bottom so landing compression stays on the floor.
+  scale(visual.scaleX, visual.scaleY);
+  translate(0, -toyBall.radius);
+  const wiggle = !toyBall.used && toyBall.vx === 0 ? sin(millis() * 0.003) * 0.08 : 0;
+  rotate(toyBall.angle + wiggle);
+  imageMode(CENTER);
+  const diameter = toyBall.radius * 2;
+  image(toyBallImg, 0, 0, diameter, diameter * toyBallImg.height / toyBallImg.width);
+  pop();
+}
+
+// Visible source bounds: files remain unchanged, including their transparent padding.
+function getPetArtwork(img) {
+  if (img === hungryPetImg) return HUNGRY_ART;
+  if (isMatureArtwork(img)) return { x: 0, y: 0, width: img.width, height: img.height };
+  if (img === petNormalImg) return { x: 970, y: 780, width: 651, height: 609 };
+  if (img === petHappyImg) return { x: 955, y: 772, width: 667, height: 625 };
+  if (img === petCryImg) return { x: 990, y: 788, width: 623, height: 584 };
+  return { x: 0, y: 0, width: img.width, height: img.height };
+}
+
+function getPetBody() {
+  const img = getCurrentPetImage();
+  const art = getPetArtwork(img);
+  const factor = petRenderFactor(img) * getScaleAtY(groundY);
+  return { width: art.width * factor * squashX,
+    height: art.height * factor * squashY };
+}
+
+function petTouchesBall() {
+  if (toyBall.dragging || toyBall.height > 18 || movementState === "jump" || abs(jumpOffset) > 1) return false;
+  return petToyOverlap((toyBall.height || 0) * getScaleAtY(toyBall.y));
+}
+
+function petToyOverlap(lift, limit = 1) {
+  const body = getPetBody();
+  const ballRadius = toyBall.radius * getScaleAtY(toyBall.y);
+  const dx = (toyBall.x - groundX - toyKickOffsetX()) / (body.width * 0.48 + ballRadius);
+  const dy = (toyBall.y - ballRadius - lift - (groundY - body.height / 2)) /
+    (body.height * 0.45 + ballRadius);
+  return dx * dx + dy * dy <= limit;
+}
+
+function petRenderFactor(img) {
+  if (img === hungryPetImg) {
+    const stageWidth = lifeStage === "child" ? 651 : 771;
+    const stageScale = getPetModelScale();
+    return (BASE_PET_WIDTH * stageWidth / 2732) * 1.18 * stageScale / HUNGRY_ART.width;
+  }
+  if (isMatureArtwork(img)) {
+    const stageScale = Object.values(elderSprites).includes(img) ? ELDER_MODEL_SCALE : 1;
+    return (BASE_PET_WIDTH * GROWN_MODEL_WIDTH_FACTOR * stageScale) / img.width;
+  }
+  const stageScale = [petNormalImg, petHappyImg, petCryImg].includes(img) ? CHILD_MODEL_SCALE : 1;
+  return BASE_PET_WIDTH * stageScale / img.width;
+}
+
+// Adults alternate between approaching the player and initiating ball play.
+function updateAdultBehavior() {
+  if (!isMatureStage() || isDead || growthPopupOpen) return;
+  if (elderRestPending() || adultReaction || isAdultAngry()) return;
+  if (isPetCrying() || isSleeping || goingToSleep || isEating || isBeingPetted ||
+      isPlaying || isPooping || toyBall.dragging || millis() < ballChaseUntil) {
+    adultApproach = null;
+    adultNextActionAt = max(adultNextActionAt, companionshipSeconds + 3);
+    return;
+  }
+  if (adultApproach || companionshipSeconds < adultNextActionAt || energy < 35 || hunger < 35) return;
+  adultNextActionAt = companionshipSeconds + 12;
+  adultActionCount++;
+  if (lifeStage !== "elder" && adultActionCount % 2 === 0) {
+    adultInvitingBall = true;
+    ballChaseSide = 0;
+    ballChaseUntil = millis() + ballPursuitMilliseconds();
+    return;
+  }
+  if (mouseY < FLOOR_TOP + 24 || mouseY > FLOOR_BOTTOM - 22) return;
+  const target = ballPosition(mouseX, mouseY);
+  if (!target.blocked && dist(groundX, groundY, target.x, target.y) > 50) {
+    adultApproach = { x: target.x, y: target.y, until: companionshipSeconds + 6 / petMovementFactor() };
+  }
+}
+
+function updateAdultApproach() {
+  if (!isMatureStage() || !adultApproach) return false;
+  if (isPetCrying() || companionshipSeconds >= adultApproach.until ||
+      isBlockedPosition(adultApproach.x, adultApproach.y)) {
+    adultApproach = null;
+    return false;
+  }
+  const dx = adultApproach.x - groundX;
+  const dy = adultApproach.y - groundY;
+  const distance = sqrt(dx * dx + dy * dy);
+  if (distance <= 45) {
+    adultApproach = null;
+    adultAffectionUntil = millis() + 1800;
+    createHeart();
+    movementState = "pause";
+    pauseTimer = 35;
+    return true;
+  }
+  const ratio = min(1, (lifeStage === "elder" ? 20 : 75) / distance);
+  const target = ballPosition(groundX + dx * ratio, groundY + dy * ratio);
+  if (target.blocked) { adultApproach = null; return false; }
+  startJumpTo(target.x, target.y, -5.4);
+  return true;
+}
+
+// Naming is part of birth, before any care timers begin running.
+function finishPetNaming(name) {
+  if (!namingPopupOpen || petHasBeenNamed) return;
+  petName = name;
+  petHasBeenNamed = true;
+  const pausedFor = millis() - namingOpenedAt;
+  nextPoopTime += pausedFor;
+  closeNamingPopup();
+  if (!helpHasBeenShown) {
+    helpHasBeenShown = true;
+    openHelpPopup();
+  }
+}
+
+function drawFittedPetText(label, x, y, maxWidth, preferredSize) {
+  textSize(preferredSize);
+  const measured = textWidth(label);
+  if (measured > maxWidth) textSize(preferredSize * maxWidth / measured);
+  text(label, x, y);
+}
