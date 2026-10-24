@@ -1118,7 +1118,11 @@ function updatePhysicsJump() {
         : lifeStage === "elder" ? 1 : 7;
 
     if (lifeStage === "elder" && !goingToSleep && !isPlaying && millis() >= ballChaseUntil) {
-      elderRestRemaining = ELDER_MOVEMENT.restSeconds;
+      elderHopsInBurst++;
+      if (elderHopsInBurst >= ELDER_MOVEMENT.hopsPerBurst) {
+        elderRestRemaining = ELDER_MOVEMENT.restSeconds;
+        elderHopsInBurst = 0;
+      }
     }
 
 
