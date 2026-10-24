@@ -1117,10 +1117,14 @@ function updatePhysicsJump() {
         ? 3
         : lifeStage === "elder" ? 1 : 7;
 
+    if (lifeStage === "elder" && !goingToSleep) {
+      elderHopPauseRemaining = ELDER_MOVEMENT.betweenHopSeconds;
+    }
     if (lifeStage === "elder" && !goingToSleep && !isPlaying && millis() >= ballChaseUntil) {
       elderHopsInBurst++;
       if (elderHopsInBurst >= ELDER_MOVEMENT.hopsPerBurst) {
         elderRestRemaining = ELDER_MOVEMENT.restSeconds;
+        elderHopPauseRemaining = 0;
         elderHopsInBurst = 0;
       }
     }
@@ -1216,19 +1220,19 @@ function findRandomWalkableTarget(
 
 
   let minimumDistance =
-    lifeStage === "elder" ? 18 : fast
+    lifeStage === "elder" ? 12 : fast
       ? 55
       : 70;
 
 
   let maximumXDistance =
-    lifeStage === "elder" ? (fast ? 44 : 32) : fast
+    lifeStage === "elder" ? (fast ? 30 : 22) : fast
       ? 140
       : 120;
 
 
   let maximumYDistance =
-    lifeStage === "elder" ? (fast ? 28 : 22) : fast
+    lifeStage === "elder" ? (fast ? 20 : 14) : fast
       ? 95
       : 80;
 
@@ -1576,7 +1580,7 @@ function continueGoingToBed() {
   let stepDistance =
     min(
       distanceToBed,
-      lifeStage === "elder" ? 28 : 100
+      lifeStage === "elder" ? 20 : 100
     );
 
 
@@ -2257,6 +2261,13 @@ function drawPet() {
   }
   if (lifeStage === "elder" && movementState === "land" && !isPlaying) {
     targetScaleX = targetScaleY = 1;
+    targetAngle = 0;
+  }
+
+  if (lifeStage === "elder" && elderHopPauseRemaining > 0 &&
+      elderHopPauseRemaining < 0.18 && !isPetCrying() && !isPooping && !isSleeping) {
+    targetScaleX = 1.035;
+    targetScaleY = 0.965;
     targetAngle = 0;
   }
 
@@ -5502,6 +5513,7 @@ function requestBallPlay() {
     return;
   }
   // A thrown toy takes priority over the toolbar's remaining random play hops.
+  if (lifeStage === "elder") elderHopPauseRemaining = 0;
   isPlaying = false;
   playHopsRemaining = 0;
   actionEndTime = 0;
@@ -5659,7 +5671,7 @@ function approachToyBall(running = false) {
     if (!target.blocked) {
       const dx = target.x - groundX;
       const dy = target.y - groundY;
-      const ratio = min(1, (lifeStage === "elder" ? 24 : 95) / max(sqrt(dx * dx + dy * dy), 1));
+      const ratio = min(1, (lifeStage === "elder" ? 18 : 95) / max(sqrt(dx * dx + dy * dy), 1));
       const step = ballPosition(groundX + dx * ratio, groundY + dy * ratio);
       if (!step.blocked) {
         startJumpTo(step.x, step.y, normalJumpPower);
@@ -5909,7 +5921,7 @@ function updateAdultApproach() {
     pauseTimer = 35;
     return true;
   }
-  const ratio = min(1, (lifeStage === "elder" ? 28 : 75) / distance);
+  const ratio = min(1, (lifeStage === "elder" ? 20 : 75) / distance);
   const target = ballPosition(groundX + dx * ratio, groundY + dy * ratio);
   if (target.blocked) { adultApproach = null; return false; }
   startJumpTo(target.x, target.y, -5.4);

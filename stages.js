@@ -92,9 +92,11 @@ function isMatureArtwork(img) {
   return Object.values(adultSprites).includes(img) || Object.values(elderSprites).includes(img);
 }
 
-const ELDER_MOVEMENT = { speedFactor: 0.4, hopPower: 0.65, hopsPerBurst: 3, restSeconds: 3 };
+const ELDER_MOVEMENT = { speedFactor: 0.4, hopPower: 0.65, hopsPerBurst: 3,
+  betweenHopSeconds: 0.65, restSeconds: 3 };
 let elderRestRemaining = 0;
 let elderHopsInBurst = 0;
+let elderHopPauseRemaining = 0;
 
 function petMovementFactor() {
   return lifeStage === "elder" ? ELDER_MOVEMENT.speedFactor : 1;
@@ -112,20 +114,26 @@ function ballPursuitMilliseconds() {
 function resetElderMovement() {
   elderRestRemaining = 0;
   elderHopsInBurst = 0;
+  elderHopPauseRemaining = 0;
 }
 
 function elderRestPending() {
-  return lifeStage === "elder" && elderRestRemaining > 0;
+  return lifeStage === "elder" && (elderRestRemaining > 0 || elderHopPauseRemaining > 0);
 }
 
 function updateElderRest() {
   if (lifeStage !== "elder" || hunger < HUNGER_FLATTEN_THRESHOLD ||
-      goingToSleep || isPlaying || toyBall.dragging ||
-      millis() < ballChaseUntil) return false;
+      goingToSleep || toyBall.dragging || movementState === "jump") return false;
   const seconds = constrain(deltaTime / 1000, 0, 0.05);
-  if (elderRestRemaining <= 0 || movementState === "jump") return false;
-  // A full three-second floor stop follows a short burst of autonomous hops.
-  elderRestRemaining = Math.max(0, elderRestRemaining - seconds);
+  if (elderHopPauseRemaining > 0) {
+    // Give each push-off a deliberate landing/settling beat, without slow gravity.
+    elderHopPauseRemaining = Math.max(0, elderHopPauseRemaining - seconds);
+    if (millis() < ballChaseUntil) ballChaseUntil += seconds * 1000;
+  } else {
+    if (isPlaying || millis() < ballChaseUntil || elderRestRemaining <= 0) return false;
+    // The longer pause after the complete burst remains three full seconds.
+    elderRestRemaining = Math.max(0, elderRestRemaining - seconds);
+  }
   if (adultApproach) adultApproach.until += seconds;
   floorVX = floorVY = jumpOffset = jumpVelocity = 0;
   movementState = "pause";
