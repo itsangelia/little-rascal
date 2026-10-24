@@ -66,6 +66,9 @@ let adultInvitingBall = false;
 // The archived teenager's mischievous refusals now belong to the adult stage.
 const ADULT_REFUSAL = { feed: 0.30, pet: 0.25, play: 0.25 };
 const YOUTH_BOREDOM = { resetSeconds: 8 };
+const YOUTH_REFUSAL_MOOD_LOSS = { bored: 3, angry: 5 };
+// Treat rounded-full bars as full despite one frame of passive drain.
+const YOUTH_FULL_THRESHOLD = 99.5;
 let youthInteractionClock = 0;
 let youthInteractionStreak = { action: null, count: 0, limit: 0, lastAt: -Infinity };
 let adultRefusalMood = "angry";
@@ -2228,8 +2231,8 @@ function drawPet() {
   }
 
   if (isAdultAngry()) {
-    targetAngle = adultRefusalMood === "bored"
-      ? sin(millis() * 0.01) * 0.025 : sin(millis() * 0.03) * 0.06;
+    targetAngle = adultRefusalMood === "bored" ? 0 : sin(millis() * 0.03) * 0.06;
+    if (adultRefusalMood === "bored") targetScaleX = targetScaleY = 1;
     if (adultReaction?.kind === "kick") {
       if (adultReaction.phase === "windup") {
         targetScaleX = 0.90;
@@ -2819,6 +2822,11 @@ function performPlay() {
   }
 
 
+  if (lifeStage === "adult" && isYouthNeedFull("play")) {
+    preparePetInteraction("play");
+    return;
+  }
+
   if (
     energy <= 10
   ) {
@@ -2933,7 +2941,7 @@ function updateActionTimer() {
 // SLEEP
 // ============================================================
 
-function startSleeping() {
+function startSleeping(playerRequested = false) {
   if (isDead) return;
 
 
@@ -2946,6 +2954,13 @@ function startSleeping() {
 
   }
 
+
+  if (playerRequested && lifeStage === "adult" && isYouthNeedFull("sleep")) {
+    if (isPooping || growthPopupOpen) return;
+    resetYouthInteractionStreak();
+    refuseYouthInteraction("sleep", "bored");
+    return;
+  }
 
   // Too sad:
   // stay crying instead of automatically sleeping.
@@ -4869,7 +4884,7 @@ function handleToolbarButton(
 
     ) {
 
-      startSleeping();
+      startSleeping(true);
 
     }
 
@@ -5407,7 +5422,7 @@ function recordYouthInteraction(action) {
   if (streak.action !== action || now - streak.lastAt >= YOUTH_BOREDOM.resetSeconds || now < streak.lastAt) {
     streak.action = action;
     streak.count = 0;
-    streak.limit = random() < 0.5 ? 2 : 3;
+    streak.limit = random() < 0.5 ? 1 : 2;
   }
   streak.count = min(streak.limit, streak.count + 1);
   streak.lastAt = now;
@@ -5417,6 +5432,40 @@ function recordYouthInteraction(action) {
 function isAdultAngry() {
   // The guide pauses the visible expression as well as the reaction clock.
   return lifeStage === "adult" && (helpPopupOpen ? helpOpenedAt : millis()) < adultAngryUntil;
+}
+
+function isYouthNeedFull(action) {
+  if (action === "feed") return hunger >= YOUTH_FULL_THRESHOLD;
+  if (action === "pet" || action === "play") return happiness >= YOUTH_FULL_THRESHOLD;
+  if (action === "sleep") return energy >= YOUTH_FULL_THRESHOLD;
+  return false;
+}
+
+function refuseYouthInteraction(action, mood) {
+  stopCurrentMovement();
+  adultApproach = null;
+  adultInvitingBall = false;
+  adultNextActionAt = companionshipSeconds + 12;
+  adultReaction = null;
+  adultAffectionUntil = 0;
+  isEating = isBeingPetted = isPlaying = false;
+  actionEndTime = playHopsRemaining = 0;
+  adultAngryUntil = millis() + 2000;
+  adultRefusalMood = mood;
+  // Charge once per refused request, never per frame or reaction phase.
+  happiness = constrain(happiness - YOUTH_REFUSAL_MOOD_LOSS[mood], 0, 100);
+  hearts.length = 0;
+  interactionMode = "none";
+  cursor(ARROW);
+  if (mood === "bored") {
+    // Unimpressed means staying still; only actual anger evades or kicks.
+    squashX = squashY = 1;
+    petAngle = 0;
+  } else {
+    if (action === "pet") startAdultEvade();
+    if (action === "play") startAdultKick();
+  }
+  return false;
 }
 
 // Youth may randomly refuse, or become bored by repeating the same interaction.
@@ -5439,21 +5488,14 @@ function preparePetInteraction(action, roll) {
   let repetitive = false;
   if (needsComfort) resetYouthInteractionStreak();
   else repetitive = recordYouthInteraction(action);
-  const refused = !needsComfort && (repetitive ||
+  const fullNeed = isYouthNeedFull(action);
+  const refused = !needsComfort && (fullNeed || repetitive ||
     (roll === undefined ? random() : roll) < (ADULT_REFUSAL[action] || 0));
   if (!refused) return true;
-  stopCurrentMovement();
-  adultAngryUntil = millis() + 2000;
-  adultRefusalMood = repetitive ? "bored" : "angry";
-  if (repetitive) hearts.length = 0;
-  interactionMode = "none";
-  cursor(ARROW);
-  if (action === "pet") startAdultEvade();
-  if (action === "play") startAdultKick();
-  return false;
+  return refuseYouthInteraction(action, fullNeed || repetitive ? "bored" : "angry");
 }
 
-// Refused petting jumps away; refused play ends in a contact-only angry kick.
+// Angry refusals jump away or kick on contact; bored refusals stay still.
 function startAdultEvade() {
   let awayX = groundX - mouseX;
   let awayY = (groundY - getPetBody().height / 2) - mouseY;
@@ -5601,7 +5643,8 @@ function mouseReleased() {
 
 function requestBallPlay() {
   if (isDead || isSleeping || goingToSleep || isPooping ||
-      isEating || isBeingPetted || isPetCrying() || energy <= 10) return;
+      isEating || isBeingPetted || isPetCrying()) return;
+  if (energy <= 10 && !(lifeStage === "adult" && isYouthNeedFull("play"))) return;
   if (!preparePetInteraction("play")) {
     ballChaseUntil = 0;
     return;
