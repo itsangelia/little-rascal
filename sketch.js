@@ -1828,8 +1828,10 @@ function getCurrentPetImage() {
     // Keep the elderly silhouette and creases even during distress or sleep.
     // Existing falling tears communicate crying without borrowing a younger body.
     if (isStinkCrying() || isPetCrying() || isSleeping) return elderSprites.tired;
+    // Seniors sigh while pursuing the ball, then brighten up for the actual kick.
+    if (!toyBall.dragging && millis() < ballChaseUntil) return elderSprites.tired;
     if (isEating || isBeingPetted || isPlaying || toyPlayAction ||
-        millis() < adultAffectionUntil || millis() < ballChaseUntil) return elderSprites.happy;
+        millis() < adultAffectionUntil) return elderSprites.happy;
     return energy < 30 ? elderSprites.tired : elderSprites.normal;
   }
   // Odor distress takes precedence over happy actions and teen refusal.
