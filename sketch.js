@@ -64,7 +64,7 @@ let adultActionCount = 0;
 let adultAffectionUntil = 0;
 let adultInvitingBall = false;
 // The archived teenager's mischievous refusals now belong to the adult stage.
-const ADULT_REFUSAL = { feed: 0.30, pet: 0.25, play: 0.25 };
+const ADULT_REFUSAL = { feed: 0.25, pet: 0.25, play: 0.25 };
 const YOUTH_BOREDOM = { resetSeconds: 8 };
 const YOUTH_REFUSAL_MOOD_LOSS = { bored: 3, angry: 5 };
 // Treat rounded-full bars as full despite one frame of passive drain.
@@ -1847,7 +1847,7 @@ function getCurrentPetImage() {
     if (isBeingPetted || millis() < adultAffectionUntil) return adultSprites.affectionate;
     if (isEating || isPlaying || toyPlayAction || (millis() < ballChaseUntil && !isPetCrying())) return adultSprites.happy;
     if (happiness < CRY_THRESHOLD) return adultSprites.crying;
-    if (happiness < 50) return adultSprites.angry;
+    // Anger belongs to a timed refusal, not a permanent low-mood face.
     return energy < 30 ? adultSprites.unimpressed : adultSprites.normal;
   }
   if (lifeStage === "elder") {
@@ -5424,9 +5424,10 @@ function recordYouthInteraction(action) {
     streak.count = 0;
     streak.limit = random() < 0.5 ? 1 : 2;
   }
-  streak.count = min(streak.limit, streak.count + 1);
+  // The first request is not a repetition. Count one or two further repeats.
+  streak.count = min(streak.limit + 1, streak.count + 1);
   streak.lastAt = now;
-  return streak.count >= streak.limit;
+  return streak.count > streak.limit;
 }
 
 function isAdultAngry() {
@@ -5488,11 +5489,14 @@ function preparePetInteraction(action, roll) {
   let repetitive = false;
   if (needsComfort) resetYouthInteractionStreak();
   else repetitive = recordYouthInteraction(action);
-  const fullNeed = isYouthNeedFull(action);
-  const refused = !needsComfort && (fullNeed || repetitive ||
-    (roll === undefined ? random() : roll) < (ADULT_REFUSAL[action] || 0));
-  if (!refused) return true;
-  return refuseYouthInteraction(action, fullNeed || repetitive ? "bored" : "angry");
+  if (needsComfort) return true;
+  if (isYouthNeedFull(action)) return refuseYouthInteraction(action, "bored");
+  // An eligible random angry refusal must remain reachable even during repetition.
+  if ((roll === undefined ? random() : roll) < (ADULT_REFUSAL[action] || 0)) {
+    return refuseYouthInteraction(action, "angry");
+  }
+  if (repetitive) return refuseYouthInteraction(action, "bored");
+  return true;
 }
 
 // Angry refusals jump away or kick on contact; bored refusals stay still.
