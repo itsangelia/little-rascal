@@ -68,13 +68,41 @@ function isOverElderPetBubble() {
 }
 
 function drawPettingHand(x, y) {
-  // Use the familiar palm-down petting symbol instead of a custom drawn palm.
+  // A soft four-finger cartoon glove matches the game's simple outlined art.
   const ctx = drawingContext;
   ctx.save();
-  ctx.font = '30px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("🫳", x, y);
+  ctx.translate(x, y);
+  ctx.rotate(-0.28);
+  ctx.scale(0.8, 0.8);
+  ctx.fillStyle = "#fff5df";
+  ctx.strokeStyle = "#715b40";
+  ctx.lineWidth = 2;
+  ctx.lineJoin = ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(-8, 12);
+  ctx.bezierCurveTo(-12, 9, -15, 5, -18, 1);
+  ctx.bezierCurveTo(-22, -5, -16, -9, -12, -4);
+  ctx.lineTo(-9, -1);
+  ctx.lineTo(-9, -12);
+  ctx.bezierCurveTo(-9, -19, -1, -19, -1, -12);
+  ctx.lineTo(-1, -15);
+  ctx.bezierCurveTo(-1, -22, 7, -22, 7, -15);
+  ctx.lineTo(7, -12);
+  ctx.bezierCurveTo(7, -19, 15, -18, 15, -11);
+  ctx.lineTo(15, -5);
+  ctx.bezierCurveTo(15, 5, 12, 10, 8, 13);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // One curved palm mark and a rounded cuff keep the tiny silhouette readable.
+  ctx.beginPath();
+  ctx.moveTo(-7, 3);
+  ctx.quadraticCurveTo(-1, -1, 5, 3);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.roundRect(-9, 10, 19, 7, 3);
+  ctx.fill();
+  ctx.stroke();
   ctx.restore();
 }
 
