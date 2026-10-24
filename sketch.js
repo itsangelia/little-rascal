@@ -612,6 +612,7 @@ function drawGameFrame() {
   if (interactionMode === "none" && !growthPopupOpen) {
     cursor(toyBall.dragging || isOverToyBall() || isOverHelpButton() ? HAND : ARROW);
   }
+  drawElderPetRequest();
   if (growthPopupOpen) drawGrowthPopup();
 
 }
@@ -2762,6 +2763,7 @@ function performFeed() {
 
 function performPet() {
   if (isDead || !preparePetInteraction("pet")) return;
+  fulfillElderPetRequest();
   if (!isEating && !isBeingPetted && !isPlaying && !isPooping &&
       !isSleeping && !goingToSleep) recordGrowthCare();
 
@@ -4705,6 +4707,8 @@ function mousePressed() {
   }
 
 
+  if (handleElderPetRequestClick()) return;
+
   if (isOverHelpButton()) {
     openHelpPopup();
     return;
@@ -5199,6 +5203,7 @@ function updateNeglect(elapsedSeconds = deltaTime / 1000) {
 
 function die(cause) {
   if (isDead) return;
+  elderPetRequests.active = null;
   adultReaction = null;
   adultAngryUntil = 0;
   adultRefusalMood = "angry";
@@ -5251,6 +5256,7 @@ function restartPet() {
   elderAgeSeconds = 0;
   resetPetNaming();
   resetElderMovement();
+  resetElderPetRequests();
   hatchingComplete = false;
   hatchStartedAt = null;
   hatchPhase = "idle";
@@ -5340,6 +5346,7 @@ function updateGrowth() {
   resetYouthInteractionStreak();
   elderAgeSeconds = 0;
   resetElderMovement();
+  resetElderPetRequests();
   growthFeeds = growthCare = 0;
   lastGrowthCareTime = -Infinity;
   adultNextActionAt = companionshipSeconds + 12;

@@ -24,12 +24,15 @@ async function initializeFarewellArtwork() {
 // Only active, visible gameplay ages the senior; dialogs and birth do not.
 function updateNaturalAging(seconds = deltaTime / 1000) {
   if (isDead || lifeStage !== "elder" || document.hidden) return;
-  elderAgeSeconds += constrain(seconds, 0, 0.25);
+  const activeSeconds = constrain(seconds, 0, 0.25);
+  elderAgeSeconds += activeSeconds;
+  updateElderPetRequests(activeSeconds);
   if (elderAgeSeconds < NATURAL_LIFESPAN_SECONDS) return;
   // Let the last hop land and finish ongoing care. Neglect retains priority.
   if (movementState === "jump" || isSleeping || goingToSleep || isEating ||
       isBeingPetted || isPlaying || isPooping || toyBall.dragging || toyPlayAction ||
       hunger <= 0 || happiness <= 0 || isStinkCrying()) return;
+  if (!elderPetRequestsFinished()) return;
   die("oldAge");
 }
 

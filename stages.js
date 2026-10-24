@@ -150,6 +150,7 @@ function initializeStagePreview() {
   if (stage !== "adult" && stage !== "elder") return;
   lifeStage = stage;
   resetElderMovement();
+  resetElderPetRequests();
   hatchingComplete = petHasBeenNamed = helpHasBeenShown = true;
   hatchPhase = "complete";
   adultNextActionAt = companionshipSeconds + 12;

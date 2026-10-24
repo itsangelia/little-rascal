@@ -4,7 +4,7 @@ Only natural old-age death enters the thank-you-letter ending. Starvation (8 sec
 
 ## Natural lifespan
 
-`NATURAL_LIFESPAN_SECONDS` in `ending.js` is initially 80 seconds after entering the senior stage. This is visible active gameplay time; birth, naming, help, growth announcements, hidden tabs and endings do not count. The clock resets on entering the stage and starting a new life. At the deadline, finish the last airborne hop and ongoing care or sleep before stopping. Zero hunger/mood or stinky waste defer natural death so neglect remains meaningful.
+`NATURAL_LIFESPAN_SECONDS` in `ending.js` is initially 80 seconds after entering the senior stage. This is visible active gameplay time; birth, naming, help, growth announcements, hidden tabs and endings do not count. The clock resets on entering the stage and starting a new life. At the deadline, finish the last airborne hop and ongoing care or sleep before stopping. Zero hunger/mood or stinky waste defer natural death so neglect remains meaningful. The senior now also gets three visible petting-request bubbles before natural death; if sleep or other activity delays these cues, the farewell waits until all three have appeared and the final cue is petted or expires. See `senior-petting-requests.md`.
 
 ## Animation and letter
 
