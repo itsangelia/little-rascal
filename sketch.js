@@ -85,6 +85,7 @@ let ballChaseUntil = 0;
 let ballChaseSpeed = 0;
 let ballChaseStride = 0;
 let ballChaseFacing = 1;
+let ballChaseSide = 0;
 let toyPlayAction = null;
 let lastBallRewardAt = -Infinity;
 
@@ -2223,9 +2224,9 @@ function drawPet() {
   if (toyPlayAction) {
     const windingUp = toyPlayAction.phase === "windup";
     const tapping = toyPlayAction.phase === "release";
-    targetScaleX = windingUp ? 0.98 : tapping ? 1.06 : 1;
-    targetScaleY = windingUp ? 1.02 : tapping ? 0.95 : 1;
-    targetAngle = toyPlayAction.direction * (windingUp ? -0.035 : tapping ? 0.055 : 0);
+    targetScaleX = windingUp ? 0.90 : tapping ? 1.15 : 1;
+    targetScaleY = windingUp ? 1.08 : tapping ? 0.90 : 1;
+    targetAngle = toyPlayAction.direction * (windingUp ? -0.10 : tapping ? 0.12 : 0);
   }
 
   if (petImg === hungryPetImg) {
@@ -2301,7 +2302,7 @@ function drawPet() {
 
   translate(
 
-    groundX,
+    groundX + toyKickOffsetX(),
 
     characterBottomY
 
@@ -2619,7 +2620,7 @@ function drawCryingTears(
 function stopCurrentMovement() {
   // Care and sleep cancel a pending toy pursuit as well as its kick pose.
   toyPlayAction = null;
-  ballChaseUntil = ballChaseSpeed = 0;
+  ballChaseUntil = ballChaseSpeed = ballChaseSide = 0;
 
   jumpOffset = 0;
 
@@ -4929,7 +4930,7 @@ function mouseOverPet() {
   const body = getPetBody();
   // Invert the same rotation used for drawing around the ground anchor.
   const angle = isSleeping ? 0.16 : petAngle;
-  const dx = mouseX - groundX;
+  const dx = mouseX - (groundX + toyKickOffsetX());
   const dy = mouseY - (groundY + jumpOffset);
   const localX = dx * cos(angle) + dy * sin(angle);
   const localY = -dx * sin(angle) + dy * cos(angle);
@@ -5454,6 +5455,7 @@ function requestBallPlay() {
   actionEndTime = 0;
   toyPlayAction = null;
   ballChaseSpeed = 65;
+  ballChaseSide = 0;
   ballChaseUntil = millis() + 8000;
 }
 
@@ -5465,6 +5467,7 @@ function updateToyBall() {
       !isSleeping && !goingToSleep && !isPetCrying() && !isEating &&
       !isBeingPetted && !isPooping && !isPlaying) {
     toyBall.demonstrated = true;
+    ballChaseSide = 0;
     ballChaseUntil = millis() + 8000;
   }
   if (toyBall.dragging) return;
@@ -5479,17 +5482,17 @@ function updateToyBall() {
 function updateBallChase() {
   if (millis() >= ballChaseUntil || toyBall.dragging || energy <= 10 ||
       millis() < teenAngryUntil) {
-    ballChaseSpeed = 0;
+    ballChaseSpeed = ballChaseSide = 0;
     if (movementState === "chase") { movementState = "pause"; pauseTimer = 12; }
     return false;
   }
-  if (petTouchesBall()) {
-    // Wait for the thrown toy to settle near the pet before one gentle kick.
-    if (toyBall.height <= 1) {
+  if (isInFriendlyToyReach()) {
+    // Wait beside the ball's floor position, without circling underneath a bounce.
+    if (toyBall.height <= 1 && petTouchesBall()) {
       stopCurrentMovement();
       movementState = "pause";
       toyBall.vx = toyBall.vy = toyBall.verticalSpeed = toyBall.height = 0;
-      toyPlayAction = { phase: "windup", elapsed: 0,
+      toyPlayAction = { phase: "windup", elapsed: 0, kicked: false,
         direction: toyBall.x >= groundX ? 1 : -1 };
     }
     movementState = "pause";
@@ -5517,13 +5520,17 @@ function updateToyPlayAction() {
   action.elapsed += constrain(deltaTime / 1000, 0, 0.05);
   floorVX = floorVY = jumpOffset = jumpVelocity = 0;
   movementState = "pause";
-  if (action.phase === "windup" && action.elapsed >= 0.18) {
+  if (action.phase === "windup" && action.elapsed >= 0.22) {
+    action.phase = "release";
+    action.elapsed = 0;
+  } else if (action.phase === "release" && !action.kicked && action.elapsed >= 0.06) {
+    // Apply the impulse as the pet leans forward, rather than before its kick.
     if (!petTouchesBall()) {
       toyPlayAction = null;
       ballChaseUntil = ballChaseSpeed = 0;
       return false;
     }
-    let dx = toyBall.x - groundX;
+    let dx = toyBall.x - (groundX + toyKickOffsetX());
     let dy = (toyBall.y - groundY) * 0.6;
     if (lifeStage === "adult" && adultInvitingBall) {
       dx = (mouseY >= FLOOR_TOP && mouseY <= FLOOR_BOTTOM ? mouseX : width / 2) - toyBall.x;
@@ -5546,9 +5553,8 @@ function updateToyPlayAction() {
     }
     ballChaseUntil = ballChaseSpeed = 0;
     adultInvitingBall = false;
-    action.phase = "release";
-    action.elapsed = 0;
-  } else if (action.phase === "release" && action.elapsed >= 0.22) {
+    action.kicked = true;
+  } else if (action.phase === "release" && action.elapsed >= 0.25) {
     action.phase = "rest";
     action.elapsed = 0;
   } else if (action.phase === "rest" && action.elapsed >= 0.7) {
@@ -5558,17 +5564,44 @@ function updateToyPlayAction() {
   return true;
 }
 
+// A small body lunge makes the existing squash-and-lean kick readable.
+function toyKickOffsetX() {
+  if (!toyPlayAction) return 0;
+  const action = toyPlayAction;
+  if (action.phase === "windup") return -action.direction * 2 * constrain(action.elapsed / 0.22, 0, 1);
+  if (action.phase === "release") return action.direction * 6 * sin(constrain(action.elapsed / 0.25, 0, 1) * PI);
+  return 0;
+}
+
+function isInFriendlyToyReach() {
+  if (toyBall.dragging || movementState === "jump" || abs(jumpOffset) > 1) return false;
+  const body = getPetBody();
+  return abs(toyBall.y - groundY) <= max(16, body.height * 0.4) &&
+    abs(toyBall.x - groundX) >= body.width * 0.20 && petToyOverlap(0, 0.82);
+}
+
 function approachToyBall(running = false) {
   // Running follows the moving ball; refusal kicks retain their existing hops.
   const body = getPetBody();
   const ballRadius = toyBall.radius * getScaleAtY(toyBall.y);
   const approach = body.width * 0.35 + ballRadius - 6;
   const targetY = toyBall.y + body.height / 2 - ballRadius;
+  if (running) {
+    // Choose one side for this chase; do not swap left and right every frame.
+    if (!ballChaseSide) ballChaseSide = groundX <= toyBall.x ? -1 : 1;
+    let target = ballPosition(toyBall.x + ballChaseSide * approach, targetY);
+    if (target.blocked || abs(target.x - toyBall.x) < body.width * 0.20) {
+      const opposite = ballPosition(toyBall.x - ballChaseSide * approach, targetY);
+      if (opposite.blocked || abs(opposite.x - toyBall.x) < body.width * 0.20) return false;
+      ballChaseSide *= -1;
+      target = opposite;
+    }
+    return runTowardToyBall(target);
+  }
   const side = groundX <= toyBall.x ? -1 : 1;
   for (const offset of [side * approach, -side * approach, side * approach * 0.8, -side * approach * 0.8]) {
     const target = ballPosition(toyBall.x + offset, targetY);
     if (!target.blocked) {
-      if (running) return runTowardToyBall(target);
       const dx = target.x - groundX;
       const dy = target.y - groundY;
       const ratio = min(1, 95 / max(sqrt(dx * dx + dy * dy), 1));
@@ -5604,7 +5637,7 @@ function runTowardToyBall(target) {
     groundY = next.y;
   }
   floorVX = floorVY = jumpOffset = jumpVelocity = 0;
-  ballChaseFacing = dx >= 0 ? 1 : -1;
+  if (abs(dx) > 4) ballChaseFacing = dx > 0 ? 1 : -1;
   ballChaseStride += moved * TWO_PI / 42;
   movementState = moved > 0.01 ? "chase" : "pause";
   pauseTimer = 8;
@@ -5659,12 +5692,16 @@ function getPetBody() {
 
 function petTouchesBall() {
   if (toyBall.dragging || toyBall.height > 18 || movementState === "jump" || abs(jumpOffset) > 1) return false;
+  return petToyOverlap((toyBall.height || 0) * getScaleAtY(toyBall.y));
+}
+
+function petToyOverlap(lift, limit = 1) {
   const body = getPetBody();
   const ballRadius = toyBall.radius * getScaleAtY(toyBall.y);
-  const dx = (toyBall.x - groundX) / (body.width * 0.48 + ballRadius);
-  const dy = (toyBall.y - ballRadius - (toyBall.height || 0) * getScaleAtY(toyBall.y) - (groundY - body.height / 2)) /
+  const dx = (toyBall.x - groundX - toyKickOffsetX()) / (body.width * 0.48 + ballRadius);
+  const dy = (toyBall.y - ballRadius - lift - (groundY - body.height / 2)) /
     (body.height * 0.45 + ballRadius);
-  return dx * dx + dy * dy <= 1;
+  return dx * dx + dy * dy <= limit;
 }
 
 // Refusals have distinct physical responses instead of a stationary face swap.
@@ -5809,6 +5846,7 @@ function updateAdultBehavior() {
   adultActionCount++;
   if (adultActionCount % 2 === 0) {
     adultInvitingBall = true;
+    ballChaseSide = 0;
     ballChaseUntil = millis() + 8000;
     return;
   }
