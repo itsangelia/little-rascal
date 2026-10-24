@@ -80,10 +80,10 @@ function helpHeading(title, subtitle) {
 }
 
 function helpDrawAbout() {
-  helpHeading("A little life, in your hands", "Care for Little Rascal. Adults may refuse food, petting or play.");
+  helpHeading("A little life, in your hands", "Young pets may refuse care or get bored with repeated interactions.");
   const stages = [
     { x: 235, img: petNormalImg, label: "LITTLE ONE" },
-    { x: 450, img: adultSprites.normal, label: "ADULT" },
+    { x: 450, img: adultSprites.normal, label: LIFE_STAGE_LABELS.adult.toUpperCase() },
     { x: 665, img: elderSprites.normal, label: "SENIOR" }
   ];
   for (const stage of stages) {

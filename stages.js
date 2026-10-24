@@ -77,7 +77,9 @@ function clearExteriorPaper(img) {
   img.updatePixels();
 }
 
+// Keep the existing artwork/state key; the second stage is displayed as Youth.
 const LIFE_STAGES = ["child", "adult", "elder"];
+const LIFE_STAGE_LABELS = { child: "Little One", adult: "Youth", elder: "Senior" };
 const CHILD_MODEL_SCALE = 0.85;
 
 function nextLifeStage() {

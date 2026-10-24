@@ -64,7 +64,11 @@ let adultActionCount = 0;
 let adultAffectionUntil = 0;
 let adultInvitingBall = false;
 // The archived teenager's mischievous refusals now belong to the adult stage.
-const ADULT_REFUSAL = { feed: 0.25, pet: 0.20, play: 0.20 };
+const ADULT_REFUSAL = { feed: 0.30, pet: 0.25, play: 0.25 };
+const YOUTH_BOREDOM = { resetSeconds: 8 };
+let youthInteractionClock = 0;
+let youthInteractionStreak = { action: null, count: 0, limit: 0, lastAt: -Infinity };
+let adultRefusalMood = "angry";
 let adultAngryUntil = 0;
 let adultReaction = null;
 
@@ -542,6 +546,9 @@ function drawGameFrame() {
 
   if (!isDead) {
     companionshipSeconds += constrain(deltaTime / 1000, 0, 0.25);
+    if (lifeStage === "adult" && !document.hidden) {
+      youthInteractionClock += constrain(deltaTime / 1000, 0, 0.25);
+    }
     updateStats();
     updateNeglect();
     if (!isDead) updateNaturalAging();
@@ -1832,7 +1839,7 @@ function getCurrentPetImage() {
   if (isHungryPose()) return hungryPetImg;
   if (lifeStage === "adult") {
     if (isStinkCrying()) return adultSprites.crying;
-    if (isAdultAngry()) return adultSprites.angry;
+    if (isAdultAngry()) return adultRefusalMood === "bored" ? adultSprites.unimpressed : adultSprites.angry;
     if (isSleeping) return adultSprites.sleepy;
     if (isBeingPetted || millis() < adultAffectionUntil) return adultSprites.affectionate;
     if (isEating || isPlaying || toyPlayAction || (millis() < ballChaseUntil && !isPetCrying())) return adultSprites.happy;
@@ -2221,7 +2228,8 @@ function drawPet() {
   }
 
   if (isAdultAngry()) {
-    targetAngle = sin(millis() * 0.03) * 0.06;
+    targetAngle = adultRefusalMood === "bored"
+      ? sin(millis() * 0.01) * 0.025 : sin(millis() * 0.03) * 0.06;
     if (adultReaction?.kind === "kick") {
       if (adultReaction.phase === "windup") {
         targetScaleX = 0.90;
@@ -2956,6 +2964,8 @@ function startSleeping() {
   adultInvitingBall = false;
   adultReaction = null;
   adultAngryUntil = 0;
+  adultRefusalMood = "angry";
+  resetYouthInteractionStreak();
 
   interactionMode =
     "none";
@@ -3378,6 +3388,7 @@ function cleanPoopAtMouse() {
 
 
       recordGrowthCare();
+      if (lifeStage === "adult") resetYouthInteractionStreak();
 
       poops.splice(
         i,
@@ -5157,6 +5168,8 @@ function die(cause) {
   if (isDead) return;
   adultReaction = null;
   adultAngryUntil = 0;
+  adultRefusalMood = "angry";
+  resetYouthInteractionStreak();
   adultApproach = null;
   adultInvitingBall = false;
   toyBall.dragging = false;
@@ -5199,6 +5212,8 @@ function drawDeadPet() {
 function restartPet() {
   adultReaction = null;
   adultAngryUntil = 0;
+  adultRefusalMood = "angry";
+  resetYouthInteractionStreak();
   farewell = null;
   elderAgeSeconds = 0;
   resetPetNaming();
@@ -5288,6 +5303,8 @@ function updateGrowth() {
   lifeStage = nextStage;
   adultReaction = null;
   adultAngryUntil = 0;
+  adultRefusalMood = "angry";
+  resetYouthInteractionStreak();
   elderAgeSeconds = 0;
   resetElderMovement();
   growthFeeds = growthCare = 0;
@@ -5350,7 +5367,7 @@ function drawGrowthPopup() {
   textStyle(NORMAL);
   textSize(20);
   fill(101, 115, 83);
-  const growthMessage = petName + (lifeStage === "elder" ? " is now a senior." : " is now an adult.");
+  const growthMessage = petName + " has reached the " + LIFE_STAGE_LABELS[lifeStage].toLowerCase() + " stage.";
   drawFittedPetText(growthMessage, width / 2, 395, 470, 20);
   textSize(16);
   text("Your care helped them grow.", width / 2, 425);
@@ -5377,12 +5394,32 @@ function closeGrowthPopup() {
   cursor(ARROW);
 }
 
+function resetYouthInteractionStreak() {
+  youthInteractionClock = 0;
+  youthInteractionStreak = { action: null, count: 0, limit: 0, lastAt: -Infinity };
+}
+
+function recordYouthInteraction(action) {
+  if (!(action in ADULT_REFUSAL)) return false;
+  // Active gameplay time excludes the guide, growth popups and hidden-tab gaps.
+  const now = youthInteractionClock;
+  const streak = youthInteractionStreak;
+  if (streak.action !== action || now - streak.lastAt >= YOUTH_BOREDOM.resetSeconds || now < streak.lastAt) {
+    streak.action = action;
+    streak.count = 0;
+    streak.limit = random() < 0.5 ? 2 : 3;
+  }
+  streak.count = min(streak.limit, streak.count + 1);
+  streak.lastAt = now;
+  return streak.count >= streak.limit;
+}
+
 function isAdultAngry() {
   // The guide pauses the visible expression as well as the reaction clock.
   return lifeStage === "adult" && (helpPopupOpen ? helpOpenedAt : millis()) < adultAngryUntil;
 }
 
-// Each adult care attempt rolls independently; younger and older stages accept normally.
+// Youth may randomly refuse, or become bored by repeating the same interaction.
 function preparePetInteraction(action, roll) {
   if (!isMatureStage()) return true;
   if (isDead || growthPopupOpen || isSleeping || goingToSleep || isPooping) return false;
@@ -5396,12 +5433,19 @@ function preparePetInteraction(action, roll) {
   if (adultReaction) stopCurrentMovement();
   adultReaction = toyPlayAction = null;
   adultAngryUntil = adultAffectionUntil = 0;
+  adultRefusalMood = "angry";
   // Critical mood must always be recoverable through comforting petting.
   const needsComfort = action === "pet" && happiness <= CRY_THRESHOLD;
-  const refused = !needsComfort && (roll === undefined ? random() : roll) < (ADULT_REFUSAL[action] || 0);
+  let repetitive = false;
+  if (needsComfort) resetYouthInteractionStreak();
+  else repetitive = recordYouthInteraction(action);
+  const refused = !needsComfort && (repetitive ||
+    (roll === undefined ? random() : roll) < (ADULT_REFUSAL[action] || 0));
   if (!refused) return true;
   stopCurrentMovement();
   adultAngryUntil = millis() + 2000;
+  adultRefusalMood = repetitive ? "bored" : "angry";
+  if (repetitive) hearts.length = 0;
   interactionMode = "none";
   cursor(ARROW);
   if (action === "pet") startAdultEvade();

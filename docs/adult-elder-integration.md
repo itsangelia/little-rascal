@@ -1,4 +1,6 @@
-# Adult and elderly stage integration
+# Youth and elderly stage integration
+
+The second stage is now displayed as Youth (青年); the internal `adult` key, original artwork and legacy preview URL remain for compatibility. See `adult-refusals.md` for the current refusal and repetition rules.
 
 The owner approved the current adult/elderly appearance overview and requested both later stages in the playable game on 24 October 2026 (Perth time).
 

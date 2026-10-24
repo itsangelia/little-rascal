@@ -57,6 +57,7 @@ These instructions apply to the entire repository and all future Codex tasks.
 
 ## Adult refusal behavior
 
-- The former teenage refusals now apply only to adults: independent 25% refusal for feeding and 20% for petting or playing, including player-thrown toys. Keep the adult artwork and red anger mark. The life stages remain child → adult → elder.
+- The former teenage refusals now apply only to adults: 30% baseline refusal for feeding and 25% for petting or playing, including player-thrown toys. Keep the adult artwork and red anger mark. The life stages remain child → adult → elder.
 - Rejected petting triggers an angry escape hop; rejected play approaches the toy and kicks it away only on actual contact. A refusal gives no hunger/mood/care reward and costs no play energy. Keep accepted play's existing run, gentle tap and 32/5 energy costs.
-- Critical-mood petting remains accepted. Smelly-waste crying and the hungry pose keep their visual priority. Sleep, death, stage changes and restart clear reactions; the help popup pauses reactions and their anger deadline.
+- The second stage is displayed as Youth (青年); keep the internal `adult` key and approved artwork. An eligible request streak becomes boring on its randomly chosen second or third repeat: use the unimpressed face and refuse without rewards/costs. Toolbar play and floor-ball throws share one play streak; autonomous behavior never counts. Switching care, successful cleaning, or eight active seconds between attempts resets it. Sleep/death/growth/restart also clear it.
+- Critical-mood petting remains accepted and clears the repeated-petting streak. Smelly-waste crying and the hungry pose keep their visual priority. Sleep, death, stage changes and restart clear reactions; the help popup pauses reactions and their anger deadline.
