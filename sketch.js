@@ -2003,7 +2003,7 @@ function drawPet() {
     depthScale,
 
     17 *
-    depthScale * (lifeStage === "child" ? CHILD_MODEL_SCALE : 1)
+    depthScale * getPetModelScale()
 
   );
 
@@ -5232,8 +5232,8 @@ function die(cause) {
 
 function drawDeadPet() {
   const depth = getScaleAtY(groundY);
-  const stageScale = lifeStage === "child" ? CHILD_MODEL_SCALE : 1;
-  // Match the visible child's size and baseline without changing its original art.
+  const stageScale = getPetModelScale();
+  // Match the current stage size and baseline without changing the original art.
   const artWidth = BASE_PET_WIDTH * depth * (651 / 2732) * stageScale;
   const artHeight = artWidth * DEATH_ART.height / DEATH_ART.width;
   const bottomY = groundY;
@@ -5940,11 +5940,12 @@ function petToyOverlap(lift, limit = 1) {
 function petRenderFactor(img) {
   if (img === hungryPetImg) {
     const stageWidth = lifeStage === "child" ? 651 : 771;
-    const stageScale = lifeStage === "child" ? CHILD_MODEL_SCALE : 1;
+    const stageScale = getPetModelScale();
     return (BASE_PET_WIDTH * stageWidth / 2732) * 1.18 * stageScale / HUNGRY_ART.width;
   }
   if (isMatureArtwork(img)) {
-    return (BASE_PET_WIDTH * GROWN_MODEL_WIDTH_FACTOR) / img.width;
+    const stageScale = Object.values(elderSprites).includes(img) ? ELDER_MODEL_SCALE : 1;
+    return (BASE_PET_WIDTH * GROWN_MODEL_WIDTH_FACTOR * stageScale) / img.width;
   }
   const stageScale = [petNormalImg, petHappyImg, petCryImg].includes(img) ? CHILD_MODEL_SCALE : 1;
   return BASE_PET_WIDTH * stageScale / img.width;

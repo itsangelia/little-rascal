@@ -43,7 +43,7 @@ These instructions apply to the entire repository and all future Codex tasks.
 
 ## Current size and play balance
 
-- Child world artwork renders at 85% of its former width and height, including its birth reveal, hungry and death poses. Preserve image proportions and keep its hitbox and shadow aligned. Guide/naming portraits and the other life stages keep their existing sizes.
+- Child world artwork renders at 85% of its former width and height, including its birth reveal, hungry and death poses. Preserve image proportions and keep its hitbox and shadow aligned. Senior world artwork is now 115% of its former width and height, including its hungry/death poses and natural farewell, with aligned shadows and hitboxes. Guide/naming portraits and the Youth model keep their existing sizes.
 - A rewarded physical toy interaction costs 5 energy points; accepted toolbar PLAY costs 32. Preserve the existing reward cooldown and energy clamping. Refused play does not charge energy. See [docs/play-balance.md](docs/play-balance.md).
 
 ## Approved farewell and rebirth
@@ -53,7 +53,7 @@ These instructions apply to the entire repository and all future Codex tasks.
 - Never use the crossed-eyes death/result illustration as the natural farewell body. Reuse the current senior character art; gradual squash is the requested animation, not a change to source artwork or normal model proportions.
 - Reuse F directly from `design-options/farewell-options.png`; preserve its closed eyes, wings, cheeks, head star and ghost silhouette. Keep all original art files intact.
 - Render the letter as an unfolded cream sheet with a folded corner, faint rules and serif text. Keep the exact owner-provided `FAREWELL_LETTER` text, including “Dear Friend,”, “PS:” and “Love, Little Rascal”. Do not add a cause, stage or statistics to the letter.
-- Pause care, movement, growth and lifetime counters throughout farewell, the letter and rebirth. Neither the envelope nor the letter advances automatically. Click the envelope to open the letter (Enter/Space also work); keep the letter open until the player closes it. Keep music available. The dedicated `previews/farewell/` page demonstrates natural death; normal game pages begin at the egg.
+- Pause care, movement, growth and lifetime counters throughout farewell, the letter and rebirth. Neither the envelope nor the letter advances automatically. When the envelope appears, clear all waste and hide the toy ball through the letter and rebirth; the new life restores the toy. Click the envelope to open the letter (Enter/Space also work); keep the letter open until the player closes it. Keep music available. The dedicated `previews/farewell/` page demonstrates natural death; normal game pages begin at the egg.
 
 ## Adult refusal behavior
 

@@ -81,6 +81,12 @@ function clearExteriorPaper(img) {
 const LIFE_STAGES = ["child", "adult", "elder"];
 const LIFE_STAGE_LABELS = { child: "Little One", adult: "Youth", elder: "Senior" };
 const CHILD_MODEL_SCALE = 0.85;
+const ELDER_MODEL_SCALE = 1.15;
+
+function getPetModelScale() {
+  if (lifeStage === "child") return CHILD_MODEL_SCALE;
+  return lifeStage === "elder" ? ELDER_MODEL_SCALE : 1;
+}
 
 function nextLifeStage() {
   const index = LIFE_STAGES.indexOf(lifeStage);

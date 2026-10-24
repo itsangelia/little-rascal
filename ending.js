@@ -41,7 +41,7 @@ function startFarewell() {
   const art = getPetArtwork(sprite);
   const bodyWidth = art.width * petRenderFactor(sprite) * getScaleAtY(groundY);
   farewell = {
-    phase: "still", elapsed: 0, x: groundX, y: groundY, bodyWidth, sprite, art,
+    phase: "still", elapsed: 0, floorCleared: false, x: groundX, y: groundY, bodyWidth, sprite, art,
     name: petName
   };
 }
@@ -82,23 +82,24 @@ function updateFarewell(seconds = deltaTime / 1000) {
   }
   farewell.phase = next;
   farewell.elapsed = 0;
+  if (next === "envelope") {
+    // Leave only the envelope once the soul has finished scattering.
+    poops.length = 0;
+    toyBall.dragging = false;
+    toyBall.vx = toyBall.vy = 0;
+    farewell.floorCleared = true;
+  }
 }
 
 function drawFarewellRoom() {
   imageMode(CORNER);
   image(mapImg, 0, 0, width, height);
-  const gathering = farewell.phase === "gather" || farewell.phase === "newborn";
-  const fade = farewell.phase === "newborn" ? 0 : gathering
-    ? 1 - hatchSmooth(farewell.elapsed / FAREWELL_SECONDS.gather) : 1;
-  if (fade > 0) {
-    push();
-    tint(255, fade * 255);
-    const objects = poops.map(poop => ({ y: poop.y, draw: () => drawPoop(poop) }));
-    objects.push({ y: toyBall.y, draw: drawToyBall });
-    objects.sort((a, b) => a.y - b.y);
-    for (const object of objects) object.draw();
-    pop();
-  }
+  // Keep the floor empty through the letter and rebirth; restart restores the toy.
+  if (farewell.floorCleared) return;
+  const objects = poops.map(poop => ({ y: poop.y, draw: () => drawPoop(poop) }));
+  objects.push({ y: toyBall.y, draw: drawToyBall });
+  objects.sort((a, b) => a.y - b.y);
+  for (const object of objects) object.draw();
 }
 
 function farewellBodyShape(softness) {
