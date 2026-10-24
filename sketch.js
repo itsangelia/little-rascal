@@ -900,6 +900,11 @@ function updateMovement() {
   // ==========================================================
 
   if (updateElderRest()) return;
+  if (lifeStage === "elder" && elderWalkTarget &&
+      (millis() < ballChaseUntil || (hunger < HUNGER_FLATTEN_THRESHOLD && !goingToSleep && !isPlaying))) {
+    cancelElderWalk();
+  }
+  if (updateElderWalk()) return;
 
   if (
     movementState ===
@@ -1046,7 +1051,7 @@ function updatePhysicsJump() {
 
   let frameScale =
     deltaTime /
-    16.6667 * petMovementFactor();
+    16.6667;
 
 
   // ==========================================================
@@ -1068,7 +1073,7 @@ function updatePhysicsJump() {
   // ==========================================================
 
   jumpVelocity +=
-    gravity * petHopFactor() *
+    gravity *
     frameScale;
 
 
@@ -1208,19 +1213,19 @@ function findRandomWalkableTarget(
 
 
   let minimumDistance =
-    fast
+    lifeStage === "elder" ? 18 : fast
       ? 55
       : 70;
 
 
   let maximumXDistance =
-    fast
+    lifeStage === "elder" ? (fast ? 44 : 32) : fast
       ? 140
       : 120;
 
 
   let maximumYDistance =
-    fast
+    lifeStage === "elder" ? (fast ? 28 : 22) : fast
       ? 95
       : 80;
 
@@ -1356,6 +1361,10 @@ function startJumpTo(
 
 ) {
 
+  if (lifeStage === "elder" && !isPlaying) {
+    startElderWalk(targetX, targetY);
+    return;
+  }
   power *= petHopFactor();
 
   let flightFrames =
@@ -1365,7 +1374,7 @@ function startJumpTo(
       power
     ) /
 
-    (gravity * petHopFactor());
+    gravity;
 
 
   flightFrames =
@@ -1693,7 +1702,8 @@ function getFloorBounds(y) {
 
 function isBlockedPosition(
   x,
-  y
+  y,
+  allowBed = false
 ) {
 
 
@@ -1716,7 +1726,7 @@ function isBlockedPosition(
 
   if (
 
-    x > 565 &&
+    !allowBed && x > 565 &&
 
     x < 755 &&
 
@@ -2241,6 +2251,19 @@ function drawPet() {
     targetAngle = ballChaseFacing * 0.025;
   }
 
+  if (lifeStage === "elder" &&
+      (movementState === "elderWalk" || movementState === "chase")) {
+    const effort = sin(elderStridePhase * PI);
+    const facing = movementState === "chase" ? ballChaseFacing : elderWalkFacing;
+    targetScaleX = 1 + effort * 0.012;
+    targetScaleY = 1 - effort * 0.01;
+    targetAngle = facing * effort * 0.012;
+  }
+  if (lifeStage === "elder" && movementState === "land" && !isPlaying) {
+    targetScaleX = targetScaleY = 1;
+    targetAngle = 0;
+  }
+
   if (toyPlayAction) {
     const windingUp = toyPlayAction.phase === "windup";
     const tapping = toyPlayAction.phase === "release";
@@ -2310,7 +2333,7 @@ function drawPet() {
     groundY +
 
     jumpOffset - (movementState === "chase" ? abs(sin(ballChaseStride)) *
-      (lifeStage === "elder" ? 1 : 2.5) : 0);
+      (lifeStage === "elder" ? 0 : 2.5) : 0);
 
 
 
@@ -2639,6 +2662,7 @@ function drawCryingTears(
 // ============================================================
 
 function stopCurrentMovement() {
+  cancelElderWalk();
   // Care and sleep cancel a pending toy pursuit as well as its kick pose.
   toyPlayAction = null;
   ballChaseUntil = ballChaseSpeed = ballChaseSide = 0;
@@ -5436,11 +5460,11 @@ function isOverToyBall() {
     toyBall.radius * getScaleAtY(toyBall.y) + 8;
 }
 
-function ballPosition(x, y) {
+function ballPosition(x, y, allowBed = false) {
   y = constrain(y, FLOOR_TOP + 24, FLOOR_BOTTOM - 22);
   const bounds = getFloorBounds(y);
   x = constrain(x, bounds.left + 24, bounds.right - 24);
-  return { x, y, blocked: isBlockedPosition(x, y) };
+  return { x, y, blocked: isBlockedPosition(x, y, allowBed) };
 }
 
 function mouseDragged() {
@@ -5483,6 +5507,7 @@ function requestBallPlay() {
     return;
   }
   // A thrown toy takes priority over the toolbar's remaining random play hops.
+  cancelElderWalk();
   isPlaying = false;
   playHopsRemaining = 0;
   actionEndTime = 0;
@@ -5655,7 +5680,9 @@ function approachToyBall(running = false) {
 function runTowardToyBall(target) {
   const dx = target.x - groundX, dy = target.y - groundY;
   const distance = Math.hypot(dx, dy);
-  const travel = min(distance, max(65 * petMovementFactor(), ballChaseSpeed) * constrain(deltaTime / 1000, 0, 0.05));
+  const seconds = constrain(deltaTime / 1000, 0, 0.05);
+  const stride = lifeStage === "elder" ? elderStrideSpeed(seconds) : 1;
+  const travel = min(distance, max(65 * petMovementFactor(), ballChaseSpeed) * stride * seconds);
   const steps = max(1, ceil(travel / 5));
   let moved = 0;
   for (let i = 0; i < steps && distance > 0.1; i++) {

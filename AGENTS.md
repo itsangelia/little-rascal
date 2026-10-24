@@ -32,7 +32,7 @@ These instructions apply to the entire repository and all future Codex tasks.
 - Use the approved artwork and expression choices in [design-options/elder-approved.md](design-options/elder-approved.md) for future elderly-stage work.
 - Preserve the selected A body, line style, two stars and eye-corner creases. The approved expressions are kind (A), tired sigh (F), and happy with the baby happy mouth while retaining A's eyes and creases.
 - The integrated growth sequence is child → teenager → adult → elder. Each transition uses two effective feeds and two other care actions, followed by the next waking. Elder is the final growth stage; do not add automatic old-age death without a separate request.
-- Senior movement uses 40% of the younger stages' speed, lower hops, and approximately 30% of autonomous activity time resting on the floor. Explicit care, sleep and player-started ball pursuit interrupt these scheduled rests; keep the sigh expression during pursuit and the contact-timed gentle kick.
+- Senior movement uses grounded short steps with normal-cadence weight shifts and approximately 30% autonomous rest time. Do not scale the physics timestep or reduce gravity to imitate aging: the owner rejected the slow-motion effect. Normal wandering, approaches and bed travel stay grounded; explicit play may use a brief low hop with normal gravity. Keep the sigh during pursuit, the contact-timed gentle kick, and responsive care/sleep during rests.
 
 ## Approved adult appearance
 
