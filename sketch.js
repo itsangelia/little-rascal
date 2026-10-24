@@ -257,10 +257,14 @@ function isHungryPose() {
 }
 
 
-// Below 30 mood:
-// Pet cries and stops moving.
+// Youth cries below 25 mood; the other stages retain their threshold of 30.
 
 const CRY_THRESHOLD = 30;
+const YOUTH_MOOD = { cry: 25, angry: 40 };
+
+function getCryThreshold() {
+  return lifeStage === "adult" ? YOUTH_MOOD.cry : CRY_THRESHOLD;
+}
 
 
 // Extra mood loss when hungry
@@ -628,7 +632,7 @@ function isPetCrying() {
 
   return (
 
-    happiness < CRY_THRESHOLD &&
+    happiness < getCryThreshold() &&
 
     !isSleeping &&
 
@@ -816,6 +820,20 @@ function updateStats() {
 // ============================================================
 
 function updateMovement() {
+  // An awake youth below 25 mood stops even midway through a chase or bed route.
+  if (lifeStage === "adult" && happiness < YOUTH_MOOD.cry && !isSleeping) {
+    if (goingToSleep) growthSleepPending = false;
+    goingToSleep = false;
+    adultApproach = null;
+    adultInvitingBall = false;
+    adultReaction = null;
+    adultAngryUntil = 0;
+    stopCurrentMovement();
+    isPlaying = false;
+    playHopsRemaining = 0;
+    movementState = "pause";
+    return;
+  }
   if (updateAdultReaction()) return;
   if (isAdultAngry() &&
       !isSleeping && !goingToSleep) return;
@@ -1842,12 +1860,12 @@ function getCurrentPetImage() {
   if (isHungryPose()) return hungryPetImg;
   if (lifeStage === "adult") {
     if (isStinkCrying()) return adultSprites.crying;
-    if (isAdultAngry()) return adultRefusalMood === "bored" ? adultSprites.unimpressed : adultSprites.angry;
     if (isSleeping) return adultSprites.sleepy;
+    if (happiness < YOUTH_MOOD.cry) return adultSprites.crying;
+    if (isAdultAngry()) return adultRefusalMood === "bored" ? adultSprites.unimpressed : adultSprites.angry;
+    if (happiness < YOUTH_MOOD.angry) return adultSprites.angry;
     if (isBeingPetted || millis() < adultAffectionUntil) return adultSprites.affectionate;
     if (isEating || isPlaying || toyPlayAction || (millis() < ballChaseUntil && !isPetCrying())) return adultSprites.happy;
-    if (happiness < CRY_THRESHOLD) return adultSprites.crying;
-    // Anger belongs to a timed refusal, not a permanent low-mood face.
     return energy < 30 ? adultSprites.unimpressed : adultSprites.normal;
   }
   if (lifeStage === "elder") {
@@ -1864,7 +1882,7 @@ function getCurrentPetImage() {
   if (isStinkCrying()) return petCryImg;
   if (millis() < ballChaseUntil && !isSleeping && !goingToSleep && !isPetCrying()) return petHappyImg;
   if (isEating || isBeingPetted || isPlaying || toyPlayAction) return petHappyImg;
-  return happiness < CRY_THRESHOLD ? petCryImg : petNormalImg;
+  return happiness < getCryThreshold() ? petCryImg : petNormalImg;
 }
 
 // Draw room objects in floor-depth order.
@@ -2814,7 +2832,7 @@ function performPlay() {
 
   if (
     happiness <
-    CRY_THRESHOLD
+    getCryThreshold()
   ) {
 
     return;
@@ -2967,7 +2985,7 @@ function startSleeping(playerRequested = false) {
 
   if (
     happiness <
-    CRY_THRESHOLD
+    getCryThreshold()
   ) {
 
     return;
@@ -5485,7 +5503,7 @@ function preparePetInteraction(action, roll) {
   adultAngryUntil = adultAffectionUntil = 0;
   adultRefusalMood = "angry";
   // Critical mood must always be recoverable through comforting petting.
-  const needsComfort = action === "pet" && happiness <= CRY_THRESHOLD;
+  const needsComfort = action === "pet" && happiness <= getCryThreshold();
   let repetitive = false;
   if (needsComfort) resetYouthInteractionStreak();
   else repetitive = recordYouthInteraction(action);

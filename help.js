@@ -106,10 +106,7 @@ function helpDrawAbout() {
     line(x + 10, 309, x + 4, 315);
   }
   noStroke();
-  textStyle(BOLD);
-  textSize(17);
   fill(111, 91, 60);
-  text("Two useful feeds + two other care actions", width / 2, 419);
   textStyle(NORMAL);
   textSize(15);
   text("Pet, play or clean. Then let them sleep — they grow on waking.", width / 2, 447);

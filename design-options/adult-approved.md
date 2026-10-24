@@ -8,7 +8,7 @@ After reviewing the eight-image overview, the owner requested that both later st
 
 Adult refusals now reuse the archived teenager behavior: 25% for feeding, petting or playing. This second stage is now displayed as Youth (青年), retaining the original artwork and internal `adult` state key. Repeating one care action becomes boring after one or two repeats (the second or third total attempt; the first request is not a repeat), showing unimpressed, staying still and rejecting it (−3 mood once); switch actions or wait eight active seconds to reset. Full matching need bars also cause a stationary unimpressed refusal. Random refusal temporarily uses the adult angry face with the red anger mark (−5 mood once); rejected petting hops away and rejected play kicks the toy away on contact. Critical-mood petting remains available. Source PNGs are unchanged.
 
-Normal is the default; anger is limited to timed refusals/reactions, and low energy below 30 uses unimpressed. Mood 30–49 no longer holds the angry face. Feeding, petting, playing and affectionate approaches use happy. Critical mood or smelly waste uses crying. Sleep reuses unimpressed with the existing Z animation. The shared hungry pose still takes priority below 30 hunger.
+Normal is the default from 40 mood upward; youth mood 25–39 uses angry, and below 25 uses crying and stops movement. Timed refusal faces still apply outside critical crying. Low energy below 30 uses unimpressed. Child and senior crying thresholds remain 30. Feeding, petting, playing and affectionate approaches use happy. Critical mood or smelly waste uses crying. Sleep reuses unimpressed with the existing Z animation. The shared hungry pose still takes priority below 30 hunger.
 
 ## Confirmed appearance
 
