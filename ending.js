@@ -64,8 +64,8 @@ function farewellNoise(i) {
 function updateFarewell(seconds = deltaTime / 1000) {
   if (!farewell || farewell.phase === "letter" || document.hidden) return;
   if (farewell.phase === "envelope") {
-    // Fade in once, then wait indefinitely for a deliberate open action.
-    farewell.elapsed = min(0.8, farewell.elapsed + constrain(seconds, 0, 0.1));
+    // Keep a visible-time clock for the idle sway while waiting for a click.
+    farewell.elapsed += constrain(seconds, 0, 0.1);
     return;
   }
   farewell.elapsed += constrain(seconds, 0, 0.1);
@@ -192,7 +192,11 @@ function drawFarewellEnvelope() {
   noStroke();
   fill(96, 77, 53, opacity * 25);
   ellipse(0, 29, 86, 10);
-  rotate(-0.055);
+  // Rock gently around the bottom edge; the floor shadow stays planted.
+  const sway = sin(farewell.elapsed * TWO_PI / 2.8) * 0.03 * opacity;
+  translate(0, 27);
+  rotate(-0.055 + sway);
+  translate(0, -27);
   // A cream paper envelope with a folded flap and the pet's little star seal.
   stroke(174, 143, 95, opacity * 230);
   strokeWeight(1.4);

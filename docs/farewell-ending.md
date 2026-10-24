@@ -12,7 +12,7 @@ The actual senior model stands on the floor for 3 seconds. It then gently soften
 
 The softened body dissolves for 3 seconds. The existing approved F soul rises for 3.8 seconds and scatters into stars for 1.8 seconds. It is cropped from the original concept sheet with its paper removed at runtime.
 
-After the soul scatters, a cream envelope with a star seal fades in on the floor where the pet stood. The envelope waits indefinitely; click it (or press Enter/Space) to open the letter. Clicking elsewhere does not advance the ending. Care, needs, age and lifetime remain paused while it waits.
+After the soul scatters, a cream envelope with a star seal fades in on the floor where the pet stood. The envelope gently rocks about its bottom edge (±1.7° every 2.8 seconds), with its shadow anchored and its click target stable. The sway uses visible active time and stops when the letter opens. The envelope waits indefinitely; click it (or press Enter/Space) to open the letter. Clicking elsewhere does not advance the ending. Care, needs, age and lifetime remain paused while it waits.
 
 The thank-you letter uses the owner's exact seven text lines in `FAREWELL_LETTER`. It resembles unfolded cream stationery with a folded corner, faint rules and serif type. No cause, stage or statistics appear. It waits indefinitely for CLOSE LETTER, Enter, Space or Escape. The music control remains usable.
 
