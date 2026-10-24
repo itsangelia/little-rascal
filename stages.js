@@ -92,100 +92,25 @@ function isMatureArtwork(img) {
   return Object.values(adultSprites).includes(img) || Object.values(elderSprites).includes(img);
 }
 
-const ELDER_MOVEMENT = { speedFactor: 0.4, playHopPower: 0.55, walkSpeed: 34,
-  strideSeconds: 0.34, restFraction: 0.30, activeSeconds: 7 };
+const ELDER_MOVEMENT = { speedFactor: 0.4, hopPower: 0.65, restFraction: 0.30, activeSeconds: 1.4 };
 let elderActiveSeconds = 0;
 let elderRestRemaining = 0;
-let elderWalkTarget = null;
-let elderStridePhase = 0;
-let elderWalkFacing = 1;
 
 function petMovementFactor() {
   return lifeStage === "elder" ? ELDER_MOVEMENT.speedFactor : 1;
 }
 
 function petHopFactor() {
-  return lifeStage === "elder" ? ELDER_MOVEMENT.playHopPower : 1;
+  return lifeStage === "elder" ? ELDER_MOVEMENT.hopPower : 1;
 }
 
 function ballPursuitMilliseconds() {
-  // A slower senior still needs enough time to reach a toy across the room.
+  // Small senior hops need enough time to reach a player-thrown toy.
   return lifeStage === "elder" ? 20000 : 8000;
 }
 
 function resetElderMovement() {
   elderActiveSeconds = elderRestRemaining = 0;
-  cancelElderWalk();
-}
-
-function cancelElderWalk() {
-  elderWalkTarget = null;
-  elderStridePhase = 0;
-}
-
-function startElderWalk(x, y) {
-  const target = ballPosition(x, y, goingToSleep);
-  elderWalkTarget = { x: target.x, y: target.y, detourSide: 1 };
-  floorVX = floorVY = jumpOffset = jumpVelocity = 0;
-  movementState = "elderWalk";
-}
-
-// Short pushes and weight transfers run at a normal cadence, without airtime.
-function elderStrideSpeed(seconds) {
-  elderStridePhase = (elderStridePhase + seconds / ELDER_MOVEMENT.strideSeconds) % 1;
-  return 0.55 + 0.45 * Math.sin(elderStridePhase * Math.PI) ** 2;
-}
-
-function updateElderWalk() {
-  if (lifeStage !== "elder" || !elderWalkTarget) return false;
-  const goal = elderWalkTarget.detour || elderWalkTarget;
-  const dx = goal.x - groundX, dy = goal.y - groundY;
-  const distance = Math.hypot(dx, dy);
-  if (distance > 0.5) {
-    const seconds = constrain(deltaTime / 1000, 0, 0.05);
-    const travel = Math.min(distance, ELDER_MOVEMENT.walkSpeed * elderStrideSpeed(seconds) * seconds);
-    const sx = dx / distance * travel, sy = dy / distance * travel;
-    let next = ballPosition(groundX + sx, groundY + sy, goingToSleep);
-    if (next.blocked) {
-      // Commit to a short side waypoint instead of turning around every frame.
-      let detour = null;
-      for (const side of [elderWalkTarget.detourSide, -elderWalkTarget.detourSide]) {
-        const x = groundX - dy / distance * 48 * side;
-        const y = groundY + dx / distance * 48 * side;
-        const point = ballPosition(x, y, goingToSleep);
-        if (point.blocked || Math.hypot(point.x - x, point.y - y) > 1) continue;
-        let clear = true;
-        for (let i = 1; i <= 10; i++) {
-          if (isBlockedPosition(groundX + (point.x - groundX) * i / 10,
-              groundY + (point.y - groundY) * i / 10, goingToSleep)) clear = false;
-        }
-        if (clear && (elderWalkTarget.detours || 0) < 3) {
-          detour = point; elderWalkTarget.detourSide = side; break;
-        }
-      }
-      if (!detour) {
-        cancelElderWalk(); movementState = "pause"; pauseTimer = 1;
-        return true;
-      }
-      elderWalkTarget.detour = detour;
-      elderWalkTarget.detours = (elderWalkTarget.detours || 0) + 1;
-      return true;
-    }
-    groundX = next.x; groundY = next.y;
-    if (Math.abs(dx) > 0.5) elderWalkFacing = Math.sign(dx);
-    floorVX = floorVY = jumpOffset = jumpVelocity = 0;
-    movementState = "elderWalk";
-    if (Math.hypot(goal.x - groundX, goal.y - groundY) > 0.5) return true;
-  }
-  if (elderWalkTarget.detour) { elderWalkTarget.detour = null; return true; }
-  cancelElderWalk();
-  movementState = "pause";
-  pauseTimer = 1;
-  if (goingToSleep && Math.hypot(groundX - BED_X, groundY - BED_Y) < 14) {
-    groundX = BED_X; groundY = BED_Y;
-    goingToSleep = false; isSleeping = true;
-  }
-  return true;
 }
 
 function elderRestPending() {
