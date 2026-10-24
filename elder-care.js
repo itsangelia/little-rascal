@@ -68,29 +68,13 @@ function isOverElderPetBubble() {
 }
 
 function drawPettingHand(x, y) {
-  // Canvas curves keep this small outlined hand compatible with p5 2's renderer.
+  // Use the familiar palm-down petting symbol instead of a custom drawn palm.
   const ctx = drawingContext;
   ctx.save();
-  ctx.translate(x, y);
-  ctx.strokeStyle = "#9f7f53";
-  ctx.fillStyle = "#f9e8c8";
-  ctx.lineWidth = 1.3;
-  ctx.lineJoin = "round";
-  ctx.beginPath();
-  ctx.moveTo(-6, 12); ctx.lineTo(-12, 2);
-  ctx.bezierCurveTo(-15, -3, -10, -5, -7, 0);
-  ctx.lineTo(-5, 2); ctx.lineTo(-5, -10);
-  ctx.bezierCurveTo(-5, -14, -1, -14, -1, -10);
-  ctx.lineTo(-1, -2); ctx.lineTo(-1, -14);
-  ctx.bezierCurveTo(-1, -17, 3, -17, 3, -14);
-  ctx.lineTo(3, -2); ctx.lineTo(3, -12);
-  ctx.bezierCurveTo(3, -15, 7, -15, 7, -12);
-  ctx.lineTo(7, 0); ctx.lineTo(7, -7);
-  ctx.bezierCurveTo(7, -10, 11, -10, 11, -7);
-  ctx.lineTo(11, 4); ctx.bezierCurveTo(11, 10, 7, 13, 5, 14);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
+  ctx.font = '30px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("🫳", x, y);
   ctx.restore();
 }
 
