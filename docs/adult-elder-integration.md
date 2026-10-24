@@ -4,7 +4,7 @@ The owner approved the current adult/elderly appearance overview and requested b
 
 ## Behavior
 
-- The sequence is child → teenager → adult → elder. During each of the first three stages, two effective feeds (hunger at or below 95) and two other care actions prepare the next transition. The pet grows after its next sleep and waking, with the existing announcement popup. Counters reset for the new stage, and the name and needs carry over.
+- The current sequence is child → adult → elder. The owner removed the teenage stage and moved the former third-stage adult to the second stage. During child and adult, two effective feeds (hunger at or below 95) and two other care actions prepare the next transition. The pet grows after its next sleep and waking, with the existing announcement popup. Counters reset, and the name and needs carry over. The previous four-stage game is preserved at `backup-2026-10-24-78cbbb3`.
 - Petting, cleaning and toolbar play count as other care. A completed, rewarded kick after a player uses the floor ball also counts. Autonomous demonstrations and pet-initiated invitations do not contribute to growth.
 - The adult uses the owner's original normal/crying images, outlined unimpressed/angry designs and approved open-eye happy face. Feeding, affection and play show happy; mood 30–49 shows angry, mood below 30 shows crying, and energy below 30 shows unimpressed. Sleep uses unimpressed plus the existing Z animation.
 - The elder uses the approved kind, tired and happy images. Sleep, low energy and chasing the ball use tired/sigh; reaching and kicking the ball uses happy. Crying retains the elderly tired body and adds the existing falling tears. Smelly-waste crying ends after the smelly piles are cleaned.
@@ -15,8 +15,8 @@ The owner approved the current adult/elderly appearance overview and requested b
 ## Files
 
 - `stages.js`: load and crop approved artwork in memory, remove only exterior white paper from the elderly sheet, and define stage/preview helpers. Original source PNG files are unchanged.
-- `sketch.js`: select expressions, continue growth into elder, carry care/sleep progress, align mature tears, and preserve mature interactions.
-- `help.js`: show adult and senior inside the existing last stage card, preserving the guide panel and main interface layout.
+- `sketch.js`: select expressions, carry growth/care/sleep progress, align mature tears, and preserve mature interactions. Teenage image loading, refusal and reaction code have been removed from the active sketch. Mature render width is independent of archived teenage assets.
+- `help.js`: show child, adult and senior in the existing three cards, preserving the guide panel and main interface layout.
 - `index.html` and `play.html`: load the shared stage module and refresh script versions.
 - `previews/adult/index.html` and `previews/elder/index.html`: start at the selected stage using the actual game scripts. The historical duplicate adult preview sketch is retained but no longer loaded.
 - Appearance records, gallery and `AGENTS.md`: record the approved integration and preserve the appearance/growth requirements for future tasks.
@@ -24,13 +24,13 @@ The owner approved the current adult/elderly appearance overview and requested b
 ## Manual verification
 
 1. Serve the repository root with `python3 -m http.server 8000`. Open `/play.html`: it must begin with the gently rocking C egg. Click it, watch the meteor/birth animation, type a name, and close the guide. The canvas remains 900 × 640.
-2. Complete two effective feeds and two care actions; then use SLEEP. Confirm the next stage and popup appear after waking. Repeat through teenager, adult and elder. The elder must not turn into another teenager or adult after further care and sleep.
+2. Complete two effective feeds and two care actions; then use SLEEP. Confirm waking goes directly from child to adult, with the adult artwork and announcement. Repeat to reach elder. Elder must remain the final stage after more care/sleep; the teenage stage must never appear in the current lifecycle.
 3. Open `/previews/adult/` or `/previews/elder/` to try the mature stages immediately. Feed and pet them, drag/release the floor ball, observe the gentle contact-timed kick, clean waste and use sleep. The revised adult happy face and elderly eye-corner creases must remain visible.
 4. Check low mood, low energy and hunger below 30. Allow waste to smell, then clean it; check that crying ends. Death/restart must return to the egg. The music switch must still toggle without overriding a mute choice.
 5. Inspect the browser console for JavaScript errors and the Network panel for missing images or scripts.
 
 ## Automated browser validation
 
-Chromium/Playwright checks exercised real egg/naming/music controls, all three care-and-waking transitions, growth-popup pausing, stage expression selection, adult and elder native feed/pet controls, elder sleep/odor/cleaning, all four hungry hitboxes, mature contact-based kicks, neglect deaths and egg restart. Existing teen refusal/evade/kick and toy speed/bounce/reward-cooldown regressions were also checked. A synthetic closed-outline image verified that exterior paper clearing preserves enclosed white and the black contour. Original PNG SHA-256 checks verify source preservation.
+Chromium/Playwright checks cover real egg/naming controls, both care-and-waking transitions, growth-popup pausing, the adult image/announcement after the first transition, terminal elder behavior, retained care/play/neglect/restart systems and absence of teenage image requests. Existing checks also cover size/energy tuning, toy contact/bounce/cooldown and exterior paper clearing that preserves enclosed white and the black contour. Source artwork and the four-stage backup remain intact. The teenage PNGs and historical prototype remain archived for reference.
 
 Senior movement checks verify the full three-second stop after each burst, the deliberate settling intervals inside it, and a longer total movement-burst duration, using consecutive takeoff/landing timestamps in a running browser. Hop airtime retains normal gravity, and needs continue draining during pauses. Checks also cover bed access, care responses, disabled senior initiation paths, retained adult initiation, and retained player-requested play. Native drag/release verifies the slower hop pursuit, sigh face and happy contact-timed kick. Restarting clears the pacing clocks.
