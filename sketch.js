@@ -55,7 +55,7 @@ let petNormalImg;
 let petHappyImg;
 let petCryImg;
 let hungryPetImg;
-const HUNGRY_ART = { x: 293, y: 241, width: 982, height: 566 };
+const HUNGRY_ART = { x: 116, y: 100, width: 1305, height: 813 };
 let teenNormalImg;
 let teenHappyImg;
 let teenCryImg;
@@ -438,7 +438,7 @@ async function setup() {
     );
 
 
-  hungryPetImg = await loadImage("assets/hungry-pet.png");
+  hungryPetImg = await loadImage("assets/hungry-pet-a.png");
   teenNormalImg = await loadImage("teenager.png");
   teenHappyImg = await loadImage("teenager happy.png");
   teenCryImg = await loadImage("teenager cry.png");
@@ -2548,7 +2548,7 @@ function drawCryingTears(
     topY +
 
     drawHeight *
-    (isHungryPose() ? 0.68 : 0.47);
+    (isHungryPose() ? 0.70 : 0.47);
 
 
   noStroke();
@@ -2568,7 +2568,7 @@ function drawCryingTears(
 
     groundX -
     drawWidth *
-    (isHungryPose() ? 0.04 : 0.17),
+    (isHungryPose() ? 0.11 : 0.17),
 
     tearStartY +
     fall1 *
@@ -2590,7 +2590,7 @@ function drawCryingTears(
 
     groundX +
     drawWidth *
-    (isHungryPose() ? 0.25 : 0.17),
+    (isHungryPose() ? 0.21 : 0.17),
 
     tearStartY +
     fall2 *
