@@ -225,9 +225,9 @@ let energy = 85;
 
 let hungerDrain = 0.90;
 
-let happinessDrain = 0.45;
+let happinessDrain = 0.5175;
 
-let energyDrain = 0.30;
+let energyDrain = 0.345;
 
 
 
@@ -446,7 +446,7 @@ async function setup() {
 
   adultSprites = extractAdultSprites(await loadImage("assets/adult-expressions.png"));
 
-  toyBallImg = trimToyBallArtwork(await loadImage("assets/hand-drawn-toy-ball.png"));
+  toyBallImg = trimToyBallArtwork(await loadImage("assets/toyball.png"));
   poopImg = await loadImage("shit.png");
   deathImg = await loadImage("design-options/death-a3-cross-eyes.png");
   await initializeHatching();
