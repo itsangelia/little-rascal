@@ -31,3 +31,8 @@ These instructions apply to the entire repository and all future Codex tasks.
 
 - Use the approved artwork and expression choices in [design-options/elder-approved.md](design-options/elder-approved.md) for future elderly-stage work.
 - Preserve the selected A body, line style, two stars and eye-corner creases. The approved expressions are kind (A), tired sigh (F), and happy with the baby happy mouth while retaining A's eyes and creases.
+
+## Approved adult appearance
+
+- Follow the owner's adult reference description in [design-options/adult-approved.md](design-options/adult-approved.md).
+- Preserve the round cream body and flat drawing style, with the large head star and the smaller star beside the right cheek. Adult artwork has no elderly eye-corner creases.
