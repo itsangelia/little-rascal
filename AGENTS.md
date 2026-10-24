@@ -35,4 +35,5 @@ These instructions apply to the entire repository and all future Codex tasks.
 ## Approved adult appearance
 
 - Follow the owner's adult reference description in [design-options/adult-approved.md](design-options/adult-approved.md).
-- Preserve the round cream body and flat drawing style, with the large head star and the smaller star beside the right cheek. Adult artwork has no elderly eye-corner creases.
+- Preserve the round cream body, its visible black outer contour (including both side bumps and the bottom), and flat drawing style, with the large head star and the smaller star beside the right cheek. Both stars retain their warm ochre outlines. Adult artwork has no elderly eye-corner creases.
+- The original transparent PNG contains a black body outline that can disappear visually against a black image-viewer background. Inspect it on a light or gray background. Never instruct image generation to remove the black body outline.

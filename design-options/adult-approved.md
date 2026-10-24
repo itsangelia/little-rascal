@@ -4,7 +4,7 @@ The owner designated two inline reference images as the adult pet on 24 October 
 
 ## Confirmed appearance
 
-- Round cream body with small side bumps and the owner's simple flat drawing style.
+- Round cream body with small side bumps, a visible black outer contour, and the owner's simple flat drawing style. Preserve the black contour around both side bumps and along the bottom. The outline can be hard to see when a transparent PNG is displayed on black; inspect originals on a light or gray background.
 - A large pale-yellow star attached to the head, outlined in warm ochre.
 - A smaller yellow star beside the right cheek/side, at the cheek's height.
 - Flat pale-pink cheeks and compact black pen facial features.
@@ -22,11 +22,15 @@ The owner designated two inline reference images as the adult pet on 24 October 
 | B | Angry, with a bright red comic anger mark. |
 | C | Happy, with the baby-style happy mouth. |
 
-The requested expressions remain unimpressed, angry (with a red anger mark), and happy. Edit only facial features using the owner's original PNG as the reference. Preserve the original round silhouette, side bumps, cream fill, pink cheeks and both stars. Do not add watercolor texture, change the body into a wider dome, or enlarge the features.
+The requested expressions remain unimpressed, angry (with a red anger mark), and happy. Edit only facial features using the owner's original PNG as the reference. Preserve the original round silhouette, black body contour, side bumps, cream fill, pink cheeks and both stars. Do not add watercolor texture, change the body into a wider dome, or enlarge the features.
 
-## Revised expression proposal
+## Rejected second expression sheet
 
-[adult-original-expression-review.png](adult-original-expression-review.png) is a new transparent comparison generated using the actual normal PNG from the ZIP as the image-edit reference. From left to right: unimpressed, angry with a red anger mark, and happy. It is a proposal for review, not an approved asset. The generator can still alter edges, fill and proportions; do not claim that this file preserves the original body pixel-for-pixel. The originals below remain authoritative. No gameplay assets have been replaced.
+[adult-original-expression-review.png](adult-original-expression-review.png) was also rejected: the black outer body contour was omitted. The generation instructions incorrectly requested no black body outline. Do not use this sheet or repeat that instruction. The owner's subsequent gray-background reference explicitly shows the required black body contour. No gameplay assets have been replaced.
+
+## Outlined expression proposal
+
+[adult-outlined-expression-review.png](adult-outlined-expression-review.png) restores the visible black body contour, including the side bumps and bottom. From left to right: unimpressed, angry with a red anger mark, and happy. The transparent PNG was inspected on a white browser background to verify the outline is visible. This generated proposal is awaiting the owner's review; it is not a pixel-identical edit of the originals and has not been integrated into gameplay.
 
 ## Original file archive
 
