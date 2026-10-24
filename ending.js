@@ -1,7 +1,9 @@
 // Farewell is an active-time sequence. The letter waits for the player's choice.
-const FAREWELL_SECONDS = { still: 1, dissolve: 3, rise: 3.8, scatter: 1.8,
+const FAREWELL_SECONDS = { still: 3, soften: 4, dissolve: 3, rise: 3.8, scatter: 1.8,
   gather: 3.4, newborn: 1.8 };
-const LETTER_CLOSE = { x: 340, y: 490, w: 220, h: 46 };
+const LETTER_CLOSE = { x: 360, y: 563, w: 180, h: 40 };
+const NATURAL_LIFESPAN_SECONDS = 90;
+let elderAgeSeconds = 0;
 let farewell = null;
 let farewellSoul;
 
@@ -19,21 +21,39 @@ async function initializeFarewellArtwork() {
   farewellSoul = trimStageSprite(soul);
 }
 
+// Only active, visible gameplay ages the senior; dialogs and birth do not.
+function updateNaturalAging(seconds = deltaTime / 1000) {
+  if (isDead || lifeStage !== "elder" || document.hidden) return;
+  elderAgeSeconds += constrain(seconds, 0, 0.25);
+  if (elderAgeSeconds < NATURAL_LIFESPAN_SECONDS) return;
+  // Let the last hop land and finish ongoing care. Neglect retains priority.
+  if (movementState === "jump" || isSleeping || goingToSleep || isEating ||
+      isBeingPetted || isPlaying || isPooping || toyBall.dragging || toyPlayAction ||
+      hunger <= 0 || happiness <= 0 || isStinkCrying()) return;
+  die("oldAge");
+}
+
 function startFarewell() {
-  const stageScale = lifeStage === "child" ? CHILD_MODEL_SCALE : 1;
-  const bodyWidth = BASE_PET_WIDTH * getScaleAtY(groundY) * (651 / 2732) * stageScale;
+  const sprite = elderSprites.normal;
+  const art = getPetArtwork(sprite);
+  const bodyWidth = art.width * petRenderFactor(sprite) * getScaleAtY(groundY);
   farewell = {
-    phase: "still", elapsed: 0, x: groundX, y: groundY, bodyWidth,
-    name: petName, cause: deathCause, stage: lifeStage,
-    seconds: floor(companionshipSeconds)
+    phase: "still", elapsed: 0, x: groundX, y: groundY, bodyWidth, sprite, art,
+    name: petName
   };
+}
+
+// Neglect keeps the earlier result screen. Only natural death receives a letter.
+function drawDeathEnding() {
+  if (deathCause === "oldAge") drawFarewell();
+  else drawDeathSummary();
 }
 
 function initializeFarewellPreview() {
   // Only the dedicated preview opts in. Normal game links always start at the egg.
   if (document.body.dataset.previewEnding !== "farewell") return;
   companionshipSeconds = 240;
-  die("sadness");
+  die("oldAge");
 }
 
 function farewellNoise(i) {
@@ -46,7 +66,7 @@ function updateFarewell(seconds = deltaTime / 1000) {
   farewell.elapsed += constrain(seconds, 0, 0.1);
   const duration = FAREWELL_SECONDS[farewell.phase];
   if (farewell.elapsed < duration) return;
-  const next = { still: "dissolve", dissolve: "rise", rise: "scatter",
+  const next = { still: "soften", soften: "dissolve", dissolve: "rise", rise: "scatter",
     scatter: "letter", gather: "newborn" }[farewell.phase];
   if (farewell.phase === "newborn") {
     restartPet();
@@ -73,8 +93,15 @@ function drawFarewellRoom() {
   }
 }
 
-function drawFarewellBody(progress) {
-  const f = farewell, w = f.bodyWidth, h = w * DEATH_ART.height / DEATH_ART.width;
+function farewellBodyShape(softness) {
+  const p = hatchSmooth(softness);
+  return { width: farewell.bodyWidth * (1 + 0.16 * p),
+    height: farewell.bodyWidth * farewell.art.height / farewell.art.width * (1 - 0.55 * p) };
+}
+
+function drawFarewellBody(progress, softness = 1) {
+  const f = farewell, shape = farewellBodyShape(softness);
+  const w = shape.width, h = shape.height;
   const left = f.x - w / 2, top = f.y - h;
   noStroke();
   fill(96, 77, 53, 25 * (1 - progress));
@@ -93,7 +120,7 @@ function drawFarewellBody(progress) {
   ctx.clip();
   push();
   tint(255, 255 * (1 - progress * 0.45));
-  image(deathImg, left, top, w, h, DEATH_ART.x, DEATH_ART.y, DEATH_ART.width, DEATH_ART.height);
+  image(f.sprite, left, top, w, h, f.art.x, f.art.y, f.art.width, f.art.height);
   pop();
   ctx.restore();
   if (progress <= 0) return;
@@ -142,57 +169,66 @@ function drawSoulStars(progress) {
   }
 }
 
+// Keep the owner's wording exactly; only visual line wrapping may vary.
+const FAREWELL_LETTER = [
+  "Dear Friend,",
+  "Thank you for taking care of me.",
+  "I had a wonderful time with you.",
+  "Even when I was naughty, you stayed by my side.",
+  "I'm glad we met.",
+  "PS: I will leave a little starlight in your room.",
+  "Love, Little Rascal"
+];
+
 function drawFarewellLetter() {
   noStroke();
-  fill(58, 59, 43, 80);
+  fill(58, 59, 43, 75);
   rect(0, 0, width, height);
-  fill(75, 66, 43, 24);
-  rect(201, 94, 510, 466, 25);
-  stroke(183, 162, 113);
-  strokeWeight(1.7);
-  fill(253, 250, 237);
-  rect(195, 86, 510, 466, 25);
-  noFill();
-  stroke(234, 225, 195);
+  // An unfolded sheet, with a folded corner, faint rules and a warm paper edge.
+  fill(75, 66, 43, 28);
+  rect(184, 51, 550, 502, 2);
+  stroke(202, 183, 144);
   strokeWeight(1);
-  rect(204, 95, 492, 448, 19);
-  drawFarewellStar(450, 126, 12, 230);
+  fill(255, 251, 237);
+  beginShape();
+  vertex(175, 42); vertex(693, 42); vertex(725, 74);
+  vertex(725, 544); vertex(175, 544);
+  endShape(CLOSE);
+  fill(239, 228, 200);
+  triangle(693, 42, 693, 74, 725, 74);
+  stroke(222, 209, 177, 80);
+  for (let y = 144; y <= 494; y += 25) line(210, y, 690, y);
+  stroke(224, 192, 164, 90);
+  line(210, 76, 210, 510);
   noStroke();
-  textFont("Arial");
-  textAlign(CENTER, CENTER);
-  textStyle(BOLD);
-  fill(107, 88, 59);
-  textSize(28);
-  text("Thank you for being my person", 450, 171);
+  fill(104, 84, 59);
+  textFont("Georgia");
   textStyle(NORMAL);
+  textAlign(LEFT, CENTER);
+  textSize(24);
+  text(FAREWELL_LETTER[0], 230, 103);
+  textSize(18);
+  text(FAREWELL_LETTER[1], 230, 178);
+  text(FAREWELL_LETTER[2], 230, 228);
+  text(FAREWELL_LETTER[3], 230, 278);
+  text(FAREWELL_LETTER[4], 230, 353);
   textSize(16);
-  fill(114, 98, 74);
-  text("Our little time together has come to an end.\nThank you for sharing your world with me.", 450, 233);
-  const reasons = {
-    starvation: "My little tummy stayed empty for too long.",
-    sadness: "I needed more company, and my heart grew too sad.",
-    illness: "The uncleaned room made me too ill to stay."
-  };
-  textSize(14);
-  text(reasons[farewell.cause] || "It is time for me to say goodbye.", 450, 298);
-  fill(139, 142, 110);
-  textSize(13);
-  const stage = { child: "Child", adult: "Adult", elder: "Senior" }[farewell.stage];
-  const minutes = floor(farewell.seconds / 60), seconds = farewell.seconds % 60;
-  text("Time together: " + minutes + "m " + seconds + "s  ·  " + stage, 450, 339);
-  fill(114, 98, 74);
-  textSize(16);
-  text("I will leave a little starlight in your room.", 450, 384);
-  textStyle(BOLD);
-  drawFittedPetText("With love, " + farewell.name, 450, 432, 420, 21);
+  text(FAREWELL_LETTER[5], 230, 415);
+  textStyle(ITALIC);
+  textSize(22);
+  text(FAREWELL_LETTER[6], 430, 478);
+  drawFarewellStar(674, 488, 8, 170);
   const b = LETTER_CLOSE, hover = helpContains(b.x, b.y, b.w, b.h);
   stroke(183, 145, 72);
-  strokeWeight(1.5);
+  strokeWeight(1.3);
   fill(hover ? color(250, 224, 145) : color(242, 218, 158));
-  rect(b.x, b.y, b.w, b.h, 21);
+  rect(b.x, b.y, b.w, b.h, 18);
   noStroke();
   fill(100, 78, 49);
-  textSize(16);
+  textFont("Arial");
+  textStyle(NORMAL);
+  textAlign(CENTER, CENTER);
+  textSize(14);
   text("CLOSE LETTER", 450, b.y + b.h / 2);
   cursor(hover ? HAND : ARROW);
 }
@@ -234,7 +270,8 @@ function drawFarewell() {
   cursor(ARROW);
   const phase = farewell.phase;
   const p = farewell.elapsed / (FAREWELL_SECONDS[phase] || 1);
-  if (phase === "still") drawFarewellBody(0);
+  if (phase === "still") drawFarewellBody(0, 0);
+  else if (phase === "soften") drawFarewellBody(0, p);
   else if (phase === "dissolve") drawFarewellBody(p);
   else if (phase === "rise") drawFarewellSoul(p, min(1, p * 5) * 205);
   else if (phase === "scatter") {
@@ -250,7 +287,7 @@ function drawFarewell() {
     textStyle(NORMAL);
     textSize(26);
     textAlign(CENTER, CENTER);
-    text("新生", EGG_X, FLOOR_Y + 55);
+    text("A New Beginning", EGG_X, FLOOR_Y + 55);
   }
   pop();
 }

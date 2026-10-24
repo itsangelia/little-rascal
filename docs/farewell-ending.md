@@ -1,19 +1,24 @@
-# Farewell and rebirth
+# Natural farewell and rebirth
 
-The existing starvation (8 seconds at zero hunger), sadness (8 seconds at zero mood), and illness (6 seconds until flies, 7 more until death) conditions now lead into a farewell inside the unchanged 900 × 640 watercolor room. No additional death condition is introduced.
+Only natural old-age death enters the thank-you-letter ending. Starvation (8 seconds at zero hunger), sadness (8 seconds at zero mood), and illness (6 seconds until flies, then 7 more until death) keep the original result screen and START AGAIN button. All artwork, the watercolor room, normal models, layout and 900 × 640 canvas remain intact.
 
-The pet holds its original crossed-eyes death pose for 1 second. Its body dissolves for 3 seconds, then the approved F soul rises for 3.8 seconds and scatters into stars for 1.8 seconds. F is cropped and its green paper removed at runtime from the existing concept sheet; source artwork is unchanged. All animation time uses visible, bounded frame time, so a background tab cannot skip the letter.
+## Natural lifespan
 
-The cream thank-you letter shows the pet's name, active companionship duration, last stage, and a cause-specific sentence. It stays open indefinitely. Click CLOSE LETTER or press Enter, Space, or Escape to continue. Other clicks do not skip it. The music button remains available.
+`NATURAL_LIFESPAN_SECONDS` in `ending.js` is initially 90 seconds after entering the senior stage. This is visible active gameplay time; birth, naming, help, growth announcements, hidden tabs and endings do not count. The clock resets on entering the stage and starting a new life. At the deadline, finish the last airborne hop and ongoing care or sleep before stopping. Zero hunger/mood or stinky waste defer natural death so neglect remains meaningful.
 
-Closing the letter starts 3.4 seconds of room starlight gathering into the approved C egg, followed by a 1.8-second “新生” reveal. The pet resets only after this reveal. Needs, neglect clocks, lifetime, movement, toys and growth remain paused throughout. The new egg waits for a fresh click and uses the existing meteor, extended birth reveal and editable naming flow.
+## Animation and letter
 
-## Manual checks
+The actual senior model stands on the floor for 3 seconds. It then gently softens over 4 seconds: its height gradually falls to 45%, width expands to 116%, and its bottom stays fixed on the floor. Only this requested animation changes the drawn proportions; PNG files and normal gameplay proportions are unchanged. The death/result illustration is never used in this sequence.
 
-1. Open `previews/farewell/` over HTTP to view the complete ending without raising a pet first. The demonstration starts as a senior with a four-minute sample lifetime; it is isolated from normal game entry.
-2. Watch the dissolution, rising winged soul and scattered stars. Confirm the room and canvas keep their proportions.
-3. Leave the letter open; it must not advance. Click away from its button and toggle music; neither should dismiss it. Check the signature and cause.
-4. Close the letter. Watch stars converge into the C egg and the 新生 title fade. The egg must wait and gently rock. Click to see the meteor and birth, then enter a new name.
-5. On `play.html`, verify normal entry still begins at the egg. Trigger each existing neglect condition and repeat the ending. Care actions must be blocked after death and reset with the new pet.
+The softened body dissolves for 3 seconds. The existing approved F soul rises for 3.8 seconds and scatters into stars for 1.8 seconds. It is cropped from the original concept sheet with its paper removed at runtime.
 
-Browser validation exercises native letter dismissal and re-hatching/naming, all three death causes, paused stats, full state reset, the three-stage growth flow, and existing toy/elder movement regressions.
+The thank-you letter uses the owner's exact seven text lines in `FAREWELL_LETTER`. It resembles unfolded cream stationery with a folded corner, faint rules and serif type. No cause, stage or statistics appear. It waits indefinitely for CLOSE LETTER, Enter, Space or Escape. The music control remains usable.
+
+Closing the letter starts 3.4 seconds of starlight gathering into the C egg, followed by a 1.8-second “A New Beginning” reveal. Reset only after the reveal; the egg waits for a fresh click and retains its rocking, meteor, extended hatch reveal and editable naming flow.
+
+## Checks
+
+- Open `previews/farewell/` to watch natural death immediately. Verify the real senior stands for 3 seconds, softens gradually without floating, dissolves, then becomes the rising F soul and stars.
+- Check the exact English letter, stationery, indefinite pause and music. Close it and confirm starlight, the English title, a clickable egg, meteor and a new name.
+- In `play.html`, raise the pet to senior and care for it through its 90-second active lifespan. Help/growth dialogs must pause aging; young stages do not age toward this deadline.
+- Trigger each neglect death: the earlier result screen should appear without a thank-you letter, and START AGAIN should return to the egg.

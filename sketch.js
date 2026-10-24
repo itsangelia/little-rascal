@@ -511,7 +511,7 @@ function drawGameFrame() {
     return;
   }
   if (isDead) {
-    drawFarewell();
+    drawDeathEnding();
     return;
   }
 
@@ -540,6 +540,7 @@ function drawGameFrame() {
     companionshipSeconds += constrain(deltaTime / 1000, 0, 0.25);
     updateStats();
     updateNeglect();
+    if (!isDead) updateNaturalAging();
     if (!isDead) {
       updateToyBall();
       updateAdultBehavior();
@@ -551,7 +552,7 @@ function drawGameFrame() {
   }
 
   if (isDead) {
-    drawFarewell();
+    drawDeathEnding();
     return;
   }
 
@@ -4535,6 +4536,78 @@ function drawToolbarIcon(
 // INSTRUCTION
 // ============================================================
 
+// The result screen uses the same canvas and the selected hand-drawn death asset.
+function drawDeathSummary() {
+  push();
+  background(250, 247, 235);
+  noStroke();
+  // Subtle radial rays echo the reference without replacing the watercolor palette.
+  for (let i = 0; i < 40; i++) {
+    const angle = i * TWO_PI / 40;
+    const spread = 0.035;
+    fill(203, 214, 180, 55);
+    triangle(width / 2, 330,
+      width / 2 + cos(angle - spread) * 1200, 330 + sin(angle - spread) * 1200,
+      width / 2 + cos(angle + spread) * 1200, 330 + sin(angle + spread) * 1200);
+  }
+  noFill();
+  stroke(191, 169, 123);
+  strokeWeight(2);
+  rectMode(CORNER);
+  rect(22, 20, width - 44, height - 40, 24);
+
+  textFont("Arial");
+  textAlign(CENTER, CENTER);
+  textStyle(BOLD);
+  stroke(112, 89, 60);
+  strokeWeight(3);
+  fill(255, 253, 241);
+  drawFittedPetText(petName, width / 2, 88, 760, 48);
+  noStroke();
+  fill(112, 89, 60);
+  textSize(36);
+  text("HAS DIED", width / 2, 143);
+
+  const causes = {
+    starvation: "Starvation",
+    sadness: "A broken heart",
+    illness: "Illness from uncleaned poop"
+  };
+  textStyle(NORMAL);
+  textSize(21);
+  fill(101, 115, 83);
+  text("Cause: " + causes[deathCause], width / 2, 204);
+
+  const artWidth = 340;
+  const artHeight = artWidth * DEATH_ART.height / DEATH_ART.width;
+  fill(117, 99, 63, 22);
+  ellipse(width / 2, 394, 310, 20);
+  imageMode(CORNER);
+  image(deathImg, (width - artWidth) / 2, 390 - artHeight, artWidth, artHeight,
+    DEATH_ART.x, DEATH_ART.y, DEATH_ART.width, DEATH_ART.height);
+
+  const totalSeconds = floor(companionshipSeconds);
+  const minutes = floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  fill(112, 89, 60);
+  textSize(18);
+  text("Time together: " + minutes + "m " + seconds + "s", width / 2, 452);
+
+  const ready = millis() - deathTime >= 1000;
+  const hover = mouseX >= 340 && mouseX <= 560 && mouseY >= 522 && mouseY <= 574;
+  cursor(ready && hover ? HAND : ARROW);
+  stroke(183, 145, 72);
+  strokeWeight(2);
+  fill(ready && hover ? color(250, 224, 145) : color(242, 218, 158));
+  rect(340, 522, 220, 52, 23);
+  noStroke();
+  fill(100, 78, 49);
+  textStyle(BOLD);
+  textSize(18);
+  text("START AGAIN", width / 2, 548);
+  pop();
+}
+
 // Mouse input is shared by the existing tools and the result screen.
 function mousePressed() {
   if (handleMusicClick()) return;
@@ -4554,7 +4627,9 @@ function mousePressed() {
     return;
   }
   if (isDead) {
-    handleFarewellClick();
+    if (deathCause === "oldAge") handleFarewellClick();
+    else if (millis() - deathTime >= 1000 && mouseX >= 340 && mouseX <= 560 &&
+        mouseY >= 522 && mouseY <= 574) restartPet();
     return;
   }
 
@@ -5071,7 +5146,8 @@ function die(cause) {
   interactionMode = "none";
   hearts.length = sparkles.length = 0;
   cursor(ARROW);
-  startFarewell();
+  if (cause === "oldAge") startFarewell();
+  else farewell = null;
 }
 
 function drawDeadPet() {
@@ -5093,6 +5169,7 @@ function drawDeadPet() {
 
 function restartPet() {
   farewell = null;
+  elderAgeSeconds = 0;
   resetPetNaming();
   resetElderMovement();
   hatchingComplete = false;
@@ -5178,6 +5255,7 @@ function updateGrowth() {
       isPooping || toyBall.dragging || toyPlayAction ||
       movementState === "jump") return;
   lifeStage = nextStage;
+  elderAgeSeconds = 0;
   resetElderMovement();
   growthFeeds = growthCare = 0;
   lastGrowthCareTime = -Infinity;
