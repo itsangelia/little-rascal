@@ -35,9 +35,13 @@ The requested expressions remain unimpressed, angry (with a red anger mark), and
 
 The owner rejected the happy face in this sheet: its closed crescent eyes and short mouth do not match the supplied happy reference. Do not use that happy face for integration. This feedback does not establish approval of the other two designs.
 
-## Open-eye happy proposal
+## Approved open-eye happy design
 
-[adult-happy-open-eyes.png](adult-happy-open-eyes.png) revises only the happy design for review: open tilted black oval eyes, a small omega-shaped upper lip and a narrow vertical pink U-shaped open mouth. It retains the adult's right-cheek star and black body outline. No gameplay assets are replaced; the previous three-expression sheet remains unchanged for comparison.
+[adult-happy-open-eyes.png](adult-happy-open-eyes.png) was approved by the owner ("OK了就这样") on 24 October 2026, Perth time. It uses open tilted black oval eyes, a small omega-shaped upper lip and a narrow vertical pink U-shaped open mouth. It retains the adult's right-cheek star and black body outline. No gameplay assets are replaced; the previous three-expression sheet remains unchanged for comparison.
+
+## Current appearance overview
+
+[appearance-gallery.html](appearance-gallery.html) displays five adult designs (original normal, original crying, current unimpressed and angry proposals, and approved open-eye happy) and the three approved elderly expressions. It displays the existing source images through cropped viewports without repainting or changing the originals. [appearance-overview.png](appearance-overview.png) is a browser screenshot of that gallery. The adult gallery is an asset inventory, not a claim that every expression is approved or integrated.
 
 ## Original file archive
 

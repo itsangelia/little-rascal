@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Little Rascal · 成年与老年形象总览</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f8f6ef; color: #514a3e; font: 16px/1.5 system-ui, sans-serif; }
+    main { max-width: 1400px; padding: 32px 36px 26px; margin: auto; }
+    h1 { font-size: 30px; margin: 0 0 6px; }
+    .intro { margin: 0 0 22px; color: #817866; }
+    h2 { font-size: 22px; margin: 22px 0 12px; }
+    .grid { display: grid; gap: 14px; }
+    .adult { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .elder { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    figure { margin: 0; padding: 14px 12px 12px; background: #fff; border: 1px solid #e8e0cf; border-radius: 16px; text-align: center; }
+    svg { display: block; width: 100%; height: 206px; overflow: hidden; }
+    .elder svg { height: 220px; }
+    figcaption { margin-top: 8px; font-weight: 650; font-size: 19px; }
+    .detail { font-size: 13px; font-weight: 400; color: #827865; display: block; margin-top: 2px; }
+    .note { font-size: 14px; margin: 22px 0 0; color: #817866; }
+    @media (max-width: 850px) {
+      main { padding: 22px 16px; }
+      .adult { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .elder { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      h1 { font-size: 25px; }
+    }
+    @media (max-width: 450px) {
+      .grid { grid-template-columns: minmax(0, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Little Rascal · 成年与老年形象总览</h1>
+    <p class="intro">展示现有素材；保留原图、黑色外描边和各阶段的星星位置。</p>
+    <section aria-labelledby="adult-title">
+      <h2 id="adult-title">成年版 · 5 种</h2>
+      <div class="grid adult">
+        <figure>
+          <svg viewBox="924 575 887 831" role="img" aria-label="成年平常，用户原图"><image href="../assets/adult-original/normal.png" width="2732" height="2048" /></svg>
+          <figcaption>平常<span class="detail">你的原图</span></figcaption>
+        </figure>
+        <figure>
+          <svg viewBox="937 585 871 816" role="img" aria-label="成年哭泣，用户原图"><image href="../assets/adult-original/crying.png" width="2732" height="2048" /></svg>
+          <figcaption>哭泣<span class="detail">你的原图</span></figcaption>
+        </figure>
+        <figure>
+          <svg viewBox="71 100 600 563" role="img" aria-label="成年无语，现有设计稿"><image href="adult-outlined-expression-review.png" width="1993" height="789" /></svg>
+          <figcaption>无语<span class="detail">现有设计稿</span></figcaption>
+        </figure>
+        <figure>
+          <svg viewBox="695 100 601 563" role="img" aria-label="成年生气，红色愤怒符号，现有设计稿"><image href="adult-outlined-expression-review.png" width="1993" height="789" /></svg>
+          <figcaption>生气 💢<span class="detail">现有设计稿</span></figcaption>
+        </figure>
+        <figure>
+          <svg viewBox="448 297 540 510" role="img" aria-label="成年高兴，睁眼加细长粉色开口"><image href="adult-happy-open-eyes.png" width="1448" height="1086" /></svg>
+          <figcaption>高兴<span class="detail">刚确认的睁眼版</span></figcaption>
+        </figure>
+      </div>
+    </section>
+    <section aria-labelledby="elder-title">
+      <h2 id="elder-title">老年版 · 3 种</h2>
+      <div class="grid elder">
+        <figure>
+          <svg viewBox="76 90 594 510" role="img" aria-label="老年慈祥，A版"><defs><clipPath id="elder-kind"><rect x="76" y="90" width="594" height="510" /></clipPath></defs><image href="elder-a-tired-happy.png" width="2043" height="770" clip-path="url(#elder-kind)" /></svg>
+          <figcaption>慈祥 / 平常<span class="detail">已保留的 A 版</span></figcaption>
+        </figure>
+        <figure>
+          <svg viewBox="718 90 595 510" role="img" aria-label="老年累，F叹气版"><defs><clipPath id="elder-tired"><rect x="718" y="90" width="595" height="510" /></clipPath></defs><image href="elder-a-tired-happy.png" width="2043" height="770" clip-path="url(#elder-tired)" /></svg>
+          <figcaption>累 / 叹气<span class="detail">A 的外形＋F 的表情</span></figcaption>
+        </figure>
+        <figure>
+          <svg viewBox="1360 90 595 510" role="img" aria-label="老年高兴，保留眼角细纹"><defs><clipPath id="elder-happy"><rect x="1360" y="90" width="595" height="510" /></clipPath></defs><image href="elder-a-tired-happy.png" width="2043" height="770" clip-path="url(#elder-happy)" /></svg>
+          <figcaption>高兴<span class="detail">保留老年眼睛和眼角细纹</span></figcaption>
+        </figure>
+      </div>
+    </section>
+    <p class="note">这是素材总览：新版成年素材尚未替换进游戏，老年成长阶段尚未接入。</p>
+  </main>
+</body>
+</html>
