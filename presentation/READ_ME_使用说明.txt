@@ -1,25 +1,20 @@
-Little Rascal — 最终版 PPT 与逐页讲稿
+Little Rascal · 按brief与rubric重编的PPT及讲稿
+更新：2026-10-25（珀斯）
+16页PPT：14页正文（含两分钟演示页）+2页引用/AI声明附录。
+英文约1032词；计划总长9分47秒（含120秒演示）。必须按实际语速排练，最终视频8–10分钟。
+英文讲稿+中文对照；中文不另读。PPT备注也含逐页讲稿。
 
-内容同步至游戏版本 d3ab74f，更新日期：2026 年 10 月 25 日（珀斯）。
+本版以设计问题、前后对比和反馈为主线：
+- 四阶段缩成三阶段：已实施的时长优化。
+- 玩球从隔空追逐改成接触后轻踢。
+- 老年从慢放改为缓慢小跳+原地休息，更依恋玩家并主动要摸摸。
+- 死亡用于责任感和挑战性；公平性测试针对提示和反应时间。
+- 加入你确认的同学建议、老师反馈、本人录制叫声与AI许可情况。
 
-1. Little_Rascal_Presentation.pptx：13 页英文可编辑 PPT。
-2. Little_Rascal_Presentation.pdf：同版 PDF 预览。
-3. Little_Rascal_Speaker_Script_EN_ZH.docx：可编辑英文稿＋中文对照。
-4. Little_Rascal_Speaker_Script_EN_ZH.pdf：讲稿打印版。
-5. Little_Rascal_Speaker_Script_EN_ZH.md：纯文本备份。
+当前PPT不含实际试玩视频。第3页有两分钟分镜；需要你录制并剪辑，明确阶段间剪接。
+已确认同学建议，但“你给其他同学的反馈”仍需补充。音乐先按Pixabay标注，补全曲名/作者/原链接并核对你写的pixaboy。个人分析须你核实表达。
+游戏内容没有改动。实际依据d3ab74f。
 
-PPT 备注区也有对应逐页稿件。英文讲稿约 808 词，按计划总长约 9 分 14 秒，其中包含 2 分钟试玩剪辑。演示分镜已提供，未嵌入试玩视频；请自己录制或替换真实互动录像，并按实际语速排练。
-
-本次更新：
-- 幼儿期：三次有效喂食＋三次摸摸，下一次睡醒长大；低于30能量自动睡觉。
-- 五段原声：C摸摸、B生气、A开始哭泣时一次、D踢中球、L自然哼哼。
-- 扬声器只开关背景音乐；原生音频播放与混音检查。
-- 幼儿哼哼7–10秒；普通排便24–36秒，饭后8–12秒。
-- 刷新正式版截图，保留窗口适配、全屏和完整告别流程。
-- 更新 PPT 备注、Word/PDF/在线讲稿与游戏链接。
-
-截图来自实际游戏，部分状态为演示而设置，不是观众测试证据。个人反思和真实反馈请按实际经历填写。提交前核对原始作业要求、姓名学号命名、背景音乐来源和 AI 使用声明。
-本次只更新展示文件，没有修改游戏代码或玩法。
-
+文件：PPTX/PPT PDF；Word/讲稿PDF/Markdown；Revision_Record_EN_ZH.md；本说明、presentation-content.json结构化备份。ZIP含上述8个文件。
 正式游戏：https://itsangelia.github.io/little-rascal/?v=d3ab74f
-源文件：https://github.com/itsangelia/little-rascal
+工作文件：https://github.com/itsangelia/little-rascal
