@@ -4,7 +4,7 @@
 // p5.js 2.0
 //
 // REQUIRED FILES:
-// map.jpg
+// assets/room-background-v1.png (approved first refinement; original map.jpg retained)
 // kid.png
 // kid happy.png
 // kid cry.png
@@ -429,7 +429,7 @@ async function setup() {
 
   mapImg =
     await loadImage(
-      "map.jpg"
+      "assets/room-background-v1.png"
     );
 
 

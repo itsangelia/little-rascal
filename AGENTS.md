@@ -69,3 +69,9 @@ These instructions apply to the entire repository and all future Codex tasks.
 - Both clicking the bubble and using the existing PET tool run the normal petting action once, hide the bubble and show the existing happy response. No extra reward or penalty is added. Missing a cue has no extra penalty.
 - Natural death waits until all three cues have actually appeared and the last cue is resolved or expires. Ordinary scheduling finishes before 80 seconds; exceptionally delayed cues can postpone natural death. Neglect deaths keep their existing rules and take priority.
 - Reset requests on growth, restart and direct stage preview initialization. Hide them during death/farewell. Preserve senior hop/rest pacing and no autonomous ball play.
+
+## Approved room background
+
+- The owner selected the first refined background for the official game: `assets/room-background-v1.png`, copied byte-for-byte from `design-options/background-refined.png`. Preserve this approved watercolor artwork and its proportions.
+- Keep the original `map.jpg` intact as an archive. `design-options/background-refined-v2.png` remains an unselected alternative; the review page defaults to the approved first version.
+- Keep the fixed 900 × 640 canvas, room/interface layout, prop placement and collision coordinates unchanged when loading this background. Preserve all original source images.

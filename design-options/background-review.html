@@ -32,31 +32,31 @@ button:focus-visible,a:focus-visible{outline:3px solid #cca35a;outline-offset:3p
 <body>
 <main>
 <h1>Little Rascal · 背景效果对照</h1>
-<p>选择原图、第一版或第二版，也可以把两版效果稿并排查看。</p>
+<p>第一版已确认并用于正式游戏。可以切换查看已存档的原图、正式使用的第一版，以及第二版备选方案。</p>
 <nav aria-label="选择背景版本">
-<button type="button" id="original" aria-pressed="false">原图</button>
-<button type="button" id="v1" aria-pressed="false">第一版</button>
-<button type="button" id="v2" aria-pressed="true">第二版</button>
+<button type="button" id="original" aria-pressed="false">原图 · 已存档</button>
+<button type="button" id="v1" aria-pressed="true">第一版 · 正式使用</button>
+<button type="button" id="v2" aria-pressed="false">第二版 · 备选</button>
 <button type="button" id="compare" class="compare-toggle" aria-pressed="false" aria-expanded="false" aria-controls="comparison">并排对比第一版 / 第二版</button>
 </nav>
-<p class="caption" id="caption" aria-live="polite">第二版效果稿：在第一版基础上继续细化的水彩房间</p>
+<p class="caption" id="caption" aria-live="polite">第一版：已确认，当前正式游戏使用的背景</p>
 <section class="single" id="single-view" aria-label="当前选择的背景">
-<img id="background" src="background-refined-v2.png" alt="第二版水彩房间背景效果稿，中央保留宠物活动空地">
+<img id="background" src="background-refined.png" alt="已确认的第一版水彩房间背景，当前正式游戏使用">
 </section>
 <section class="comparison" id="comparison" aria-label="第一版与第二版并排对照" hidden>
 <figure>
-<h2>A · 第一版</h2>
-<img src="background-refined.png" alt="第一版水彩房间背景效果稿" loading="lazy">
+<h2>A · 第一版 · 已确认／正式使用</h2>
+<img src="background-refined.png" alt="已确认并正式使用的第一版水彩房间背景" loading="lazy">
 <figcaption><a href="background-refined.png" target="_blank" rel="noopener">单独打开第一版</a> · <a href="background-refined.png" download>下载第一版</a></figcaption>
 </figure>
 <figure>
-<h2>B · 第二版</h2>
-<img src="background-refined-v2.png" alt="第二版水彩房间背景效果稿" loading="lazy">
+<h2>B · 第二版 · 备选／未选用</h2>
+<img src="background-refined-v2.png" alt="未选用的第二版水彩房间背景备选方案" loading="lazy">
 <figcaption><a href="background-refined-v2.png" target="_blank" rel="noopener">单独打开第二版</a> · <a href="background-refined-v2.png" download>下载第二版</a></figcaption>
 </figure>
 </section>
-<p class="foot"><a id="open-selected" href="background-refined-v2.png" target="_blank" rel="noopener">单独打开第二版</a> · <a id="download-selected" href="background-refined-v2.png" download>下载第二版</a> · <a href="../">进入正式游戏</a></p>
-<p class="caption">第一版和第二版都是背景效果稿；正式游戏仍使用原图，尚未替换。</p>
+<p class="foot"><a id="open-selected" href="background-refined.png" target="_blank" rel="noopener">单独打开第一版</a> · <a id="download-selected" href="background-refined.png" download>下载第一版</a> · <a href="../">进入正式游戏</a></p>
+<p class="caption">正式游戏现使用第一版；原图保留存档，第二版作为未选用的备选方案。</p>
 </main>
 <script>
 const image=document.getElementById('background');
@@ -67,17 +67,17 @@ const compareButton=document.getElementById('compare');
 const openSelected=document.getElementById('open-selected');
 const downloadSelected=document.getElementById('download-selected');
 const choices={
- original:{src:'../map.jpg',name:'原图',label:'原图：当前正式游戏使用的背景'},
- v1:{src:'background-refined.png',name:'第一版',label:'第一版效果稿：窗外层次、水彩质感与植物细节'},
- v2:{src:'background-refined-v2.png',name:'第二版',label:'第二版效果稿：在第一版基础上继续细化的水彩房间'}
+ original:{src:'../map.jpg',name:'原图',label:'原图：已存档，保留原始背景素材'},
+ v1:{src:'background-refined.png',name:'第一版',label:'第一版：已确认，当前正式游戏使用的背景'},
+ v2:{src:'background-refined-v2.png',name:'第二版',label:'第二版备选方案：未选用，保留作设计对照'}
 };
-let selected='v2';
+let selected='v1';
 function setComparison(show){
  singleView.hidden=show;
  comparison.hidden=!show;
  compareButton.setAttribute('aria-pressed',String(show));
  compareButton.setAttribute('aria-expanded',String(show));
- caption.textContent=show?'并排对照：A 为第一版，B 为第二版；手机上将上下排列。':choices[selected].label;
+ caption.textContent=show?'并排对照：A 为已确认的正式背景，B 为未选用的第二版；手机上将上下排列。':choices[selected].label;
 }
 function selectBackground(id){
  selected=id;
