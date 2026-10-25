@@ -1,6 +1,6 @@
 # Little Rascal — Presentation script
 
-English narration: about 804 words; add a two-minute edited walkthrough.
+English narration: about 808 words; add a two-minute edited walkthrough.
 
 ## 01 — Little Rascal
 
@@ -36,21 +36,21 @@ Framework source: Norman, D. A. (2004). Emotional Design. Describe this as the d
 
 Time: 44 seconds
 
-The experience begins with a gently moving egg. Clicking it triggers a shooting-star arrival, followed by naming and a short guide. Naming gives the player a personal entry into the relationship. The main loop combines care with visible feedback. Growth follows useful interactions and the next sleep and waking. An accepted sleep lasts at least three visible seconds after arrival at the nest, making rest easier to notice. The final farewell leads back to an egg, so the life cycle can begin again.
+The experience begins with a gently moving egg. Clicking it triggers a shooting-star arrival, naming and a short guide. Naming gives the player a personal entry into the relationship. Childhood growth now requires three effective feeds and three petting actions, followed by the next sleep and waking. Below thirty energy, the little one automatically goes to bed. Sleep remains visible for at least three seconds and restores energy before waking. The final farewell leads back to an egg, so the life cycle can begin again.
 
-体验从一颗轻轻晃动的蛋开始。点击后会出现流星出场动画，接着进入起名和简短说明。起名让玩家更个人化地进入这段关系。主体循环把照顾行为和可见反馈连接起来。成长需要有效互动，并在下一次睡醒后发生。一次被接受的睡觉操作，在到达巢里后至少会有三秒可见的睡眠，让休息更容易被玩家注意到。最后的告别会回到一颗新蛋，让生命循环重新开始。
+体验从一颗轻轻晃动的蛋开始。点击后出现流星出场、起名和简短说明。起名让玩家更个人化地进入这段关系。现在，幼儿期需要累计三次有效喂食和三次摸摸，再在下一次睡醒后长大。能量低于三十时，幼儿会自动去睡觉。睡眠至少有三秒可见过程，并恢复能量后醒来。最后的告别会回到新蛋，开始下一轮生命。
 
-Accepted sleep has a minimum of three visible active seconds after nest arrival and also waits for energy to reach at least 80. This does not change growth qualification: two effective feeds plus two other care actions, then the next waking. Youth can still refuse an unneeded full-energy sleep request.
+Child → Youth: 3 effective feeds (hunger ≤95, available for care) +3 accepted PET actions, then next completed sleep. PLAY, toy rewards and CLEAN do not replace childhood PET. Youth → Senior retains2 effective feeds+2 other care actions. Child auto-sleeps strictly below30 energy after current care/play; other stages retain≤8. At least3 visible seconds asleep AND energy≥80 to wake. Never show growth before waking.
 
 ## 05 — One character, three changing relationships
 
 Time: 39 seconds
 
-The released game has three stages: Little One, Youth and Senior. The youngest stage introduces the care loop. Youth adds independence through refusal and boredom, making the character less predictable. The senior keeps the same recognizable stars and body language, but moves in small hopping bursts with pauses to rest. It also asks for affection through a thought bubble. Changing behaviour, as well as appearance, is what makes the stages feel different.
+The released game has three stages: Little One, Youth and Senior. Childhood is more vocal, with occasional spontaneous humming during eligible idle time. Its feeding, petting and rest introduce responsibility. Youth adds independence through refusal and boredom. The senior keeps the recognizable stars, but moves in small hopping bursts with pauses to rest and asks for affection through a thought bubble. Changing behaviour and sound, as well as appearance, make the stages feel different.
 
-正式版共有三个阶段：幼年、青年和老年。幼年阶段介绍基础照顾循环。青年阶段通过拒绝和厌烦表现独立性，让角色不那么可预测。老年阶段保留熟悉的星星和身体特征，但改成小幅连续跳动，并停下来休息，还会通过气泡表达想被抚摸的需要。让阶段产生差异的，不只是外形，还有行为。
+正式版共有幼年、青年和老年三个阶段。幼儿期会在空闲时偶尔自然哼哼，喂食、摸摸和休息让玩家建立照顾的责任感。青年通过拒绝和厌烦表现独立性。老年保留熟悉的星星外形，但以短跳和停顿表现衰老，并通过气泡请求抚摸。阶段差异来自行为、声音与外形的共同变化。
 
-
+Child humL:7–10 eligible idle seconds; Youth/Senior:10–18. Busy actions, distress, sleep, dialogs and hidden tabs pause/suppress humming. Childhood waste:24–36s ordinary scheduling;8–12s after meals. Other stages:18–30s /5–8.5s. Existing illness deadlines remain6s flies,13s fatal.
 
 ## 06 — Care is a conversation, not a command
 
@@ -62,15 +62,15 @@ Youth has a twenty-five percent baseline chance to refuse feeding, petting or pl
 
 
 
-## 07 — Bring interaction into the room
+## 07 — Let the pet show and voice its needs
 
 Time: 38 seconds
 
-The floor toy makes play a physical action in the room. The player can pick it up and throw it, then watch it bounce and roll. The pet approaches it and kicks only when contact is reached. Other needs also have visible consequences. Low hunger produces a flattened pose, and uncleaned waste develops odor and flies. Together, motion and expression help connect an action, its consequence and the next possible response.
+The floor toy makes play physical. The player throws it, and the pet kicks only after contact. A short call follows the kick, making the timing clearer. Other recorded sounds distinguish accepted petting, anger and spontaneous humming. A crying cue plays once when crying begins, without looping. Hunger below thirty also changes the body into a flattened pose. This already visualizes a need beyond a bar. Expression, movement and sound work together to help the player understand the pet.
 
-地上的玩具把玩耍变成了房间里的实际动作。玩家可以拿起球再扔出去，观察它弹跳和滚动。宠物靠近后，只有真正碰到球才会踢球。其他需求同样有可见后果：饥饿较低时会出现饿扁的姿态，没及时清理的粑粑会发臭并出现苍蝇。动作和表情共同连接玩家行为、产生的后果，以及下一步可以作出的回应。
+地上的玩具让玩耍成为实际动作。玩家扔出球，宠物只有碰到球才会踢，踢中时的短叫声让反馈更清楚。其他原声分别用于接受摸摸、生气和自然哼哼。哭声只在开始哭泣时播放一次，不会在持续哭泣时循环。饥饿低于三十还会切换成饿扁形态，这已经是数值条之外的需求可视化。表情、动作与声音共同帮助玩家理解宠物。
 
-
+Owner-approved audio: C accepted PET; B anger; A crying onset once per visible episode; D actual friendly toy-contact kick only; L spontaneous humming. Reusable native HTMLAudio playback preserves original pitch/speed. Speaker toggles BGM ONLY; pet effects remain enabled. Calls reduce BGM briefly and restore prior volume. Generic hunger/energy bubbles are not implemented; existing senior affection bubble remains.
 
 ## 08 — A life in two minutes
 
@@ -80,7 +80,7 @@ I’ll now show a two-minute edited walkthrough. It brings together the opening,
 
 接下来展示一段两分钟的剪辑试玩，串联开场、日常照顾、青年反应以及老年告别。部分等待和重复照顾会缩短，方便清楚展示完整生命周期。
 
-This is a planned 120-second edited gameplay demonstration, not audience-testing evidence. Prepare the actual recording separately. Spoken introduction ≈20 seconds; footage ≈120 seconds. Leave enough screen time to read the envelope/letter; use cuts or clearly marked time compression.
+This is a planned 120-second edited gameplay demonstration, not audience-testing evidence. Prepare the actual recording separately. Spoken introduction ≈20 seconds; footage ≈120 seconds. Leave enough screen time to read the envelope/letter; use cuts or clearly marked time compression. Record current audio: C on accepted PET, D at contact, B on Youth anger; include one brief A crying onset and one L idle hum where possible. Show child3feed+3PET readiness and sleep/wake through clearly edited clips. The full life cycle is not claimed to fit uncut into120seconds.
 
 ## 09 — Let the player choose when to say goodbye
 
@@ -96,21 +96,21 @@ Natural old age has a different ending from neglect. The senior pauses, gently s
 
 Time: 43 seconds
 
-The game uses two-dimensional programming with pseudo-three-dimensional movement. Ground position and jump height are separate; depth scaling, Y sorting and shadows create space. Focused scripts handle stages, the toy, music and other systems. Internal game coordinates remain nine hundred by six hundred and forty. CSS fits the display to the window without changing the layout, and a player-clicked button enables fullscreen where supported. The native naming input remains aligned during resizing. Music is enabled by default, but browser policy may require the first player gesture before playback.
+The game uses two-dimensional programming with pseudo-three-dimensional movement. Ground position and jump height are separate; depth scaling, Y sorting and shadows create space. Internal coordinates remain nine hundred by six hundred and forty, with CSS window fitting and player-triggered fullscreen. Sound uses reusable native audio players, matching the audition page. Recorded clips retain their original pitch and speed. The speaker controls background music only, while pet calls remain audible. Browser gesture handling and playback checks support reliable interaction.
 
-游戏使用二维编程实现伪三维运动。地面位置和跳跃高度分别计算，再通过远近缩放、按地面位置排序和阴影营造空间感。成长阶段、玩具、音乐等系统由对应脚本负责。游戏内部坐标始终保持九百乘六百四十。CSS 在不改变布局的情况下让显示大小适应窗口，玩家也可以点击按钮进入浏览器支持的全屏模式。原生起名输入框在窗口变化时仍会保持对齐。音乐默认开启，但受浏览器规则影响，可能需要玩家第一次交互后才允许播放。
+游戏使用二维编程实现伪三维运动。地面位置与跳跃高度分开计算，再用远近缩放、按地面位置排序和阴影营造空间。内部坐标保持九百乘六百四十，通过 CSS 适配窗口，并由玩家主动点击全屏。声音改用与试听页相同的原生音频播放器，保留原声的音调与速度。扬声器只控制背景音乐，宠物叫声继续保留。手势启动处理与播放检查帮助保障互动反馈。
 
-Final release ef6daa9: viewport.js and style.css scale the canvas display only; no resizeCanvas() or internal coordinate/physics changes. Aspect ratio is preserved, so cream margins may remain. Fullscreen is user-triggered on the document root and depends on browser support; this keeps the native naming form visible and aligned. Background audio retains browser-gesture unlocking. Window fit does not establish full mobile/accessibility support.
+Release d3ab74f. Main scripts: sketch.js care/growth/child sleep; sound-effects.js reusable HTMLAudio, silent gesture warmups, priority and one-shot cues; music.js BGM-only toggle. Native FX volume.9, idle65% relative; BGM briefly ducks to≤.135 then restores without toggling/starting music. p5.sound add-ons are no longer required. Fixed internal coordinates and native input/fullscreen alignment preserved.
 
 ## 11 — Make each reaction feel intentional
 
 Time: 42 seconds
 
-Development involved repeated designer-led revisions: improving contact-timed kicks, giving seniors short hops and rest periods, and simplifying the life cycle to three stages. The final visual pass unifies the watercolor room and interface, with window fitting and fullscreen. Browser checks verify interactions, growth and the ending, but do not establish emotional effectiveness. The next step is to observe actual players. Saved progress is not implemented, and accessibility and longer play-session balancing remain future work.
+Designer-led iteration improved contact-timed kicks, senior hops and rest, the watercolor interface, and the three-stage life cycle. Recent changes make childhood growth depend on three feeds and three petting actions, followed by waking, and trigger automatic sleep below thirty energy. Sound was also revised: native playback and mixing checks replaced a fragile audio path. Browser checks verify these behaviours, but do not establish emotional effectiveness. Real audience feedback, saved progress and accessibility remain future work.
 
-开发过程中进行了多次由设计者主导的调整：优化接触后踢球的反馈，让老年宠物有短跳和真正的休息，并把生命周期简化成三个阶段。最后的视觉调整统一了水彩房间和界面，并加入窗口适配与全屏。浏览器检查帮助验证互动、成长和结尾流程，但不能证明情感效果。下一步应该观察真实玩家。目前尚未实现进度保存，可访问性和更长试玩过程中的平衡，也仍需要后续完善。
+设计者主导的迭代改进了接触后踢球、老年的跳动与休息、水彩界面和三阶段生命周期。最近把幼儿成长改为三次有效喂食加三次摸摸后睡醒，并加入能量低于三十的自动睡眠。音频也经过调整：改用原生播放，并检查与背景音乐同时播放时的表现。浏览器检查验证行为，但不能证明情感效果。真实受众反馈、进度保存和可访问性仍是未来方向。
 
-Distinguish implemented iteration from future work. The current internal canvas is fixed at 900 × 640 but its CSS display now fits the window; do not call the released game non-responsive solely because coordinates are fixed. No audience study, participant counts or emotional-effectiveness metrics are claimed. Saved progress, further accessibility and longer balancing are proposals, not implemented features.
+Implemented: childhood3feed+3PET then waking, auto-bed<30, hum7–10eligible seconds, ordinary waste24–36s and meal8–12s; owner-selected C/B/A/D/L audio; native playback checked with BGM active, not only with music muted. No formal audience study or measured emotional-effectiveness claims. Keep prior fixed-canvas/CSS adaptation explanation accurate.
 
 ## 12 — A relationship built from small interactions
 
@@ -120,14 +120,14 @@ Little Rascal brings everyday care, changing personality and a complete life cyc
 
 Little Rascal 把日常照顾、变化的性格和完整生命周期，放进了一个小小的房间。这个项目的重点，是连接行为与情感意义。下一步的挑战是通过真实玩家验证这个设计目标。谢谢观看。
 
-Playable game: https://itsangelia.github.io/little-rascal/?v=ef6daa9
+Playable game: https://itsangelia.github.io/little-rascal/?v=d3ab74f
 
 ## 13 — References and production credits
 
 Time: 0 seconds
 
-This appendix records the design framework, technical library and production references. Before submission, confirm the original source and licence for the background music and add the specific reference-game citation required by your course.
+This appendix records the design framework, technical library and production references. Before submission, confirm source and licence credits for the background music and uploaded voice recording, and complete the reference-game citation required by the course.
 
-附录记录设计框架、技术库和制作参考。提交前，请确认背景音乐原始来源和使用许可，并按课程要求补全参考游戏的具体引用。
+附录记录设计框架、技术库和制作参考。提交前请确认背景音乐与上传叫声音频的来源、使用许可，并按课程要求补全参考游戏引用。
 
-Credits must distinguish uploaded original illustrations from generated design explorations. Do not claim all assets are exclusively hand-drawn by the student. Confirm instructor requirements for AI disclosure. No formal audience study or participant metrics are claimed.
+Credits must distinguish uploaded original illustrations from generated design explorations. Do not claim all assets are exclusively hand-drawn by the student. Confirm instructor requirements for AI disclosure. No formal audience study or participant metrics are claimed. Pet calls are edited excerpts from the owner-uploaded 提取的音频.m4a, not generated voices. Do not label them as self-recorded or royalty-free without verification.
