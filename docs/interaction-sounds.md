@@ -1,41 +1,55 @@
-# Interaction sounds
+# Approved interaction sounds
 
-The pet now gives two quiet, wordless responses in addition to the existing
-background music. `sound-effects.js` synthesizes the calls with the native Web
-Audio API; there are no downloaded recordings, new dependencies or changes to
-the approved artwork.
+The official game now plays four owner-selected excerpts from the uploaded
+`提取的音频.m4a`. `sound-effects.js` uses native Web Audio buffers and preloads
+small WAV files from `assets/sounds/`. These files are byte-for-byte copies of
+the approved audition clips. All life stages retain the recording's original
+pitch and speed, with no synthetic voice fallback or pitch shifting.
 
-| Event | Response |
-| --- | --- |
-| Accepted petting, including a senior affection request | A soft, rising then falling contented hum |
-| Accepted toolbar play | A shorter, brighter playful call |
-| Friendly physical contact kick | The playful call at the actual kick, independently of the care reward cooldown |
-| A thrown ball before contact, an angry kick, or a refused interaction | No happy call |
+| Owner's clip | Event | Trigger |
+| --- | --- | --- |
+| C | Accepted petting | Once when normal petting or a senior affection request is accepted |
+| B | Anger | Once per angry refusal, or once on entering the visible Youth angry face |
+| D | Playing with the floor ball | Once at a successful friendly contact kick, independently of the care reward cooldown |
+| L | Spontaneous humming | Occasionally after 10–18 visible, eligible idle seconds, at a quieter level |
 
-Child, Youth and Senior use the same sound character, with a slightly lower
-pitch as they grow. Senior calls are also slightly longer. Calls last about
-0.30–0.42 seconds, have a soft attack and release, and never overlap. A 650 ms
-cooldown limits repeated calls. No continuous vocal loop is added.
+Selecting PLAY or throwing a ball does not play D before contact. An angry
+refusal uses B; its refusal kick does not receive a friendly D response. Bored
+refusals remain silent. Anger does not loop once per frame while the angry face
+stays visible. Audio changes do not alter needs, care rewards, refusal
+probabilities, growth, movement or toy physics.
 
-The existing speaker controls both music and interaction sounds and remains on
-at the start of a fresh visit. Browser audio restrictions are respected: a real
-gesture unlocks the sound context, rejected playback is handled, and missed
-calls are never queued for later replay. Muting, opening the guide, a Youth
-refusal, death, restart, and hiding the page stop the current call. Muting does
-not change care rewards, growth, refusal probabilities or ball physics.
+The existing speaker controls **background music only**. Turning it off pauses
+`bgm.mp3`; C, B, D and L remain enabled. The pet's sound context unlocks from a
+real gesture independently of the background music setting. Rejected playback
+and loading failures are handled without queuing missed calls for later replay.
+
+Only one pet call plays at a time. Explicit care and anger take priority over
+an idle hum. Idle humming pauses or stops during sleep, care, crying, hunger,
+refusals, chasing/dragging a toy, dialogs and death. Hidden tabs do not bank
+idle time or calls. Death, restart and growth reset the relevant sound state;
+no calls carry into the letter, rebirth or a new egg. Opening the guide stops
+current effects. Existing speakers and controls keep their positions.
 
 ## Checking the change
 
-Serve the game over HTTP. Complete hatching and naming, then use PET and PLAY on
-the pet. Throw the floor ball and wait for a real friendly kick. The calls should
-follow accepted actions rather than tool selection or ball release. Turn off
-the existing speaker; both music and new calls should stop. Turn it back on and
-perform a new action; an old call should not replay. Check Youth refusals and
-Senior petting as well as the first stage.
+Serve the game over HTTP and complete hatching and naming. Accept petting to
+hear C. Throw the toy and wait for actual friendly contact to hear D. In Youth,
+check an angry refusal for B and a bored refusal for silence. Leave a comfortable
+pet idle to hear L occasionally. Turn off the speaker and verify that background
+music stops while new pet calls still work. Turning background music back on
+must not replay an old call. Check help, sleep, death and hidden tabs for idle
+suppression. The canvas remains 900 × 640 internally.
 
-Automated browser checks can verify events, audio signal output, muting,
-non-overlap and console errors. The final timbre and balance should also be
-judged by listening on the player's device.
+`design-options/voice-review.html` retains all 16 candidate excerpts.
+`previews/sounds/` uses the same engine with an explicit audition configuration;
+its alternate query selections never override the official game's fixed map.
+The audition config is `design-options/recorded-sound-effects.js`; the old second
+engine and draw wrapper have been removed to keep idle time advancing once.
+
+Automated browser checks verify actual audio buffers, event timing, background
+music isolation, priority, silence in excluded states, loading retries and
+console errors. The owner judges the timbre and balance on their playback device.
 
 ## Proposed needs visualization
 

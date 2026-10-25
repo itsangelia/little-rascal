@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "status": "audition-only; awaiting owner selection",
+  "version": 3,
+  "status": "audition library; C/B/D/L approved and integrated into the official game",
   "source": {
     "uploadedName": "提取的音频.m4a",
     "durationSeconds": 65.872993,
@@ -9,7 +9,7 @@
     "sha256": "b596e2c1e491c285985a9417af0746802437877309aaec3d9090938f2bbb1b50",
     "originalIncludedInRepository": false
   },
-  "analysisNotice": "All 16 candidates were identified from waveform, spectrogram and silence boundaries only. No subjective listening or emotion classification is claimed. E–P retain longer complete or repeated bursts so the owner can identify laughter, hums or other expressions by audition; no candidate is yet assigned to these emotions.",
+  "analysisNotice": "The owner identified C as petting, B as anger, D as a toy-contact kick and L as spontaneous humming. Other excerpts remain available for comparison without an approved emotional assignment.",
   "processing": {
     "linearGain": 0.6,
     "fadeInSeconds": 0.008,
@@ -21,10 +21,13 @@
   },
   "previewDefaults": {
     "pet": "C",
-    "play": "B",
-    "notice": "C/B remain temporary audition defaults, not approved final interaction or emotion mapping. Petting laughter and spontaneous hums require owner selection; no idle sample is approved.",
+    "angry": "B",
+    "play": "D",
+    "idle": "L",
     "masterGain": 0.45,
-    "combinedGainRelativeToSource": 0.27
+    "idleRelativeGain": 0.65,
+    "combinedGainRelativeToSource": 0.27,
+    "notice": "These defaults now match the owner-approved official mapping. Alternate audition choices do not change the official game."
   },
   "excludedRange": {
     "startSeconds": 57.51,
@@ -52,7 +55,9 @@
       "sampleRate": 44100,
       "channels": 2,
       "peakAmplitude": 0.232513,
-      "rmsDbfs": -24.1
+      "rmsDbfs": -24.1,
+      "selectionStatus": "approved by owner",
+      "approvedRole": "anger"
     },
     {
       "id": "C",
@@ -63,7 +68,9 @@
       "sampleRate": 44100,
       "channels": 2,
       "peakAmplitude": 0.167145,
-      "rmsDbfs": -28.03
+      "rmsDbfs": -28.03,
+      "selectionStatus": "approved by owner",
+      "approvedRole": "accepted petting"
     },
     {
       "id": "D",
@@ -74,7 +81,9 @@
       "sampleRate": 44100,
       "channels": 2,
       "peakAmplitude": 0.242828,
-      "rmsDbfs": -24.16
+      "rmsDbfs": -24.16,
+      "selectionStatus": "approved by owner",
+      "approvedRole": "friendly physical toy-contact kick"
     },
     {
       "id": "E",
@@ -177,8 +186,9 @@
       "channels": 2,
       "peakAmplitude": 0.320648,
       "rmsDbfs": -24.81,
-      "selectionStatus": "unclassified; awaiting owner audition",
-      "grouping": "Full burst or nearby repeated bursts retained together; only surrounding silence trimmed."
+      "selectionStatus": "approved by owner",
+      "grouping": "Full burst or nearby repeated bursts retained together; only surrounding silence trimmed.",
+      "approvedRole": "occasional spontaneous idle humming"
     },
     {
       "id": "M",
@@ -234,8 +244,10 @@
     }
   ],
   "selectionRequests": {
-    "pet": "The owner requests laughter for accepted petting; awaiting the owner's chosen sample IDs.",
-    "play": "Awaiting the owner's chosen sample IDs for play.",
-    "idle": "The owner requests hums for occasional spontaneous/idle calls; awaiting the owner's chosen sample IDs."
-  }
+    "pet": "Owner selected C.",
+    "angry": "Owner selected B.",
+    "play": "Owner selected D at physical friendly kick contact only.",
+    "idle": "Owner selected L for spontaneous humming."
+  },
+  "backgroundMusicControl": "The speaker toggles background music only; recorded pet effects remain enabled."
 }

@@ -1,12 +1,81 @@
-// Original wordless pet calls, synthesized quietly without changing the music track.
+// Owner-approved recorded pet calls; the original speed and pitch are preserved.
 let petSoundContext = null;
 let petSoundOutput = null;
 let petSoundVoice = null;
 let lastPetSoundAt = -Infinity;
 const PET_SOUND_COOLDOWN = 0.65;
+const recordedPetSoundBuffers = {};
+let recordedPetSoundsReady = false;
+let recordedPetSoundPreparation = null;
+let recordedPetSoundLoadError = "";
+let recordedPetDecodeContext = null;
+const recordedPetSampleRoot = new URL("assets/sounds/", document.currentScript ? document.currentScript.src
+  : new URL("sound-effects.js", document.baseURI));
+const activePetSoundAuditionConfig = document.body && document.body.dataset.soundAudition === "true"
+  ? window.petSoundAuditionConfig || null : null;
+const recordedPetSoundSelection = activePetSoundAuditionConfig
+  ? {
+    pet: recordedPetSoundChoice(activePetSoundAuditionConfig.selection.pet, "C"),
+    angry: recordedPetSoundChoice(activePetSoundAuditionConfig.selection.angry, "B"),
+    play: recordedPetSoundChoice(activePetSoundAuditionConfig.selection.play, "D"),
+    idle: activePetSoundAuditionConfig.selection.idle === null ? null
+      : recordedPetSoundChoice(activePetSoundAuditionConfig.selection.idle, "L")
+  }
+  : { pet: "C", angry: "B", play: "D", idle: "L" };
+const recordedPetSoundFiles = { C: "pet-C.wav", B: "angry-B.wav", D: "kick-D.wav", L: "idle-L.wav" };
+let lastPetSoundKind = null;
+let petSoundAngryFaceLatched = false;
+let recordedIdlePetSoundElapsed = 0;
+let recordedIdlePetSoundDelay = 10 + Math.random() * 8;
+
+function resetIdlePetSoundTimer() {
+  recordedIdlePetSoundElapsed = 0;
+  recordedIdlePetSoundDelay = 10 + Math.random() * 8;
+}
+
+function recordedPetSoundChoice(value, fallback) {
+  const id = String(value || "").toUpperCase();
+  return /^[A-P]$/.test(id) ? id : fallback;
+}
+
+function recordedPetSoundURL(id) {
+  if (activePetSoundAuditionConfig && activePetSoundAuditionConfig.files[id]) {
+    return new URL(activePetSoundAuditionConfig.files[id], document.baseURI);
+  }
+  return new URL(recordedPetSoundFiles[id], recordedPetSampleRoot);
+}
+
+function preparePetSoundBuffers() {
+  if (recordedPetSoundsReady) return Promise.resolve(true);
+  if (recordedPetSoundPreparation) return recordedPetSoundPreparation;
+  recordedPetSoundLoadError = "";
+  recordedPetSoundPreparation = (async () => {
+    // Decode before the first care action, without starting an audible context.
+    const OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!recordedPetDecodeContext) {
+      if (!OfflineContext) throw new Error("Recorded audio decoding is unavailable in this browser.");
+      recordedPetDecodeContext = new OfflineContext(2, 1, 44100);
+    }
+    const selectedIds = [...new Set(Object.values(recordedPetSoundSelection).filter(Boolean))];
+    await Promise.all(selectedIds.map(async id => {
+      if (recordedPetSoundBuffers[id]) return;
+      const response = await fetch(recordedPetSoundURL(id));
+      if (!response.ok) throw new Error("Could not load voice sample " + id + ".");
+      const buffer = await response.arrayBuffer();
+      recordedPetSoundBuffers[id] = await recordedPetDecodeContext.decodeAudioData(buffer);
+    }));
+    recordedPetSoundsReady = selectedIds.every(id => !!recordedPetSoundBuffers[id]);
+    return recordedPetSoundsReady;
+  })().catch(error => {
+    recordedPetSoundLoadError = error.message;
+    return false;
+  }).finally(() => { recordedPetSoundPreparation = null; });
+  return recordedPetSoundPreparation;
+}
 
 function petSoundIsEnabled() {
-  return typeof musicEnabled !== "undefined" && musicEnabled && !document.hidden;
+  // The speaker controls background music only; pet calls have no mute toggle.
+  return !document.hidden;
 }
 
 function petSoundCanPlay() {
@@ -24,16 +93,17 @@ function petSoundCanPlay() {
 
 function unlockPetSounds(event) {
   if ((event && !event.isTrusted) || !petSoundIsEnabled()) return Promise.resolve(false);
-  // Context creation/resume stays inside a real gesture, never a delayed sound queue.
   if (!event && navigator.userActivation && !navigator.userActivation.isActive &&
       (!petSoundContext || petSoundContext.state !== "running")) return Promise.resolve(false);
+  preparePetSoundBuffers();
   try {
     if (!petSoundContext) {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) return Promise.resolve(false);
       petSoundContext = new AudioContextClass();
       petSoundOutput = petSoundContext.createGain();
-      petSoundOutput.gain.value = 0.8;
+      // Files use a common 0.6 gain; this playback level keeps live call RMS near 0.02–0.04.
+      petSoundOutput.gain.value = 0.45;
       petSoundOutput.connect(petSoundContext.destination);
     }
     if (petSoundContext.state === "running") return Promise.resolve(true);
@@ -44,70 +114,22 @@ function unlockPetSounds(event) {
   }
 }
 
-// Harmonic pitch curves and moving formants make a small "mrr/woo", not a UI beep.
 function createPetVoice(context, destination, kind, stage, when = context.currentTime) {
-  const elder = stage === "elder";
-  const pitchFactor = elder ? 0.72 : stage === "adult" ? 0.9 : 1;
-  const duration = (kind === "pet" ? 0.36 : 0.30) * (elder ? 1.16 : 1);
-  const end = when + duration;
-  const basePitch = (kind === "pet" ? 288 : 312) * pitchFactor;
-  const nodes = [];
-  const sources = [];
-  const sourceMix = context.createGain();
-  sourceMix.gain.value = 0.72;
-  const warmth = context.createBiquadFilter();
-  warmth.type = "highpass";
-  warmth.frequency.value = 95;
-  warmth.Q.value = 0.5;
-  const firstFormant = context.createBiquadFilter();
-  firstFormant.type = "peaking";
-  firstFormant.Q.value = 1.25;
-  firstFormant.gain.value = 3;
-  firstFormant.frequency.setValueAtTime((kind === "pet" ? 430 : 560) * pitchFactor, when);
-  firstFormant.frequency.linearRampToValueAtTime(650 * pitchFactor, when + duration * 0.35);
-  firstFormant.frequency.linearRampToValueAtTime(390 * pitchFactor, end);
-  const secondFormant = context.createBiquadFilter();
-  secondFormant.type = "peaking";
-  secondFormant.frequency.value = 1250 * pitchFactor;
-  secondFormant.Q.value = 1.7;
-  secondFormant.gain.value = 2.5;
-  const softness = context.createBiquadFilter();
-  softness.type = "lowpass";
-  softness.Q.value = 0.45;
-  softness.frequency.setValueAtTime(1000 * pitchFactor, when);
-  softness.frequency.linearRampToValueAtTime(1900 * pitchFactor, when + duration * 0.28);
-  softness.frequency.linearRampToValueAtTime(750 * pitchFactor, end);
+  const sampleId = recordedPetSoundSelection[kind];
+  const buffer = recordedPetSoundBuffers[sampleId];
+  if (!buffer) throw new Error("The selected recorded voice is not ready.");
+  const source = context.createBufferSource();
+  source.buffer = buffer;
+  source.loop = false;
+  // Preserve the owner's original recording in every life stage.
+  source.playbackRate.value = 1;
+  if (source.detune) source.detune.value = 0;
   const envelope = context.createGain();
-  envelope.gain.setValueAtTime(0, when);
-  envelope.gain.linearRampToValueAtTime(kind === "pet" ? 0.055 : 0.06, when + 0.045);
-  envelope.gain.linearRampToValueAtTime(0.042, when + duration * 0.48);
-  envelope.gain.linearRampToValueAtTime(0, end);
-  sourceMix.connect(warmth).connect(firstFormant).connect(secondFormant).connect(softness).connect(envelope).connect(destination);
-  nodes.push(sourceMix, warmth, firstFormant, secondFormant, softness, envelope);
-  for (const partial of [{ multiple: 1, level: 1, wave: "triangle" }, { multiple: 2, level: 0.19, wave: "sine" }]) {
-    const source = context.createOscillator();
-    source.type = partial.wave;
-    source.frequency.setValueAtTime(basePitch * partial.multiple, when);
-    source.frequency.exponentialRampToValueAtTime(basePitch * (kind === "pet" ? 1.18 : 1.30) * partial.multiple,
-      when + duration * 0.3);
-    source.frequency.exponentialRampToValueAtTime(basePitch * (kind === "pet" ? 0.84 : 0.92) * partial.multiple, end);
-    const partialGain = context.createGain();
-    partialGain.gain.value = partial.level;
-    source.connect(partialGain).connect(sourceMix);
-    nodes.push(source, partialGain);
-    sources.push(source);
-  }
-  const vibrato = context.createOscillator();
-  vibrato.frequency.value = elder ? 4.2 : 5.8;
-  const vibratoDepth = context.createGain();
-  vibratoDepth.gain.value = elder ? 7 : 5;
-  vibrato.connect(vibratoDepth);
-  for (const source of sources) vibratoDepth.connect(source.detune);
-  nodes.push(vibrato, vibratoDepth);
-  sources.push(vibrato);
+  envelope.gain.setValueAtTime(kind === "idle" ? 0.65 : 1, when);
+  source.connect(envelope).connect(destination);
   let cleaned = false;
   const voice = {
-    kind, stage, end, sources,
+    kind, stage, sampleId, source, buffer, sources: [source], end: when + buffer.duration,
     stop() {
       if (cleaned) return;
       const now = context.currentTime;
@@ -117,37 +139,44 @@ function createPetVoice(context, destination, kind, stage, when = context.curren
         envelope.gain.setValueAtTime(envelope.gain.value, now);
       }
       envelope.gain.linearRampToValueAtTime(0, now + 0.008);
-      for (const source of sources) {
-        try { source.stop(now + 0.01); } catch (_) { /* The finite voice may already have ended. */ }
-      }
+      try { source.stop(now + 0.01); } catch (_) { /* The finite clip may already have ended. */ }
     }
   };
-  let ended = 0;
-  for (const source of sources) {
-    source.onended = () => {
-      if (++ended < sources.length || cleaned) return;
-      cleaned = true;
-      for (const node of nodes) node.disconnect();
-      if (petSoundVoice === voice) petSoundVoice = null;
-    };
-    source.start(when);
-    source.stop(end + 0.01);
-  }
+  source.onended = () => {
+    cleaned = true;
+    source.disconnect();
+    envelope.disconnect();
+    if (petSoundVoice === voice) petSoundVoice = null;
+  };
+  source.start(when);
   return voice;
 }
 
 function playPetSound(kind, stage) {
-  if ((kind !== "pet" && kind !== "play") || !petSoundCanPlay()) return false;
+  // Explicit refusals consume the matching visible-face entry even if audio is blocked.
+  if (kind === "angry") petSoundAngryFaceLatched = true;
+  if (!["pet", "play", "angry", "idle"].includes(kind) || !petSoundCanPlay()) return false;
+  if (kind === "idle" && !canPlayIdlePetSound()) return false;
+  if (!recordedPetSoundBuffers[recordedPetSoundSelection[kind]]) {
+    preparePetSoundBuffers();
+    return false;
+  }
   if (!petSoundContext || petSoundContext.state !== "running") {
     unlockPetSounds();
     return false;
   }
+  // A new angry response must not be hidden by a preceding happy or idle call.
+  const priorityAnger = kind === "angry" && lastPetSoundKind !== "angry";
+  if (petSoundVoice && ((kind !== "idle" && petSoundVoice.kind === "idle") ||
+      (kind === "angry" && petSoundVoice.kind !== "angry"))) stopPetSounds();
   const now = petSoundContext.currentTime;
-  if (petSoundVoice || now - lastPetSoundAt < PET_SOUND_COOLDOWN) return false;
+  if (petSoundVoice || (!priorityAnger && now - lastPetSoundAt < PET_SOUND_COOLDOWN)) return false;
   const currentStage = stage || (typeof lifeStage === "undefined" ? "child" : lifeStage);
   try {
     petSoundVoice = createPetVoice(petSoundContext, petSoundOutput, kind, currentStage, now);
     lastPetSoundAt = now;
+    lastPetSoundKind = kind;
+    resetIdlePetSoundTimer();
     return true;
   } catch (_) {
     petSoundVoice = null;
@@ -159,10 +188,77 @@ function stopPetSounds() {
   if (petSoundVoice) petSoundVoice.stop();
   petSoundVoice = null;
   lastPetSoundAt = -Infinity;
+  lastPetSoundKind = null;
+  resetIdlePetSoundTimer();
+}
+
+function resetPetSoundState() {
+  petSoundAngryFaceLatched = false;
+}
+
+function petHasAngrySoundFace() {
+  return typeof lifeStage !== "undefined" && lifeStage === "adult" &&
+    typeof isDead !== "undefined" && !isDead &&
+    typeof hatchingComplete !== "undefined" && hatchingComplete &&
+    typeof adultSprites !== "undefined" && !!adultSprites.angry &&
+    typeof getCurrentPetImage === "function" && getCurrentPetImage() === adultSprites.angry;
+}
+
+function updatePetSoundState() {
+  const angryFace = petHasAngrySoundFace();
+  const entered = angryFace && !petSoundAngryFaceLatched;
+  petSoundAngryFaceLatched = angryFace;
+  // Passive mood-face changes never interrupt an accepted care response.
+  const activeCare = (typeof isBeingPetted !== "undefined" && isBeingPetted) ||
+    (typeof isEating !== "undefined" && isEating) ||
+    (typeof isPlaying !== "undefined" && isPlaying) ||
+    (typeof toyPlayAction !== "undefined" && !!toyPlayAction);
+  // Busy/modal/hidden/loading entries are consumed, never queued for later replay.
+  return entered && !activeCare ? playPetSound("angry") : false;
+}
+
+function canPlayIdlePetSound() {
+  if (!recordedPetSoundSelection.idle || !petSoundCanPlay()) return false;
+  if (typeof farewell !== "undefined" && farewell) return false;
+  if (typeof isEating !== "undefined" && isEating) return false;
+  if (typeof isBeingPetted !== "undefined" && isBeingPetted) return false;
+  if (typeof isPlaying !== "undefined" && isPlaying) return false;
+  if (typeof toyPlayAction !== "undefined" && toyPlayAction) return false;
+  if (typeof toyBall !== "undefined" && toyBall.dragging) return false;
+  if (typeof adultApproach !== "undefined" && adultApproach) return false;
+  if (typeof adultReaction !== "undefined" && adultReaction) return false;
+  if (typeof isAdultAngry === "function" && isAdultAngry()) return false;
+  if (typeof lifeStage !== "undefined" && lifeStage === "adult" &&
+      typeof YOUTH_MOOD !== "undefined" && happiness < YOUTH_MOOD.angry) return false;
+  if (typeof isPetCrying === "function" && isPetCrying()) return false;
+  if (typeof isHungryPose === "function" && isHungryPose()) return false;
+  if (typeof energy !== "undefined" && energy <= 10) return false;
+  if (typeof ballChaseUntil !== "undefined" && typeof millis === "function" && millis() < ballChaseUntil) return false;
+  return true;
+}
+
+function updateIdlePetSound(elapsedSeconds) {
+  // Only visible, eligible gameplay counts; no wall-clock timer or delayed queue.
+  if (!canPlayIdlePetSound()) {
+    // A spontaneous clip must not continue into sleep, distress or active care.
+    if (petSoundVoice && petSoundVoice.kind === "idle") stopPetSounds();
+    return false;
+  }
+  if (petSoundVoice || !petSoundContext || petSoundContext.state !== "running" ||
+      !recordedPetSoundBuffers[recordedPetSoundSelection.idle]) return false;
+  const seconds = Math.max(0, Math.min(Number(elapsedSeconds) || 0, 0.25));
+  recordedIdlePetSoundElapsed += seconds;
+  if (recordedIdlePetSoundElapsed < recordedIdlePetSoundDelay) return false;
+  return playPetSound("idle");
 }
 
 for (const gesture of ["pointerdown", "pointerup", "touchend", "keydown"]) {
   document.addEventListener(gesture, unlockPetSounds, true);
 }
-document.addEventListener("visibilitychange", () => { if (document.hidden) stopPetSounds(); });
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopPetSounds();
+  // Browser frame suspension must not create a deferred anger call on return.
+  petSoundAngryFaceLatched = petHasAngrySoundFace();
+});
 window.addEventListener("pagehide", stopPetSounds);
+preparePetSoundBuffers();

@@ -10,27 +10,20 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.11/addons/p5.sound.min.js"></script>
   <link rel="stylesheet" href="style.css?v=viewport-fit-1">
 </head>
-<body>
+<body data-sound-audition="true">
   <main></main>
   <script src="viewport.js?v=viewport-fit-1"></script>
   <script src="hatching.js?v=child-scale-play-energy-1"></script>
   <script src="ui-theme.js?v=watercolor-ui-1"></script>
   <script src="help.js?v=pet-voices-1"></script>
   <script src="naming.js?v=watercolor-ui-1"></script>
-  <script src="music.js?v=pet-voices-1"></script>
-  <script src="design-options/recorded-sound-effects.js?v=recorded-voice-2"></script>
+  <script src="music.js?v=bgm-control-2"></script>
+  <script src="design-options/recorded-sound-effects.js?v=approved-audition-3"></script>
+  <script src="sound-effects.js?v=approved-voices-1"></script>
   <script src="toy-ball.js?v=bouncy-face-ball-1"></script>
   <script src="stages.js?v=senior-size-115-1"></script>
   <script src="elder-care.js?v=cartoon-glove-bubble-1"></script>
   <script src="ending.js?v=clear-farewell-floor-1"></script>
-  <script src="sketch.js?v=pet-voices-1"></script>
-  <script>
-    // Preview-only delegation keeps the official draw loop and game rules intact.
-    const recordedSoundPreviewDraw = window.draw;
-    window.draw = function () {
-      recordedSoundPreviewDraw.apply(this, arguments);
-      updateIdlePetSound(deltaTime / 1000);
-    };
-  </script>
+  <script src="sketch.js?v=approved-voices-1"></script>
 </body>
 </html>

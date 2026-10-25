@@ -31,13 +31,9 @@ function isOverMusicButton() {
 function handleMusicClick() {
   if (!isOverMusicButton()) return false;
   musicEnabled = !musicEnabled;
-  if (musicEnabled) {
-    startBackgroundMusic();
-    unlockPetSounds();
-  } else {
-    musicAudio.pause();
-    stopPetSounds();
-  }
+  // The speaker controls background music; the pet keeps its own voice.
+  if (musicEnabled) startBackgroundMusic();
+  else musicAudio.pause();
   return true;
 }
 

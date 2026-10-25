@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "status": "owner-approved interaction mapping",
+  "source": {
+    "uploadedName": "提取的音频.m4a",
+    "durationSeconds": 65.872993,
+    "sampleRate": 44100,
+    "channels": 2,
+    "sha256": "b596e2c1e491c285985a9417af0746802437877309aaec3d9090938f2bbb1b50",
+    "originalIncludedInRepository": false
+  },
+  "processing": {
+    "linearGain": 0.6,
+    "fadeInSeconds": 0.008,
+    "fadeOutSeconds": 0.008,
+    "playbackRate": 1,
+    "pitchShiftSemitones": 0,
+    "timeStretch": false,
+    "format": "stereo PCM 16-bit WAV; original 44.1 kHz sample rate"
+  },
+  "mapping": {
+    "pet": "C",
+    "angry": "B",
+    "play": "D",
+    "idle": "L"
+  },
+  "playback": {
+    "playbackRate": 1,
+    "detuneCents": 0,
+    "allStagesUseOriginalPitchAndSpeed": true,
+    "masterGain": 0.45,
+    "idleRelativeGain": 0.65,
+    "oneVoiceAtATime": true,
+    "cooldownSeconds": 0.65,
+    "idleEligibleDelaySeconds": [
+      10,
+      18
+    ],
+    "notes": "C plays after accepted petting; B expresses anger; D plays only on actual friendly toy contact; L is an occasional eligible idle call. Approved excerpts are copied byte-for-byte from audition assets. Anger can interrupt happy/idle calls; deliberate care can interrupt idle calls. No delayed replay after loading, dialogs or hidden tabs.",
+    "backgroundMusicSwitch": "Background music only; pet effects remain enabled."
+  },
+  "samples": [
+    {
+      "id": "C",
+      "file": "pet-C.wav",
+      "sourceStartSeconds": 26.37,
+      "sourceEndSeconds": 26.76,
+      "durationSeconds": 0.39,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.167145,
+      "rmsDbfs": -28.03,
+      "kind": "pet",
+      "copiedFrom": "design-options/voice-samples/C.wav",
+      "sha256": "1eebabfdf44b617da6e01e15a0b9440d45bcf9b490b5a106939d58737f870d2f"
+    },
+    {
+      "id": "B",
+      "file": "angry-B.wav",
+      "sourceStartSeconds": 19.8,
+      "sourceEndSeconds": 20.23,
+      "durationSeconds": 0.43,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.232513,
+      "rmsDbfs": -24.1,
+      "kind": "angry",
+      "copiedFrom": "design-options/voice-samples/B.wav",
+      "sha256": "bd5842a095cbec141d8b0995c4f64c16e048f5c6c34abc5d1d1ea14efd2b9f15"
+    },
+    {
+      "id": "D",
+      "file": "kick-D.wav",
+      "sourceStartSeconds": 48.28,
+      "sourceEndSeconds": 48.77,
+      "durationSeconds": 0.49,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.242828,
+      "rmsDbfs": -24.16,
+      "kind": "play",
+      "copiedFrom": "design-options/voice-samples/D.wav",
+      "sha256": "c8c01aeccf059486d4698f4449f732a6e8c93dbf6e0eeadc4e1856e601835f47"
+    },
+    {
+      "id": "L",
+      "file": "idle-L.wav",
+      "sourceStartSeconds": 14.67,
+      "sourceEndSeconds": 16.52,
+      "durationSeconds": 1.85,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.320648,
+      "rmsDbfs": -24.81,
+      "kind": "idle",
+      "copiedFrom": "design-options/voice-samples/L.wav",
+      "sha256": "4e837d77ff5ece9c2521a5400ec4d5115764b7bda8427531adce428f0d582919"
+    }
+  ]
+}

@@ -87,3 +87,11 @@ These instructions apply to the entire repository and all future Codex tasks.
 
 - Keep the p5 game canvas and all game coordinates at 900 × 640. `style.css` scales only its displayed size to fit and center inside the window with the original aspect ratio; keep any cream margins needed to avoid stretching or cropping.
 - `viewport.js` owns the small full-screen DOM control in the unused upper-right gutter. Request fullscreen on the document root after a user gesture so native naming inputs remain visible. Preserve button-event isolation, fullscreen exit, scaled pointer mapping and name-form alignment across window changes. Do not introduce `resizeCanvas()` for display fitting.
+
+## Approved pet voice and music control
+
+- The owner selected recorded excerpts C for accepted petting, B for anger, D for a friendly physical toy-contact kick, and L for occasional spontaneous humming. Preserve the byte-exact selected WAVs in `assets/sounds/` and their original pitch/speed across all stages. Keep the full 16-clip audition library intact. Do not restore synthesized voices.
+- D plays only when the pet actually kicks the toy; selecting PLAY, throwing the ball or an angry refusal kick does not play D. B plays once for an angry refusal or entry into the visible Youth angry face, with no continuous replay while the expression persists. Bored refusals stay silent. Preserve all existing care and movement rules.
+- Idle L uses a quiet 10–18 visible eligible-second interval and yields to care, anger, sleep, distress, dialogs, toy pursuit and death. Count idle time once in the main draw flow. No queued calls after loading, hiding the page or returning from dialogs; no voice carries into farewell or rebirth.
+- The owner explicitly clarified that the speaker toggles **background music only**. Pet effects continue when `musicEnabled` is false; sound-context unlocking must remain independent of the music setting. Keep browser gesture handling and rejected promises safe. Do not add an effects mute control without a request.
+- The official voice mapping is fixed. Only the explicitly marked sound audition page may configure alternate candidates, using the same shared engine. See [docs/interaction-sounds.md](docs/interaction-sounds.md).

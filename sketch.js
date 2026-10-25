@@ -490,6 +490,8 @@ async function setup() {
 
 function draw() {
   drawGameFrame();
+  updatePetSoundState();
+  updateIdlePetSound(deltaTime / 1000);
   // Keep one music control available across the egg, dialogs and gameplay.
   drawMusicButton();
 }
@@ -2902,8 +2904,6 @@ function performPlay() {
   landTimer =
     2;
 
-  playPetSound("play");
-
 }
 
 
@@ -4611,6 +4611,7 @@ function drawDeadPet() {
 
 function restartPet() {
   stopPetSounds();
+  resetPetSoundState();
   adultReaction = null;
   adultAngryUntil = 0;
   adultRefusalMood = "angry";
@@ -4704,6 +4705,8 @@ function updateGrowth() {
       isPooping || toyBall.dragging || toyPlayAction ||
       movementState === "jump" || adultReaction || isAdultAngry()) return;
   lifeStage = nextStage;
+  stopPetSounds();
+  resetPetSoundState();
   adultReaction = null;
   adultAngryUntil = 0;
   adultRefusalMood = "angry";
@@ -4855,6 +4858,7 @@ function refuseYouthInteraction(action, mood) {
   } else {
     if (action === "pet") startAdultEvade();
     if (action === "play") startAdultKick();
+    playPetSound("angry");
   }
   return false;
 }

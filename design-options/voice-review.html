@@ -29,12 +29,13 @@
 <main>
   <h1>选一选球球的声音</h1>
   <p>新增 E–P 共 12 段，保留更完整的连声片段；之前的 A–D 也在。所有声音都来自你上传的音频，保持原来的音调和速度。</p>
-  <p>听到喜欢的笑声，就选为摸摸反馈；哼哼声选为闲时自发发声。玩球的声音也可以单独选。</p>
-  <p class="muted">当前为试听草案，正式游戏保持原样。摸摸 C／玩球 B 是原来的试听组合，闲时哼哼等你选择。</p>
+  <p>已选定：C 是摸摸叫声，B 是生气声，D 是踢中玩具球的叫声，L 是闲时哼哼。你也可以在这里继续对比其他片段。</p>
+  <p class="muted">正式游戏使用这组声音。这里的选择仅影响试听版；扬声器只开关背景音乐，球球的叫声会保留。</p>
   <section class="selection" aria-label="当前选择">
     <p id="selected" aria-live="polite"></p>
     <div class="choices">
       <a class="button" id="try-game" target="_blank" rel="noopener">在游戏里试听这组声音</a>
+      <a class="button" href="../?v=approved-voices-1" target="_blank" rel="noopener">玩正式版</a>
       <button id="copy" type="button">复制选择，发回聊天</button>
       <button id="clear-idle" type="button">清除哼哼选择</button>
     </div>
@@ -46,8 +47,8 @@
     <h2>之前的片段 A–D</h2>
     <div class="grid" id="previous-clips"></div>
   </div>
-  <footer>游戏试玩仍有点蛋、起名流程。选了哼哼声后，进入游戏闲着等一会儿，球球会偶尔自己发声。原有扬声器一起控制音乐和叫声。</footer>
+  <footer>游戏试玩仍有点蛋、起名流程。进入游戏闲着等一会儿，球球会偶尔自己哼哼；接受摸摸、生气和踢中球时播放对应叫声。扬声器只控制背景音乐。</footer>
 </main>
-<script src="voice-review.js?v=voice-bank-2"></script>
+<script src="voice-review.js?v=approved-voice-bank-3"></script>
 </body>
 </html>
