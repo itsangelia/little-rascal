@@ -31,8 +31,13 @@ function isOverMusicButton() {
 function handleMusicClick() {
   if (!isOverMusicButton()) return false;
   musicEnabled = !musicEnabled;
-  if (musicEnabled) startBackgroundMusic();
-  else musicAudio.pause();
+  if (musicEnabled) {
+    startBackgroundMusic();
+    unlockPetSounds();
+  } else {
+    musicAudio.pause();
+    stopPetSounds();
+  }
   return true;
 }
 

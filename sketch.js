@@ -2794,6 +2794,8 @@ function performPet() {
     millis() +
     1300;
 
+  playPetSound("pet");
+
 }
 
 
@@ -2899,6 +2901,8 @@ function performPlay() {
 
   landTimer =
     2;
+
+  playPetSound("play");
 
 }
 
@@ -4559,6 +4563,7 @@ function updateNeglect(elapsedSeconds = deltaTime / 1000) {
 
 function die(cause) {
   if (isDead) return;
+  stopPetSounds();
   elderPetRequests.active = null;
   adultReaction = null;
   adultAngryUntil = 0;
@@ -4605,6 +4610,7 @@ function drawDeadPet() {
 }
 
 function restartPet() {
+  stopPetSounds();
   adultReaction = null;
   adultAngryUntil = 0;
   adultRefusalMood = "angry";
@@ -4826,6 +4832,7 @@ function isYouthNeedFull(action) {
 }
 
 function refuseYouthInteraction(action, mood) {
+  stopPetSounds();
   stopCurrentMovement();
   adultApproach = null;
   adultInvitingBall = false;
@@ -5144,6 +5151,8 @@ function updateToyPlayAction() {
     ballChaseUntil = ballChaseSpeed = 0;
     adultInvitingBall = false;
     action.kicked = true;
+    // Voice follows the physical tap, including taps within the reward cooldown.
+    playPetSound("play");
   } else if (action.phase === "release" && action.elapsed >= 0.25) {
     action.phase = "rest";
     action.elapsed = 0;

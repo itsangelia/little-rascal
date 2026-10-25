@@ -16,6 +16,7 @@ function isOverHelpButton() {
 
 function openHelpPopup() {
   if (helpPopupOpen || isDead || growthPopupOpen) return;
+  stopPetSounds();
   helpPage = 0;
   helpOpenedAt = millis();
   helpPopupOpen = true;
