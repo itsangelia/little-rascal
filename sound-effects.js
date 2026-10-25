@@ -27,14 +27,14 @@ let petSoundAngryFaceLatched = false;
 let petSoundCryingLatched = false;
 let recordedIdlePetSoundElapsed = 0;
 let recordedIdlePetSoundStage = "child";
-let recordedIdlePetSoundDelay = 8 + Math.random() * 4;
+let recordedIdlePetSoundDelay = 7 + Math.random() * 3;
 let petSoundMusicVolume = null;
 
 function resetIdlePetSoundTimer() {
   recordedIdlePetSoundStage = typeof lifeStage === "undefined" ? "child" : lifeStage;
   recordedIdlePetSoundElapsed = 0;
   recordedIdlePetSoundDelay = recordedIdlePetSoundStage === "child"
-    ? 8 + Math.random() * 4 : 10 + Math.random() * 8;
+    ? 7 + Math.random() * 3 : 10 + Math.random() * 8;
 }
 
 function recordedPetSoundChoice(value, fallback) {

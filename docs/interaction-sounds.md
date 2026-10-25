@@ -11,7 +11,7 @@ pitch and speed, with no synthetic voice fallback or pitch shifting.
 | C | Accepted petting | Once when normal petting or a senior affection request is accepted |
 | B | Anger | Once per angry refusal, or once on entering the visible Youth angry face |
 | D | Playing with the floor ball | Once at a successful friendly contact kick, independently of the care reward cooldown |
-| L | Spontaneous humming | Child: 8–12 visible eligible seconds; other stages: 10–18; at a quieter level |
+| L | Spontaneous humming | Child: 7–10 visible eligible seconds; other stages: 10–18; at a quieter level |
 | A | Crying | Once when a visible crying episode begins; no repeat while it continues |
 
 Selecting PLAY or throwing a ball does not play D before contact. An angry
@@ -65,7 +65,7 @@ The owner judges timbre and balance on their playback device.
 
 ## Child rhythm
 
-Child spontaneous humming now uses an 8–12 eligible-second interval. Child
+Child spontaneous humming now uses a 7–10 eligible-second interval. Child
 regular waste scheduling uses 24–36 seconds and meal-triggered scheduling uses
 8–12 seconds. Youth and Senior retain their prior 18–30 / 5–8.5 second waste
 intervals and 10–18 second humming interval. Full-room retry timing stays 12–18

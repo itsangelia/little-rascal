@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "status": "owner-approved interaction mapping",
   "source": {
     "uploadedName": "提取的音频.m4a",
@@ -35,15 +35,15 @@
     "cooldownSeconds": 0.65,
     "idleEligibleDelaySeconds": {
       "child": [
-        8,
-        12
+        7,
+        10
       ],
       "otherStages": [
         10,
         18
       ]
     },
-    "notes": "C accepted petting, B anger, A crying onset once, D friendly toy contact, L eligible spontaneous humming. Child idle interval is 8–12 seconds; other stages 10–18. Native playback, original speed/pitch and the background-music-only switch are preserved.",
+    "notes": "C accepted petting, B anger, A crying onset once, D friendly toy contact, L eligible spontaneous humming. Child idle interval is 7–10 seconds; other stages 10–18. Native playback, original speed/pitch and the background-music-only switch are preserved.",
     "backgroundMusicSwitch": "Background music only; pet effects remain enabled.",
     "backend": "native reusable HTMLAudioElement; no Web Audio context or offline decoder required",
     "backgroundMusicDuringVoiceVolumeMax": 0.135,
