@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "status": "audition library; C/B/D/L approved and integrated into the official game",
   "source": {
     "uploadedName": "提取的音频.m4a",
@@ -241,6 +241,62 @@
       "rmsDbfs": -26.77,
       "selectionStatus": "unclassified; awaiting owner audition",
       "grouping": "Full burst or nearby repeated bursts retained together; only surrounding silence trimmed."
+    },
+    {
+      "id": "Q",
+      "file": "Q.wav",
+      "sourceStartSeconds": 37.66,
+      "sourceEndSeconds": 39.14,
+      "durationSeconds": 1.48,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.30368,
+      "rmsDbfs": -24.66,
+      "sha256": "3365e7b0252f17bac6d8d6962a294ff4792d4a42cb9fba01bace63dba82744f6",
+      "selectionStatus": "unclassified; owner must audition to identify crying",
+      "grouping": "Full later burst or adjacent bursts with their internal pause retained."
+    },
+    {
+      "id": "R",
+      "file": "R.wav",
+      "sourceStartSeconds": 39.88,
+      "sourceEndSeconds": 42.37,
+      "durationSeconds": 2.49,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.26825,
+      "rmsDbfs": -27.23,
+      "sha256": "65d740664f2d092a866a774688b5bc03b94478ce93b4bd78c9daaa10fd60c368",
+      "selectionStatus": "unclassified; owner must audition to identify crying",
+      "grouping": "Full later burst or adjacent bursts with their internal pause retained."
+    },
+    {
+      "id": "S",
+      "file": "S.wav",
+      "sourceStartSeconds": 43.19,
+      "sourceEndSeconds": 45.74,
+      "durationSeconds": 2.55,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.337189,
+      "rmsDbfs": -28.51,
+      "sha256": "137ca2b1974886606687a2bf033f92ec2b0a976374831c3d50f813370536b21f",
+      "selectionStatus": "unclassified; owner must audition to identify crying",
+      "grouping": "Full later burst or adjacent bursts with their internal pause retained."
+    },
+    {
+      "id": "T",
+      "file": "T.wav",
+      "sourceStartSeconds": 46.37,
+      "sourceEndSeconds": 47.7,
+      "durationSeconds": 1.33,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.205841,
+      "rmsDbfs": -31.07,
+      "sha256": "ac250f82ee04ebc59ca6dc65f8ff5902a3915b5e3c90c9f7ac5b3b24c3ec51d7",
+      "selectionStatus": "unclassified; owner must audition to identify crying",
+      "grouping": "Full later burst or adjacent bursts with their internal pause retained."
     }
   ],
   "selectionRequests": {
@@ -249,5 +305,15 @@
     "play": "Owner selected D at physical friendly kick contact only.",
     "idle": "Owner selected L for spontaneous humming."
   },
-  "backgroundMusicControl": "The speaker toggles background music only; recorded pet effects remain enabled."
+  "backgroundMusicControl": "The speaker toggles background music only; recorded pet effects remain enabled.",
+  "crySelection": {
+    "status": "awaiting owner identification; no cry sample assigned to official game",
+    "candidates": [
+      "Q",
+      "R",
+      "S",
+      "T"
+    ],
+    "notice": "Audio content cannot be directly heard in this environment. These are neutral excerpts for owner audition, not verified cries."
+  }
 }

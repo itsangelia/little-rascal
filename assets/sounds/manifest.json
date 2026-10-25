@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "status": "owner-approved interaction mapping",
   "source": {
     "uploadedName": "提取的音频.m4a",
@@ -28,7 +28,7 @@
     "playbackRate": 1,
     "detuneCents": 0,
     "allStagesUseOriginalPitchAndSpeed": true,
-    "masterGain": 0.45,
+    "masterGain": 0.9,
     "idleRelativeGain": 0.65,
     "oneVoiceAtATime": true,
     "cooldownSeconds": 0.65,
@@ -36,8 +36,10 @@
       10,
       18
     ],
-    "notes": "C plays after accepted petting; B expresses anger; D plays only on actual friendly toy contact; L is an occasional eligible idle call. Approved excerpts are copied byte-for-byte from audition assets. Anger can interrupt happy/idle calls; deliberate care can interrupt idle calls. No delayed replay after loading, dialogs or hidden tabs.",
-    "backgroundMusicSwitch": "Background music only; pet effects remain enabled."
+    "notes": "Approved C/B/D/L WAVs remain byte-identical. Native audio players are prepared by real gestures, with silent warmups, token-checked promises and no delayed replay. Effect volume is 0.9 and idle uses 65% of this. Music is temporarily lowered while a call plays and restored without changing its enabled/paused state.",
+    "backgroundMusicSwitch": "Background music only; pet effects remain enabled.",
+    "backend": "native reusable HTMLAudioElement; no Web Audio context or offline decoder required",
+    "backgroundMusicDuringVoiceVolumeMax": 0.135
   },
   "samples": [
     {

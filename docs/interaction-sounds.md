@@ -1,7 +1,7 @@
 # Approved interaction sounds
 
 The official game now plays four owner-selected excerpts from the uploaded
-`提取的音频.m4a`. `sound-effects.js` uses native Web Audio buffers and preloads
+`提取的音频.m4a`. `sound-effects.js` uses reusable native HTML audio players and preloads
 small WAV files from `assets/sounds/`. These files are byte-for-byte copies of
 the approved audition clips. All life stages retain the recording's original
 pitch and speed, with no synthetic voice fallback or pitch shifting.
@@ -20,8 +20,9 @@ stays visible. Audio changes do not alter needs, care rewards, refusal
 probabilities, growth, movement or toy physics.
 
 The existing speaker controls **background music only**. Turning it off pauses
-`bgm.mp3`; C, B, D and L remain enabled. The pet's sound context unlocks from a
-real gesture independently of the background music setting. Rejected playback
+`bgm.mp3`; C, B, D and L remain enabled. The pet's media players are prepared by a real gesture independently of the
+background music setting. No separate Web Audio context or offline decoder is
+required. Rejected playback
 and loading failures are handled without queuing missed calls for later replay.
 
 Only one pet call plays at a time. Explicit care and anger take priority over
@@ -47,9 +48,18 @@ its alternate query selections never override the official game's fixed map.
 The audition config is `design-options/recorded-sound-effects.js`; the old second
 engine and draw wrapper have been removed to keep idle time advancing once.
 
-Automated browser checks verify actual audio buffers, event timing, background
+Automated browser checks verify native media playback time, event timing, background
 music isolation, priority, silence in excluded states, loading retries and
-console errors. The owner judges the timbre and balance on their playback device.
+console errors. Native audio is also checked with Web Audio APIs unavailable and
+with background music actually playing. Calls use volume 0.9; idle calls use 65%
+of that. During a call, background music is lowered to at most 0.135, then its
+prior volume returns. This does not change the music toggle or resume paused
+music. Silent gesture warmups never become audible calls.
+
+Four additional Q–T excerpts are available at `design-options/cry-review.html`.
+They are neutral candidates pending the owner identifying a cry; no unverified
+clip is yet assigned to the official crying state. The owner judges timbre and
+balance on their playback device.
 
 ## Proposed needs visualization
 
