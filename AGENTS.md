@@ -75,3 +75,5 @@ These instructions apply to the entire repository and all future Codex tasks.
 - The owner selected the first refined background for the official game: `assets/room-background-v1.png`, copied byte-for-byte from `design-options/background-refined.png`. Preserve this approved watercolor artwork and its proportions.
 - Keep the original `map.jpg` intact as an archive. `design-options/background-refined-v2.png` remains an unselected alternative; the review page defaults to the approved first version.
 - Keep the fixed 900 × 640 canvas, room/interface layout, prop placement and collision coordinates unchanged when loading this background. Preserve all original source images.
+
+- The sleeping ground anchor is `(660, 300)`, moved 25 canvas pixels upward to align with the approved first background's nest hollow. Bed routing, arrival, sleep drawing and waking use this shared anchor; preserve normal energy recovery and stage growth.

@@ -214,7 +214,8 @@ const FRONT_RIGHT = 845;
 
 const BED_X = 660;
 
-const BED_Y = 325;
+// Align the sleeping baseline with the hollow in the approved first background.
+const BED_Y = 300;
 
 
 
