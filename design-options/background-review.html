@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Little Rascal · 背景对照</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#fcfaf2;color:#504637;font-family:Arial,sans-serif;line-height:1.6}main{max-width:1160px;margin:auto;padding:24px 18px 60px}h1{font-size:28px;margin:8px 0}nav{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}button,a{font:inherit}button{border:1px solid #bfb493;border-radius:22px;background:white;padding:10px 24px;cursor:pointer;color:#504637}button[aria-pressed="true"]{background:#728367;color:white;border-color:#728367}a{color:#586e48}img{display:block;width:100%;height:auto;background:#fff;border:1px solid #ded6bc;border-radius:12px}.caption{color:#817967;margin:8px 0}.foot{margin-top:24px}button:focus-visible{outline:3px solid #cca35a;outline-offset:3px}</style></head><body><main>
+<h1>Little Rascal · 背景效果对照</h1><p>点击切换，查看优化版和原图。</p>
+<nav aria-label="选择背景版本"><button type="button" id="refined" aria-pressed="true">优化版</button><button type="button" id="original" aria-pressed="false">原图</button></nav>
+<p class="caption" id="caption">优化版：窗外层次、水彩质感与植物细节</p>
+<img id="background" src="background-refined.png" alt="优化后的水彩房间背景，左侧植物、右侧软巢和小屋，中央保留空地">
+<p class="foot"><a href="background-refined.png" target="_blank" rel="noopener">单独打开优化图</a> · <a href="background-refined.png" download>下载图片</a> · <a href="../">进入正式游戏</a></p>
+<p class="caption">这是背景效果稿，正式游戏仍使用原图。</p>
+<script>
+const image=document.getElementById('background');
+const caption=document.getElementById('caption');
+const choices={refined:{src:'background-refined.png',label:'优化版：窗外层次、水彩质感与植物细节'},original:{src:'../map.jpg',label:'原图：当前正式游戏使用的背景'}};
+for(const [id,choice] of Object.entries(choices))document.getElementById(id).addEventListener('click',()=>{image.src=choice.src;image.alt=choice.label;caption.textContent=choice.label;for(const key of Object.keys(choices))document.getElementById(key).setAttribute('aria-pressed',String(key===id));});
+</script></main></body></html>
