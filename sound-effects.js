@@ -16,20 +16,25 @@ const recordedPetSoundSelection = activePetSoundAuditionConfig
   ? {
     pet: recordedPetSoundChoice(activePetSoundAuditionConfig.selection.pet, "C"),
     angry: recordedPetSoundChoice(activePetSoundAuditionConfig.selection.angry, "B"),
+    cry: recordedPetSoundChoice(activePetSoundAuditionConfig.selection.cry, "A"),
     play: recordedPetSoundChoice(activePetSoundAuditionConfig.selection.play, "D"),
     idle: activePetSoundAuditionConfig.selection.idle === null ? null
       : recordedPetSoundChoice(activePetSoundAuditionConfig.selection.idle, "L")
   }
-  : { pet: "C", angry: "B", play: "D", idle: "L" };
-const recordedPetSoundFiles = { C: "pet-C.wav", B: "angry-B.wav", D: "kick-D.wav", L: "idle-L.wav" };
+  : { pet: "C", angry: "B", cry: "A", play: "D", idle: "L" };
+const recordedPetSoundFiles = { C: "pet-C.wav", B: "angry-B.wav", A: "cry-A.wav", D: "kick-D.wav", L: "idle-L.wav" };
 let petSoundAngryFaceLatched = false;
+let petSoundCryingLatched = false;
 let recordedIdlePetSoundElapsed = 0;
-let recordedIdlePetSoundDelay = 10 + Math.random() * 8;
+let recordedIdlePetSoundStage = "child";
+let recordedIdlePetSoundDelay = 8 + Math.random() * 4;
 let petSoundMusicVolume = null;
 
 function resetIdlePetSoundTimer() {
+  recordedIdlePetSoundStage = typeof lifeStage === "undefined" ? "child" : lifeStage;
   recordedIdlePetSoundElapsed = 0;
-  recordedIdlePetSoundDelay = 10 + Math.random() * 8;
+  recordedIdlePetSoundDelay = recordedIdlePetSoundStage === "child"
+    ? 8 + Math.random() * 4 : 10 + Math.random() * 8;
 }
 
 function recordedPetSoundChoice(value, fallback) {
@@ -188,7 +193,9 @@ function restoreMusicAfterPetSound() {
 
 function playPetSound(kind, stage) {
   if (kind === "angry") petSoundAngryFaceLatched = true;
-  if (!["pet", "play", "angry", "idle"].includes(kind) || !petSoundCanPlay()) return false;
+  if (kind === "cry") petSoundCryingLatched = true;
+  if (!["pet", "play", "angry", "cry", "idle"].includes(kind) || !petSoundCanPlay()) return false;
+  if (kind === "cry" && !petHasCryingSoundFace()) return false;
   if (kind === "idle" && !canPlayIdlePetSound()) return false;
   const entry = getPetSoundPlayer(recordedPetSoundSelection[kind]);
   // Loading is preparation only: never queue an old interaction behind its download.
@@ -196,11 +203,14 @@ function playPetSound(kind, stage) {
     preparePetSounds();
     return false;
   }
-  const priorityAnger = kind === "angry" && lastPetSoundKind !== "angry";
-  if (petSoundVoice && ((kind !== "idle" && petSoundVoice.kind === "idle") ||
-      (kind === "angry" && petSoundVoice.kind !== "angry"))) stopPetSounds();
+  // The crying-state latch limits A to one cue per episode, including a new
+  // episode that starts shortly after the previous one has ended.
+  const priorityEmotion = kind === "cry" || (kind === "angry" && lastPetSoundKind !== kind);
+  if (petSoundVoice && ((kind !== "idle" && (petSoundVoice.kind === "idle" ||
+      (petSoundVoice.kind === "cry" && kind !== "cry"))) ||
+      (["angry", "cry"].includes(kind) && petSoundVoice.kind !== kind))) stopPetSounds();
   const now = performance.now() / 1000;
-  if (petSoundVoice || (!priorityAnger && now - lastPetSoundAt < PET_SOUND_COOLDOWN)) return false;
+  if (petSoundVoice || (!priorityEmotion && now - lastPetSoundAt < PET_SOUND_COOLDOWN)) return false;
   const audio = entry.audio, token = ++entry.token;
   entry.warming = false;
   let finished = false;
@@ -222,7 +232,10 @@ function playPetSound(kind, stage) {
       ++entry.token;
       if (pause) audio.pause();
       audio.volume = 0;
-      try { audio.currentTime = 0; } catch (_) { /* A failed media load can prevent seeking. */ }
+      // Leave a naturally ended clip buffered; the next cue seeks to zero.
+      if (pause) {
+        try { audio.currentTime = 0; } catch (_) { /* A failed media load can prevent seeking. */ }
+      }
     }
     if (petSoundVoice === voice) {
       petSoundVoice = null;
@@ -296,7 +309,10 @@ function stopPetSounds() {
   resetIdlePetSoundTimer();
 }
 
-function resetPetSoundState() { petSoundAngryFaceLatched = false; }
+function resetPetSoundState() {
+  petSoundAngryFaceLatched = false;
+  petSoundCryingLatched = false;
+}
 
 function petHasAngrySoundFace() {
   return typeof lifeStage !== "undefined" && lifeStage === "adult" &&
@@ -314,7 +330,24 @@ function updatePetSoundState() {
     (typeof isEating !== "undefined" && isEating) ||
     (typeof isPlaying !== "undefined" && isPlaying) ||
     (typeof toyPlayAction !== "undefined" && !!toyPlayAction);
+  const crying = petHasCryingSoundFace();
+  const startedCrying = crying && !petSoundCryingLatched;
+  petSoundCryingLatched = crying;
+  // One cry per visible episode; accepted care keeps its own response.
+  if (startedCrying && !activeCare) return playPetSound("cry");
   return entered && !activeCare ? playPetSound("angry") : false;
+}
+
+function petHasCryingSoundFace() {
+  const visiblePet = typeof isDead !== "undefined" && !isDead &&
+    typeof hatchingComplete !== "undefined" && hatchingComplete &&
+    typeof isHungryPose === "function" && !isHungryPose();
+  if (!visiblePet || typeof getCurrentPetImage !== "function") return false;
+  // Follow the face actually drawn: Youth may still look tearful during care,
+  // while a child can briefly smile before returning to a new crying episode.
+  if (lifeStage === "adult") return !!adultSprites.crying && getCurrentPetImage() === adultSprites.crying;
+  if (lifeStage === "elder") return typeof isPetCrying === "function" && isPetCrying();
+  return typeof petCryImg !== "undefined" && !!petCryImg && getCurrentPetImage() === petCryImg;
 }
 
 function canPlayIdlePetSound() {
@@ -338,6 +371,8 @@ function canPlayIdlePetSound() {
 }
 
 function updateIdlePetSound(elapsedSeconds) {
+  // Preview changes, growth and rebirth all pick the current stage's rhythm.
+  if (typeof lifeStage !== "undefined" && lifeStage !== recordedIdlePetSoundStage) resetIdlePetSoundTimer();
   if (!canPlayIdlePetSound()) {
     if (petSoundVoice && petSoundVoice.kind === "idle") stopPetSounds();
     return false;
@@ -356,6 +391,7 @@ for (const gesture of ["pointerdown", "pointerup", "touchend", "keydown"]) {
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) stopPetSounds();
   petSoundAngryFaceLatched = petHasAngrySoundFace();
+  petSoundCryingLatched = petHasCryingSoundFace();
 });
 window.addEventListener("pagehide", stopPetSounds);
 // Detached media can delay window.load. Begin preloading after p5 may start,

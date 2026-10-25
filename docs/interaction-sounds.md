@@ -1,6 +1,6 @@
 # Approved interaction sounds
 
-The official game now plays four owner-selected excerpts from the uploaded
+The official game now plays five owner-selected excerpts from the uploaded
 `提取的音频.m4a`. `sound-effects.js` uses reusable native HTML audio players and preloads
 small WAV files from `assets/sounds/`. These files are byte-for-byte copies of
 the approved audition clips. All life stages retain the recording's original
@@ -11,7 +11,8 @@ pitch and speed, with no synthetic voice fallback or pitch shifting.
 | C | Accepted petting | Once when normal petting or a senior affection request is accepted |
 | B | Anger | Once per angry refusal, or once on entering the visible Youth angry face |
 | D | Playing with the floor ball | Once at a successful friendly contact kick, independently of the care reward cooldown |
-| L | Spontaneous humming | Occasionally after 10–18 visible, eligible idle seconds, at a quieter level |
+| L | Spontaneous humming | Child: 8–12 visible eligible seconds; other stages: 10–18; at a quieter level |
+| A | Crying | Once when a visible crying episode begins; no repeat while it continues |
 
 Selecting PLAY or throwing a ball does not play D before contact. An angry
 refusal uses B; its refusal kick does not receive a friendly D response. Bored
@@ -20,7 +21,7 @@ stays visible. Audio changes do not alter needs, care rewards, refusal
 probabilities, growth, movement or toy physics.
 
 The existing speaker controls **background music only**. Turning it off pauses
-`bgm.mp3`; C, B, D and L remain enabled. The pet's media players are prepared by a real gesture independently of the
+`bgm.mp3`; C, B, A, D and L remain enabled. The pet's media players are prepared by a real gesture independently of the
 background music setting. No separate Web Audio context or offline decoder is
 required. Rejected playback
 and loading failures are handled without queuing missed calls for later replay.
@@ -56,10 +57,21 @@ of that. During a call, background music is lowered to at most 0.135, then its
 prior volume returns. This does not change the music toggle or resume paused
 music. Silent gesture warmups never become audible calls.
 
-Four additional Q–T excerpts are available at `design-options/cry-review.html`.
-They are neutral candidates pending the owner identifying a cry; no unverified
-clip is yet assigned to the official crying state. The owner judges timbre and
-balance on their playback device.
+The owner selected A for crying onset. The short cue plays once and finishes
+naturally; accepted petting can replace it with C. A does not loop during an
+ongoing cry.
+Q–T remain unclassified alternative excerpts at `design-options/cry-review.html`.
+The owner judges timbre and balance on their playback device.
+
+## Child rhythm
+
+Child spontaneous humming now uses an 8–12 eligible-second interval. Child
+regular waste scheduling uses 24–36 seconds and meal-triggered scheduling uses
+8–12 seconds. Youth and Senior retain their prior 18–30 / 5–8.5 second waste
+intervals and 10–18 second humming interval. Full-room retry timing stays 12–18
+seconds. Flies after six seconds and fatal illness after thirteen seconds per
+pile remain unchanged. Starting a new life or changing stage uses the current
+stage's humming interval.
 
 ## Proposed needs visualization
 

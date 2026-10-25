@@ -1,6 +1,6 @@
 {
-  "version": 4,
-  "status": "audition library; C/B/D/L approved and integrated into the official game",
+  "version": 5,
+  "status": "audition library; C/B/A/D/L approved for the official game",
   "source": {
     "uploadedName": "提取的音频.m4a",
     "durationSeconds": 65.872993,
@@ -9,7 +9,7 @@
     "sha256": "b596e2c1e491c285985a9417af0746802437877309aaec3d9090938f2bbb1b50",
     "originalIncludedInRepository": false
   },
-  "analysisNotice": "The owner identified C as petting, B as anger, D as a toy-contact kick and L as spontaneous humming. Other excerpts remain available for comparison without an approved emotional assignment.",
+  "analysisNotice": "The owner identified C as accepted petting, B as anger, A as the once-only cue on entering crying, D as a toy-contact kick and L as spontaneous humming. Other excerpts, including Q–T, remain available for comparison without an approved emotional assignment.",
   "processing": {
     "linearGain": 0.6,
     "fadeInSeconds": 0.008,
@@ -24,10 +24,12 @@
     "angry": "B",
     "play": "D",
     "idle": "L",
-    "masterGain": 0.45,
+    "masterGain": 0.9,
     "idleRelativeGain": 0.65,
-    "combinedGainRelativeToSource": 0.27,
-    "notice": "These defaults now match the owner-approved official mapping. Alternate audition choices do not change the official game."
+    "combinedGainRelativeToSource": 0.54,
+    "notice": "These defaults now match the owner-approved official mapping. Alternate audition choices do not change the official game.",
+    "cry": "A",
+    "backgroundMusicDuringVoiceVolumeMax": 0.135
   },
   "excludedRange": {
     "startSeconds": 57.51,
@@ -44,7 +46,9 @@
       "sampleRate": 44100,
       "channels": 2,
       "peakAmplitude": 0.195557,
-      "rmsDbfs": -28.33
+      "rmsDbfs": -28.33,
+      "selectionStatus": "approved by owner",
+      "approvedRole": "One-shot cue on entering crying."
     },
     {
       "id": "B",
@@ -303,17 +307,19 @@
     "pet": "Owner selected C.",
     "angry": "Owner selected B.",
     "play": "Owner selected D at physical friendly kick contact only.",
-    "idle": "Owner selected L for spontaneous humming."
+    "idle": "Owner selected L for spontaneous humming.",
+    "cry": "Owner selected A; play once on entering crying, without repetition during the same episode."
   },
   "backgroundMusicControl": "The speaker toggles background music only; recorded pet effects remain enabled.",
   "crySelection": {
-    "status": "awaiting owner identification; no cry sample assigned to official game",
+    "status": "A selected by owner and integrated for one-shot crying onset",
     "candidates": [
       "Q",
       "R",
       "S",
       "T"
     ],
-    "notice": "Audio content cannot be directly heard in this environment. These are neutral excerpts for owner audition, not verified cries."
+    "notice": "Q–T remain unclassified alternatives. A was identified by the owner as the desired crying cue.",
+    "selected": "A"
   }
 }

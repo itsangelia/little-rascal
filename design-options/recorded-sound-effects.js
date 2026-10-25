@@ -9,6 +9,7 @@
   const selection = {
     pet: choose("pet", "C"),
     angry: choose("angry", "B"),
+    cry: choose("cry", "A"),
     play: choose("play", "D"),
     idle: query.get("idle") === "off" ? null : choose("idle", "L")
   };

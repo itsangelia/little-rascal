@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "status": "owner-approved interaction mapping",
   "source": {
     "uploadedName": "提取的音频.m4a",
@@ -22,7 +22,8 @@
     "pet": "C",
     "angry": "B",
     "play": "D",
-    "idle": "L"
+    "idle": "L",
+    "cry": "A"
   },
   "playback": {
     "playbackRate": 1,
@@ -32,14 +33,21 @@
     "idleRelativeGain": 0.65,
     "oneVoiceAtATime": true,
     "cooldownSeconds": 0.65,
-    "idleEligibleDelaySeconds": [
-      10,
-      18
-    ],
-    "notes": "Approved C/B/D/L WAVs remain byte-identical. Native audio players are prepared by real gestures, with silent warmups, token-checked promises and no delayed replay. Effect volume is 0.9 and idle uses 65% of this. Music is temporarily lowered while a call plays and restored without changing its enabled/paused state.",
+    "idleEligibleDelaySeconds": {
+      "child": [
+        8,
+        12
+      ],
+      "otherStages": [
+        10,
+        18
+      ]
+    },
+    "notes": "C accepted petting, B anger, A crying onset once, D friendly toy contact, L eligible spontaneous humming. Child idle interval is 8–12 seconds; other stages 10–18. Native playback, original speed/pitch and the background-music-only switch are preserved.",
     "backgroundMusicSwitch": "Background music only; pet effects remain enabled.",
     "backend": "native reusable HTMLAudioElement; no Web Audio context or offline decoder required",
-    "backgroundMusicDuringVoiceVolumeMax": 0.135
+    "backgroundMusicDuringVoiceVolumeMax": 0.135,
+    "cryTrigger": "Once when a visible crying episode starts; no repeat while that episode continues."
   },
   "samples": [
     {
@@ -97,6 +105,20 @@
       "kind": "idle",
       "copiedFrom": "design-options/voice-samples/L.wav",
       "sha256": "4e837d77ff5ece9c2521a5400ec4d5115764b7bda8427531adce428f0d582919"
+    },
+    {
+      "id": "A",
+      "file": "cry-A.wav",
+      "sourceStartSeconds": 12.1,
+      "sourceEndSeconds": 12.62,
+      "durationSeconds": 0.52,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.195557,
+      "rmsDbfs": -28.33,
+      "kind": "cry",
+      "copiedFrom": "design-options/voice-samples/A.wav",
+      "sha256": "11705aae30e9a9c0f4627da3a0f9da3e74e2dc281bcb319a3609857ead00f248"
     }
   ]
 }

@@ -335,6 +335,16 @@ let poopCreatedThisTime = false;
 
 const MAX_POOPS = 5;
 
+const POOP_INTERVALS = {
+  child: { regular: [24000, 36000], meal: [8000, 12000] },
+  other: { regular: [18000, 30000], meal: [5000, 8500] }
+};
+
+function getPoopDelay(kind = "regular") {
+  const intervals = POOP_INTERVALS[lifeStage === "child" ? "child" : "other"];
+  return random(...intervals[kind]);
+}
+
 
 
 // ============================================================
@@ -410,7 +420,7 @@ async function setup() {
 
 
 
-  nextPoopTime = millis() + random(18000, 30000);
+  nextPoopTime = millis() + getPoopDelay();
 
 
   createCanvas(
@@ -473,10 +483,7 @@ async function setup() {
 
   nextPoopTime =
     millis() +
-    random(
-      18000,
-      30000
-    );
+    getPoopDelay();
 
 
 
@@ -2732,10 +2739,7 @@ function performFeed() {
 
     millis() +
 
-    random(
-      5000,
-      8500
-    );
+    getPoopDelay("meal");
 
 
   actionEndTime =
@@ -3229,10 +3233,7 @@ function startPooping() {
 
     millis() +
 
-    random(
-      18000,
-      30000
-    );
+    getPoopDelay();
 
 }
 
@@ -4658,7 +4659,7 @@ function restartPet() {
   poopCreatedThisTime = false;
   interactionMode = "none";
   poops.length = hearts.length = sparkles.length = 0;
-  nextPoopTime = millis() + random(18000, 30000);
+  nextPoopTime = millis() + getPoopDelay();
   cursor(ARROW);
 }
 
