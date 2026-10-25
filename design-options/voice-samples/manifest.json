@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "status": "audition-only; awaiting owner selection",
   "source": {
     "uploadedName": "提取的音频.m4a",
@@ -9,7 +9,7 @@
     "sha256": "b596e2c1e491c285985a9417af0746802437877309aaec3d9090938f2bbb1b50",
     "originalIncludedInRepository": false
   },
-  "analysisNotice": "Candidates were identified from waveform, spectrogram and silence boundaries only. No subjective listening or emotion classification is claimed. Timestamp labels do not identify a happy, sad, petting or playing emotion.",
+  "analysisNotice": "All 16 candidates were identified from waveform, spectrogram and silence boundaries only. No subjective listening or emotion classification is claimed. E–P retain longer complete or repeated bursts so the owner can identify laughter, hums or other expressions by audition; no candidate is yet assigned to these emotions.",
   "processing": {
     "linearGain": 0.6,
     "fadeInSeconds": 0.008,
@@ -22,7 +22,7 @@
   "previewDefaults": {
     "pet": "C",
     "play": "B",
-    "notice": "Audition defaults based on signal cleanliness only, not approved final interaction mapping. Choose ?pet=A&play=B etc. to compare.",
+    "notice": "C/B remain temporary audition defaults, not approved final interaction or emotion mapping. Petting laughter and spontaneous hums require owner selection; no idle sample is approved.",
     "masterGain": 0.45,
     "combinedGainRelativeToSource": 0.27
   },
@@ -75,6 +75,167 @@
       "channels": 2,
       "peakAmplitude": 0.242828,
       "rmsDbfs": -24.16
+    },
+    {
+      "id": "E",
+      "file": "E.wav",
+      "sourceStartSeconds": 0.12,
+      "sourceEndSeconds": 1.39,
+      "durationSeconds": 1.27,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.267487,
+      "rmsDbfs": -25.51,
+      "selectionStatus": "unclassified; awaiting owner audition",
+      "grouping": "Full burst or nearby repeated bursts retained together; only surrounding silence trimmed."
+    },
+    {
+      "id": "F",
+      "file": "F.wav",
+      "sourceStartSeconds": 2.2,
+      "sourceEndSeconds": 3.84,
+      "durationSeconds": 1.64,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.29364,
+      "rmsDbfs": -25.56,
+      "selectionStatus": "unclassified; awaiting owner audition",
+      "grouping": "Full burst or nearby repeated bursts retained together; only surrounding silence trimmed."
+    },
+    {
+      "id": "G",
+      "file": "G.wav",
+      "sourceStartSeconds": 4.27,
+      "sourceEndSeconds": 5.14,
+      "durationSeconds": 0.87,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.227386,
+      "rmsDbfs": -27.86,
+      "selectionStatus": "unclassified; awaiting owner audition",
+      "grouping": "Full burst or nearby repeated bursts retained together; only surrounding silence trimmed."
+    },
+    {
+      "id": "H",
+      "file": "H.wav",
+      "sourceStartSeconds": 5.43,
+      "sourceEndSeconds": 7.14,
+      "durationSeconds": 1.71,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.250183,
+      "rmsDbfs": -25.46,
+      "selectionStatus": "unclassified; awaiting owner audition",
+      "grouping": "Full burst or nearby repeated bursts retained together; only surrounding silence trimmed."
+    },
+    {
+      "id": "I",
+      "file": "I.wav",
+      "sourceStartSeconds": 7.65,
+      "sourceEndSeconds": 8.55,
+      "durationSeconds": 0.9,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.212555,
+      "rmsDbfs": -28.6,
+      "selectionStatus": "unclassified; awaiting owner audition",
+      "grouping": "Full burst or nearby repeated bursts retained together; only surrounding silence trimmed."
+    },
+    {
+      "id": "J",
+      "file": "J.wav",
+      "sourceStartSeconds": 9.02,
+      "sourceEndSeconds": 11.42,
+      "durationSeconds": 2.4,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.316681,
+      "rmsDbfs": -24.24,
+      "selectionStatus": "unclassified; awaiting owner audition",
+      "grouping": "Full burst or nearby repeated bursts retained together; only surrounding silence trimmed."
+    },
+    {
+      "id": "K",
+      "file": "K.wav",
+      "sourceStartSeconds": 13.07,
+      "sourceEndSeconds": 14.2,
+      "durationSeconds": 1.13,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.276703,
+      "rmsDbfs": -25.16,
+      "selectionStatus": "unclassified; awaiting owner audition",
+      "grouping": "Full burst or nearby repeated bursts retained together; only surrounding silence trimmed."
+    },
+    {
+      "id": "L",
+      "file": "L.wav",
+      "sourceStartSeconds": 14.67,
+      "sourceEndSeconds": 16.52,
+      "durationSeconds": 1.85,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.320648,
+      "rmsDbfs": -24.81,
+      "selectionStatus": "unclassified; awaiting owner audition",
+      "grouping": "Full burst or nearby repeated bursts retained together; only surrounding silence trimmed."
+    },
+    {
+      "id": "M",
+      "file": "M.wav",
+      "sourceStartSeconds": 17.2,
+      "sourceEndSeconds": 19.28,
+      "durationSeconds": 2.08,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.287476,
+      "rmsDbfs": -25.87,
+      "selectionStatus": "unclassified; awaiting owner audition",
+      "grouping": "Two nearby bursts retained together across their approximately 0.28-second internal pause."
+    },
+    {
+      "id": "N",
+      "file": "N.wav",
+      "sourceStartSeconds": 20.7,
+      "sourceEndSeconds": 22.27,
+      "durationSeconds": 1.57,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.315369,
+      "rmsDbfs": -24.5,
+      "selectionStatus": "unclassified; awaiting owner audition",
+      "grouping": "Full burst or nearby repeated bursts retained together; only surrounding silence trimmed."
+    },
+    {
+      "id": "O",
+      "file": "O.wav",
+      "sourceStartSeconds": 22.63,
+      "sourceEndSeconds": 25.81,
+      "durationSeconds": 3.18,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.33255,
+      "rmsDbfs": -24.89,
+      "selectionStatus": "unclassified; awaiting owner audition",
+      "grouping": "Full burst or nearby repeated bursts retained together; only surrounding silence trimmed."
+    },
+    {
+      "id": "P",
+      "file": "P.wav",
+      "sourceStartSeconds": 34.58,
+      "sourceEndSeconds": 37.02,
+      "durationSeconds": 2.44,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.257874,
+      "rmsDbfs": -26.77,
+      "selectionStatus": "unclassified; awaiting owner audition",
+      "grouping": "Full burst or nearby repeated bursts retained together; only surrounding silence trimmed."
     }
-  ]
+  ],
+  "selectionRequests": {
+    "pet": "The owner requests laughter for accepted petting; awaiting the owner's chosen sample IDs.",
+    "play": "Awaiting the owner's chosen sample IDs for play.",
+    "idle": "The owner requests hums for occasional spontaneous/idle calls; awaiting the owner's chosen sample IDs."
+  }
 }

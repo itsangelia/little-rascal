@@ -18,11 +18,19 @@
   <script src="help.js?v=pet-voices-1"></script>
   <script src="naming.js?v=watercolor-ui-1"></script>
   <script src="music.js?v=pet-voices-1"></script>
-  <script src="design-options/recorded-sound-effects.js?v=recorded-voice-1"></script>
+  <script src="design-options/recorded-sound-effects.js?v=recorded-voice-2"></script>
   <script src="toy-ball.js?v=bouncy-face-ball-1"></script>
   <script src="stages.js?v=senior-size-115-1"></script>
   <script src="elder-care.js?v=cartoon-glove-bubble-1"></script>
   <script src="ending.js?v=clear-farewell-floor-1"></script>
   <script src="sketch.js?v=pet-voices-1"></script>
+  <script>
+    // Preview-only delegation keeps the official draw loop and game rules intact.
+    const recordedSoundPreviewDraw = window.draw;
+    window.draw = function () {
+      recordedSoundPreviewDraw.apply(this, arguments);
+      updateIdlePetSound(deltaTime / 1000);
+    };
+  </script>
 </body>
 </html>

@@ -15,12 +15,21 @@ const recordedPetSampleRoot = new URL("voice-samples/", document.currentScript ?
 const recordedPetSoundQuery = new URLSearchParams(location.search);
 const recordedPetSoundSelection = {
   pet: recordedPetSoundChoice(recordedPetSoundQuery.get("pet"), "C"),
-  play: recordedPetSoundChoice(recordedPetSoundQuery.get("play"), "B")
+  play: recordedPetSoundChoice(recordedPetSoundQuery.get("play"), "B"),
+  // Spontaneous calls stay disabled until the owner explicitly chooses an excerpt.
+  idle: recordedPetSoundChoice(recordedPetSoundQuery.get("idle"), null)
 };
+let recordedIdlePetSoundElapsed = 0;
+let recordedIdlePetSoundDelay = 10 + Math.random() * 8;
+
+function resetIdlePetSoundTimer() {
+  recordedIdlePetSoundElapsed = 0;
+  recordedIdlePetSoundDelay = 10 + Math.random() * 8;
+}
 
 function recordedPetSoundChoice(value, fallback) {
   const id = String(value || "").toUpperCase();
-  return /^[A-D]$/.test(id) ? id : fallback;
+  return /^[A-P]$/.test(id) ? id : fallback;
 }
 
 function preparePetSoundBuffers() {
@@ -34,7 +43,7 @@ function preparePetSoundBuffers() {
       if (!OfflineContext) throw new Error("Recorded audio decoding is unavailable in this browser.");
       recordedPetDecodeContext = new OfflineContext(2, 1, 44100);
     }
-    const selectedIds = [...new Set(Object.values(recordedPetSoundSelection))];
+    const selectedIds = [...new Set(Object.values(recordedPetSoundSelection).filter(Boolean))];
     await Promise.all(selectedIds.map(async id => {
       if (recordedPetSoundBuffers[id]) return;
       const response = await fetch(new URL(id + ".wav", recordedPetSampleRoot));
@@ -102,7 +111,7 @@ function createPetVoice(context, destination, kind, stage, when = context.curren
   source.playbackRate.value = 1;
   if (source.detune) source.detune.value = 0;
   const envelope = context.createGain();
-  envelope.gain.setValueAtTime(1, when);
+  envelope.gain.setValueAtTime(kind === "idle" ? 0.65 : 1, when);
   source.connect(envelope).connect(destination);
   let cleaned = false;
   const voice = {
@@ -130,8 +139,9 @@ function createPetVoice(context, destination, kind, stage, when = context.curren
 }
 
 function playPetSound(kind, stage) {
-  if ((kind !== "pet" && kind !== "play") || !petSoundCanPlay()) return false;
-  if (!recordedPetSoundsReady) {
+  if (!["pet", "play", "idle"].includes(kind) || !petSoundCanPlay()) return false;
+  if (kind === "idle" && !canPlayIdlePetSound()) return false;
+  if (!recordedPetSoundBuffers[recordedPetSoundSelection[kind]]) {
     preparePetSoundBuffers();
     return false;
   }
@@ -139,12 +149,15 @@ function playPetSound(kind, stage) {
     unlockPetSounds();
     return false;
   }
+  // Deliberate care has priority over a quiet spontaneous call.
+  if (kind !== "idle" && petSoundVoice && petSoundVoice.kind === "idle") stopPetSounds();
   const now = petSoundContext.currentTime;
   if (petSoundVoice || now - lastPetSoundAt < PET_SOUND_COOLDOWN) return false;
   const currentStage = stage || (typeof lifeStage === "undefined" ? "child" : lifeStage);
   try {
     petSoundVoice = createPetVoice(petSoundContext, petSoundOutput, kind, currentStage, now);
     lastPetSoundAt = now;
+    resetIdlePetSoundTimer();
     return true;
   } catch (_) {
     petSoundVoice = null;
@@ -156,6 +169,42 @@ function stopPetSounds() {
   if (petSoundVoice) petSoundVoice.stop();
   petSoundVoice = null;
   lastPetSoundAt = -Infinity;
+  resetIdlePetSoundTimer();
+}
+
+function canPlayIdlePetSound() {
+  if (!recordedPetSoundSelection.idle || !petSoundCanPlay()) return false;
+  if (typeof farewell !== "undefined" && farewell) return false;
+  if (typeof isEating !== "undefined" && isEating) return false;
+  if (typeof isBeingPetted !== "undefined" && isBeingPetted) return false;
+  if (typeof isPlaying !== "undefined" && isPlaying) return false;
+  if (typeof toyPlayAction !== "undefined" && toyPlayAction) return false;
+  if (typeof toyBall !== "undefined" && toyBall.dragging) return false;
+  if (typeof adultApproach !== "undefined" && adultApproach) return false;
+  if (typeof adultReaction !== "undefined" && adultReaction) return false;
+  if (typeof isAdultAngry === "function" && isAdultAngry()) return false;
+  if (typeof lifeStage !== "undefined" && lifeStage === "adult" &&
+      typeof YOUTH_MOOD !== "undefined" && happiness < YOUTH_MOOD.angry) return false;
+  if (typeof isPetCrying === "function" && isPetCrying()) return false;
+  if (typeof isHungryPose === "function" && isHungryPose()) return false;
+  if (typeof energy !== "undefined" && energy <= 10) return false;
+  if (typeof ballChaseUntil !== "undefined" && typeof millis === "function" && millis() < ballChaseUntil) return false;
+  return true;
+}
+
+function updateIdlePetSound(elapsedSeconds) {
+  // Only visible, eligible gameplay counts; no wall-clock timer or delayed queue.
+  if (!canPlayIdlePetSound()) {
+    // A spontaneous clip must not continue into sleep, distress or active care.
+    if (petSoundVoice && petSoundVoice.kind === "idle") stopPetSounds();
+    return false;
+  }
+  if (petSoundVoice || !petSoundContext || petSoundContext.state !== "running" ||
+      !recordedPetSoundBuffers[recordedPetSoundSelection.idle]) return false;
+  const seconds = Math.max(0, Math.min(Number(elapsedSeconds) || 0, 0.25));
+  recordedIdlePetSoundElapsed += seconds;
+  if (recordedIdlePetSoundElapsed < recordedIdlePetSoundDelay) return false;
+  return playPetSound("idle");
 }
 
 for (const gesture of ["pointerdown", "pointerup", "touchend", "keydown"]) {
