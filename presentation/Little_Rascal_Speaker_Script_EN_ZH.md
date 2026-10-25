@@ -1,24 +1,24 @@
 # Little Rascal — Editorial reflection script
 
-Planned total 9:47; 1032 English words; includes 120-second edited demo.
+Planned total 9:43; 1022 English words; includes 120-second edited demo.
 
 ## 01 — Little Rascal
 
-Duration: 26 seconds
+Duration: 20 seconds
 
-Little Rascal is a virtual pet game made with p5.js. You meet a small creature, care for it, and eventually say goodbye. I wanted a changing relationship, with real consequences: the pet can die if it is neglected. That risk is intended to make care feel like a responsibility and a challenge.
+Little Rascal is a virtual pet made with p5.js. My question is how small acts of care can create attachment. The relationship changes as the pet grows. Neglect can be fatal, giving care a sense of responsibility and challenge.
 
-Little Rascal 是我用 p5.js 制作的虚拟宠物游戏。你会认识一只小球，照顾它，最后和它告别。我希望这段关系会变化，照顾也有真实的后果：疏于照顾，宠物可能会死。这种风险是我有意加入的，希望玩家感到责任，也感到挑战。
+Little Rascal 是我用 p5.js 制作的虚拟宠物。我想探索：日常的小小照顾怎样建立依恋。宠物成长时，这段关系也会变化。疏于照顾可能致死，让照顾带来责任感和挑战。
 
 
 
 ## 02 — What does a visitor notice first?
 
-Duration: 33 seconds
+Duration: 32 seconds
 
-For an exhibition, I would present it on a computer with a mouse and headphones. That is the proposed setup, not a documented exhibition. The egg gently rocks before the first click. After the arrival animation, the player gives the pet a name. A short guide introduces care. The moving egg invites a first action, but the toy is less obvious: someone could still mistake it for decoration.
+For an exhibition, I would use a computer, mouse and headphones. A rocking egg invites the first click. A shooting star introduces the pet, then the player gives it a name and sees a short guide. The loop is simple: meet, care, grow, say goodbye, then meet a new egg. The toy is less obvious than the egg; a first-time player could still mistake it for decoration.
 
-如果放在展览里，我会用一台配鼠标和耳机的电脑展示。这是预想的展览设置，不是已经记录过的展览现场。第一次点击之前，蛋会轻轻晃动。出场动画后，玩家给小球起名，再通过简短说明了解照顾方式。晃动的蛋能暗示第一次操作，但玩具球还不够明确：第一次玩的观众可能会以为它只是装饰。
+如果用于展览，我会选择电脑、鼠标和耳机。轻轻晃动的蛋邀请第一次点击，流星带来小球，之后玩家起名并阅读简短说明。流程很简单：相遇、照顾、成长、告别，再遇见新的蛋。玩具的操作暗示没有蛋那么明显；第一次玩的观众仍可能以为它只是装饰。
 
 展示形式为拟定方案。当前没有展览现场照片或观众记录。录屏须保留实际点击、拖拽与角色反应。
 
@@ -40,15 +40,15 @@ Norman’s framework helps me explain three parts of the experience. The waterco
 
 诺曼的框架帮助我解释体验的三个部分。水彩房间和简单的脸，构成第一眼的本能吸引。在行为层面，照顾会得到看得懂的回应：微笑、拒绝，或踢球。反思则来自生命循环：出生、成长、衰老、告别，再出现新蛋。感谢信回顾一段关系，新蛋邀请下一次相遇。我希望引起喜爱和温柔的失落，但不声称这些情感已经被测量。
 
-理论：Norman (2004)。本页是基于理论的设计解释，不是测得的玩家情感结果。
+理论：Norman (2004)。本页是基于理论的设计解释，不是测得的玩家情感结果。 融入版本1的第一人称视角句作为“期望的玩家体验”，不是实际受访者引语。
 
 ## 05 — Four stages became three: a shorter visit
 
-Duration: 38 seconds
+Duration: 33 seconds
 
-I shortened the life cycle from four stages to three to address the time needed for a complete experience. Teenager and adult overlapped, so I combined them into Youth and kept the refusal behaviour there. Childhood now needs three useful feeds and three accepted pettings, then sleep and waking. Youth keeps two useful feeds and two other care actions before waking into old age. The shorter sequence keeps childhood, independence and aging, with one fewer transition to wait through.
+I shortened four stages to three to reduce the time needed for a complete visit. Teenager and adult overlapped, so I combined them into Youth and kept its refusal behaviour. Useful care followed by sleep leads to growth. The shortened sequence still moves from dependence to independence, then a stronger need for companionship. Childhood needs three useful feeds and three accepted pettings; the next waking completes that transition.
 
-为了缩短一次完整体验需要的时间，我已经把四个阶段缩减成了三个。teenager 和 adult 的定位重叠，所以我把它们合并成青年，并把拒绝行为保留在那里。现在幼年需要三次有效喂食、三次接受的摸摸，再睡醒。青年保留两次有效喂食和两次其他照顾，再睡醒进入老年。缩短后的流程仍保留了幼年、独立和衰老，也减少了一次需要等待的过渡。
+为了缩短完整体验的时间，我把四阶段减成三阶段。teenager 与 adult 定位重叠，所以我合并成青年，并保留拒绝行为。有效照顾之后，通过睡眠和醒来成长。缩短后的流程仍保留从依赖到独立，再到更需要陪伴的变化。幼年需要三次有效喂食、三次接受的摸摸，再在下一次醒来完成成长。
 
 有效喂食需触发实际照顾计数；幼年玩球、清理不能代替摸摸。计数达标不会即时变形，必须在之后完成睡眠和醒来。青年内部代码键仍为adult。 缩减阶段是作者已经实施的时长优化，不应表述为尚未处理时长。完整流程受照顾速度、睡眠与玩家选择影响，没有统一固定总时长。
 
@@ -64,11 +64,11 @@ At first, playing was mainly a button. Putting a toy in the room gave the player
 
 ## 07 — Youth does not always say yes
 
-Duration: 38 seconds
+Duration: 37 seconds
 
-Youth can refuse feeding, petting or play, with a baseline chance of twenty-five percent. Repeated requests or a full need can produce a still, unimpressed response instead. I wanted it to feel less like a machine that always obeys. However, refusal can also look like a broken control. I revised reactions that lasted too long and kept comfort available when mood is critical. The remaining question is whether a new player reads the refusal as personality or as failure.
+Youth has a twenty-five percent baseline chance to refuse feeding, petting or play. Angry petting refusal can include an escape hop; refused play can send the ball away. Repetition or a full need can instead produce a still, unimpressed face. These different movements help explain the response. Yet refusal can look like a broken control. I shortened reactions that persisted and kept petting available at critical mood. The challenge is making independence readable without making care feel unresponsive.
 
-青年对喂食、摸摸和玩耍有百分之二十五的基础拒绝概率。重复请求，或者对应数值已满时，也可能让它停在原地，露出无语脸。我不想让它像一台永远服从的机器。不过，拒绝也可能被误认为按钮坏了。我修正了持续过久的反应，并保留心情极低时能被安抚的摸摸。还需要验证的是，新玩家会把拒绝理解为性格，还是操作失败。
+青年对喂食、摸摸和玩耍有百分之二十五的基础拒绝概率。生气地拒绝摸摸时，它可能跳开；拒绝玩球时，会把球踢走。重复操作或对应数值已满，则可能出现原地不动的无语脸。不同动作帮助玩家理解回应。但拒绝也可能像按钮坏了。我修正了持续过久的反应，并保留心情极低时能进行的摸摸。挑战在于让独立性看得懂，同时不让照顾显得没有反应。
 
 基础随机概率不是所有情形的最终拒绝率：满值、重复与危急安抚存在优先级。无语扣3心情，愤怒扣5；不要说拒绝不会影响数值。
 
@@ -92,7 +92,17 @@ My tutor suggested adding sound and making needs more visible, including through
 
 反馈依据：作者在本对话中回忆同学提出背景音乐、增强玩具互动、丰富表情及饿扁状态；老师建议增加音效及状态可视化。属于作者报告的定性反馈，没有参与人数、录音逐字引语或正式研究。作者确认叫声为本人录制。BGM来自Pixabay（按pixaboy理解），音乐按钮只控制BGM。
 
-## 10 — Farewell becomes a new beginning
+## 10 — 2D rules make each response feel physical
+
+Duration: 32 seconds
+
+The game is drawn in two dimensions. Floor position and jump height are separate, so the shadow stays on the floor while the pet hops. Objects are drawn in depth order. The same separation helps a kick happen at contact, not at a distance. Care, expressions and sound then respond to the current state. These rules support readable behaviour, rather than just adding visual polish.
+
+游戏是用二维画面绘制的。地面位置和跳跃高度分开计算，所以小球跳起时，影子仍留在地面。物体按前后顺序绘制。这样的分离也帮助踢球发生在实际接触时，而不是隔空发生。照顾、表情和声音再根据当前状态作出回应。这些规则是为了让行为可读，而不只是增加画面效果。
+
+来自版本1的空间示意优点，改为解释系统怎样支持交互反馈。画布内部仍为900×640，CSS只缩放显示。示意图是概念图，不是独立观众测试证据。不把实现文件名作为口播重点。
+
+## 11 — Farewell becomes a new beginning
 
 Duration: 37 seconds
 
@@ -102,17 +112,17 @@ For natural old age, I replaced the abrupt result screen with a slower farewell.
 
 自然离世通常从进入老年起累计80秒可见活跃时间；忙碌、三次需求气泡等可延后。可剪辑但不可声称完整生命周期只有80秒。感谢信原文不改。
 
-## 11 — What the feedback actually tells me
+## 12 — What the feedback actually tells me
 
-Duration: 40 seconds
+Duration: 26 seconds
 
-Peer suggestions helped me move beyond a cute character on screen: background music, a toy that feels more interactive, and clearer expressions. My own playthroughs then exposed more specific problems, including disconnected pursuit, slow-motion aging and a rushed hatch. I revised those details, while tutor advice focused my attention on sound and readable needs. These are useful development observations, not a controlled audience study. I can explain what changed, but I cannot yet claim that the final version creates attachment for every player.
+Peer feedback prompted background music, richer expressions and more interactive toy play. My playthroughs exposed disconnected pursuit, slow-motion aging and a rushed hatch. Tutor advice focused on sound and readable needs. Each led to a visible revision. This qualitative feedback explains my decisions, but it does not establish how every visitor will feel.
 
-同学的建议推动我把作品从屏幕上的可爱角色往前推进：加入背景音乐、让玩具更有互动性、让表情更清楚。自己的反复试玩又暴露出更具体的问题，包括隔空追球、像慢放一样的衰老，以及太快的孵化过程。我修改了这些细节；老师的建议则让我更关注声音和状态是否可读。这些是有用的开发观察，不是受控的受众研究。我能说明改了什么，但还不能声称最终版本会让所有玩家产生依恋。
+同学建议促成了背景音乐、更丰富的表情和更有互动性的玩具。自己的试玩发现了隔空追球、慢放式衰老和太快的出场；老师的意见集中在声音与状态可读性。这些建议都对应了看得见的修改。这些定性反馈能够解释我的决定，但不能证明每位观众都会产生什么情绪。
 
 基于作者报告的同学反馈、自己的试玩及老师意见。不得增添测试人数、姓名、伪造引语或已举办展览的说法。brief还要求给至少一名同学建设性反馈；作者尚未提供这一方向的具体经历，提交前补入真实记录。
 
-## 12 — Consequences are part of caring
+## 13 — Consequences are part of caring
 
 Duration: 41 seconds
 
@@ -122,17 +132,17 @@ Death is intentional. If the pet could never die from neglect, keeping it alive 
 
 作者明确说明死亡用于增加责任感和挑战性，不把死亡本身写成失误。13秒是每个粑粑从产生起的总时长；不是发臭后13秒。公平性属于待验证问题，不声称观众实际感到焦虑。
 
-## 13 — What I would test next
+## 14 — What I would test next
 
-Duration: 37 seconds
+Duration: 28 seconds
 
-The four-to-three-stage change already shortens the visit. Next, I would check whether that revised length works for first-time players, rather than assume it does. Without coaching, do they discover dragging, understand a refusal and respond to warnings? I would compare clearer cues and slightly longer warning periods while keeping the possibility of death. Saved progress and separate voice controls remain future possibilities. The next version should build on the shorter cycle, not add stages back in.
+The three-stage revision already shortens the visit. I would next watch first-time players without coaching: do they discover dragging, understand refusal and act on warnings? I would compare clearer cues and slightly longer warning periods while keeping the risk of death. I would also check the revised duration. Saved progress and separate voice controls are future possibilities.
 
-从四阶段缩成三阶段，已经缩短了体验。下一步，我会验证这个调整后的长度是否适合第一次玩的玩家，而不是直接假定它已经合适。在没有指导时，他们会发现拖拽、理解拒绝并回应警告吗？我会比较更清楚的提示和稍长的警告期，同时保留死亡的可能性。存档与独立叫声控制仍是未来方向。下一版应该在缩短后的流程上完善，而不是再加回阶段。
+三阶段的修改已经缩短了体验。下一步，我会在不指导的情况下观察新玩家：他们能发现拖拽、理解拒绝、回应警告吗？我会保留死亡风险，比较更清楚的提示和稍长的警告时间，也验证缩短后的体验长度。存档和独立叫声控制是未来方向。
 
 这是未来测试计划，不是已完成研究。若实际补录试玩，请取得参与者同意，并保留具体观察和修改依据。
 
-## 14 — A little life, then another beginning
+## 15 — A little life, then another beginning
 
 Duration: 25 seconds
 
@@ -142,7 +152,7 @@ Each stage changes the relationship: the little one needs care, Youth sometimes 
 
 生命循环是设计主题，不声称程序持久保存上一世记忆或名字，也不声称新蛋就是同一只宠物转生。新蛋重新进入既有出场、命名与照顾流程。
 
-## 15 — References & source notes
+## 16 — References & source notes
 
 Duration: 0 seconds
 
@@ -152,7 +162,7 @@ Duration: 0 seconds
 
 引用采用作者—年份草稿，最终按unit outline规定格式统一。老师已许可AI辅助（作者确认）。叫声为作者本人录制（作者确认）。BGM平台Pixabay（作者原写pixaboy），具体曲名/作者/下载链接待补。参考游戏发布信息仍待核实。
 
-## 16 — AI assistance & submission record
+## 17 — AI assistance & submission record
 
 Duration: 0 seconds
 
@@ -164,7 +174,7 @@ Duration: 0 seconds
 
 ## Submission checks
 
-- 已对照上传的 Assignment Two brief（5页）及rubric（1页），不再依据聊天中的要求摘要。
+- 以你上传的（2）为实际底稿，保留其迭代与反思主线；吸收（1）的情感设问、完整流程、第一人称情感框架、拒绝的身体语言、空间示意和感谢信短句。已核对brief与rubric。
 - 老师多次明确总视频为8–10分钟；第3页另写演示约2分钟、反思约8分钟。因此以总长不超过10分钟为准，约2分钟演示＋7分36秒讲解，按实际语速排练。
 - 从功能介绍改为设计反思：展览发现过程、前后对比、修改原因、代价和下一步验证。
 - 第一人称内容依据你的实际修改要求整理；个人分析只是编辑草稿，请逐句核实并用自己的话表达，不应让AI代替自己的反思。

@@ -3,34 +3,38 @@
     "project": "Little Rascal",
     "language": "English slides and narration; Chinese rehearsal translation",
     "release_commit": "d3ab74f",
-    "document_version": "rubric-editorial-v2",
+    "document_version": "merged-v2-plus-v1",
     "game_url": "https://itsangelia.github.io/little-rascal/?v=d3ab74f",
-    "spoken_word_count": 1032,
-    "total_seconds": 587,
+    "spoken_word_count": 1022,
+    "total_seconds": 583,
     "demo_seconds": 120,
     "verification_note": "Compared with uploaded Assignment Two brief and rubric; source d3ab74f; own iteration feedback distinguished from audience evidence; no fabricated peer/exhibition claims. Draft personal analysis requires author review.",
-    "author_confirmations": "Tutor AI approval; own recorded pet voice; background music source pixaboy (interpreted as Pixabay); peer suggestions: BGM, toy interactivity, richer/hungry expressions. Death intentionally creates responsibility and challenge."
+    "author_confirmations": "Tutor AI approval; own recorded pet voice; background music source pixaboy (interpreted as Pixabay); peer suggestions: BGM, toy interactivity, richer/hungry expressions. Death intentionally creates responsibility and challenge.",
+    "merge_sources": {
+      "base": "Little_Rascal_Presentation (2).pptx, 16 slides",
+      "selected_strengths": "Little_Rascal_Presentation (1).pptx: focused care/attachment question, clear interaction loop, intended first-person emotional framing, refusal body language, 2D system diagram and personal farewell quote"
+    }
   },
   "slides": [
     {
       "id": 1,
       "title": "Little Rascal",
       "kicker": "GRDE2040 · EMOTIONAL INTERACTIONS",
-      "en": "Little Rascal is a virtual pet game made with p5.js. You meet a small creature, care for it, and eventually say goodbye. I wanted a changing relationship, with real consequences: the pet can die if it is neglected. That risk is intended to make care feel like a responsibility and a challenge.",
-      "zh": "Little Rascal 是我用 p5.js 制作的虚拟宠物游戏。你会认识一只小球，照顾它，最后和它告别。我希望这段关系会变化，照顾也有真实的后果：疏于照顾，宠物可能会死。这种风险是我有意加入的，希望玩家感到责任，也感到挑战。",
+      "en": "Little Rascal is a virtual pet made with p5.js. My question is how small acts of care can create attachment. The relationship changes as the pet grows. Neglect can be fatal, giving care a sense of responsibility and challenge.",
+      "zh": "Little Rascal 是我用 p5.js 制作的虚拟宠物。我想探索：日常的小小照顾怎样建立依恋。宠物成长时，这段关系也会变化。疏于照顾可能致死，让照顾带来责任感和挑战。",
       "visual": "cover",
       "notes": "",
-      "seconds": 26
+      "seconds": 20
     },
     {
       "id": 2,
       "title": "What does a visitor notice first?",
       "kicker": "01 · ENCOUNTER & DISCOVERY",
-      "en": "For an exhibition, I would present it on a computer with a mouse and headphones. That is the proposed setup, not a documented exhibition. The egg gently rocks before the first click. After the arrival animation, the player gives the pet a name. A short guide introduces care. The moving egg invites a first action, but the toy is less obvious: someone could still mistake it for decoration.",
-      "zh": "如果放在展览里，我会用一台配鼠标和耳机的电脑展示。这是预想的展览设置，不是已经记录过的展览现场。第一次点击之前，蛋会轻轻晃动。出场动画后，玩家给小球起名，再通过简短说明了解照顾方式。晃动的蛋能暗示第一次操作，但玩具球还不够明确：第一次玩的观众可能会以为它只是装饰。",
+      "en": "For an exhibition, I would use a computer, mouse and headphones. A rocking egg invites the first click. A shooting star introduces the pet, then the player gives it a name and sees a short guide. The loop is simple: meet, care, grow, say goodbye, then meet a new egg. The toy is less obvious than the egg; a first-time player could still mistake it for decoration.",
+      "zh": "如果用于展览，我会选择电脑、鼠标和耳机。轻轻晃动的蛋邀请第一次点击，流星带来小球，之后玩家起名并阅读简短说明。流程很简单：相遇、照顾、成长、告别，再遇见新的蛋。玩具的操作暗示没有蛋那么明显；第一次玩的观众仍可能以为它只是装饰。",
       "visual": "encounter",
       "notes": "展示形式为拟定方案。当前没有展览现场照片或观众记录。录屏须保留实际点击、拖拽与角色反应。",
-      "seconds": 33
+      "seconds": 32
     },
     {
       "id": 3,
@@ -49,18 +53,18 @@
       "en": "Norman’s framework helps me explain three parts of the experience. The watercolor room and simple face are the first, visceral invitation. At the behavioural level, care has a readable response: a smile, a refusal, or a kick. Reflection comes through the life cycle: birth, growth, aging, farewell and a new egg. The letter recalls one relationship; the next egg invites another. I am aiming for affection and gentle loss, without claiming those emotions have been measured.",
       "zh": "诺曼的框架帮助我解释体验的三个部分。水彩房间和简单的脸，构成第一眼的本能吸引。在行为层面，照顾会得到看得懂的回应：微笑、拒绝，或踢球。反思则来自生命循环：出生、成长、衰老、告别，再出现新蛋。感谢信回顾一段关系，新蛋邀请下一次相遇。我希望引起喜爱和温柔的失落，但不声称这些情感已经被测量。",
       "visual": "norman",
-      "notes": "理论：Norman (2004)。本页是基于理论的设计解释，不是测得的玩家情感结果。",
+      "notes": "理论：Norman (2004)。本页是基于理论的设计解释，不是测得的玩家情感结果。 融入版本1的第一人称视角句作为“期望的玩家体验”，不是实际受访者引语。",
       "seconds": 37
     },
     {
       "id": 5,
       "title": "Four stages became three: a shorter visit",
       "kicker": "04 · SIMPLIFYING THE LIFE CYCLE",
-      "en": "I shortened the life cycle from four stages to three to address the time needed for a complete experience. Teenager and adult overlapped, so I combined them into Youth and kept the refusal behaviour there. Childhood now needs three useful feeds and three accepted pettings, then sleep and waking. Youth keeps two useful feeds and two other care actions before waking into old age. The shorter sequence keeps childhood, independence and aging, with one fewer transition to wait through.",
-      "zh": "为了缩短一次完整体验需要的时间，我已经把四个阶段缩减成了三个。teenager 和 adult 的定位重叠，所以我把它们合并成青年，并把拒绝行为保留在那里。现在幼年需要三次有效喂食、三次接受的摸摸，再睡醒。青年保留两次有效喂食和两次其他照顾，再睡醒进入老年。缩短后的流程仍保留了幼年、独立和衰老，也减少了一次需要等待的过渡。",
+      "en": "I shortened four stages to three to reduce the time needed for a complete visit. Teenager and adult overlapped, so I combined them into Youth and kept its refusal behaviour. Useful care followed by sleep leads to growth. The shortened sequence still moves from dependence to independence, then a stronger need for companionship. Childhood needs three useful feeds and three accepted pettings; the next waking completes that transition.",
+      "zh": "为了缩短完整体验的时间，我把四阶段减成三阶段。teenager 与 adult 定位重叠，所以我合并成青年，并保留拒绝行为。有效照顾之后，通过睡眠和醒来成长。缩短后的流程仍保留从依赖到独立，再到更需要陪伴的变化。幼年需要三次有效喂食、三次接受的摸摸，再在下一次醒来完成成长。",
       "visual": "stages",
       "notes": "有效喂食需触发实际照顾计数；幼年玩球、清理不能代替摸摸。计数达标不会即时变形，必须在之后完成睡眠和醒来。青年内部代码键仍为adult。 缩减阶段是作者已经实施的时长优化，不应表述为尚未处理时长。完整流程受照顾速度、睡眠与玩家选择影响，没有统一固定总时长。",
-      "seconds": 38
+      "seconds": 33
     },
     {
       "id": 6,
@@ -76,11 +80,11 @@
       "id": 7,
       "title": "Youth does not always say yes",
       "kicker": "06 · PERSONALITY & ITS COST",
-      "en": "Youth can refuse feeding, petting or play, with a baseline chance of twenty-five percent. Repeated requests or a full need can produce a still, unimpressed response instead. I wanted it to feel less like a machine that always obeys. However, refusal can also look like a broken control. I revised reactions that lasted too long and kept comfort available when mood is critical. The remaining question is whether a new player reads the refusal as personality or as failure.",
-      "zh": "青年对喂食、摸摸和玩耍有百分之二十五的基础拒绝概率。重复请求，或者对应数值已满时，也可能让它停在原地，露出无语脸。我不想让它像一台永远服从的机器。不过，拒绝也可能被误认为按钮坏了。我修正了持续过久的反应，并保留心情极低时能被安抚的摸摸。还需要验证的是，新玩家会把拒绝理解为性格，还是操作失败。",
+      "en": "Youth has a twenty-five percent baseline chance to refuse feeding, petting or play. Angry petting refusal can include an escape hop; refused play can send the ball away. Repetition or a full need can instead produce a still, unimpressed face. These different movements help explain the response. Yet refusal can look like a broken control. I shortened reactions that persisted and kept petting available at critical mood. The challenge is making independence readable without making care feel unresponsive.",
+      "zh": "青年对喂食、摸摸和玩耍有百分之二十五的基础拒绝概率。生气地拒绝摸摸时，它可能跳开；拒绝玩球时，会把球踢走。重复操作或对应数值已满，则可能出现原地不动的无语脸。不同动作帮助玩家理解回应。但拒绝也可能像按钮坏了。我修正了持续过久的反应，并保留心情极低时能进行的摸摸。挑战在于让独立性看得懂，同时不让照顾显得没有反应。",
       "visual": "youth",
       "notes": "基础随机概率不是所有情形的最终拒绝率：满值、重复与危急安抚存在优先级。无语扣3心情，愤怒扣5；不要说拒绝不会影响数值。",
-      "seconds": 38
+      "seconds": 37
     },
     {
       "id": 8,
@@ -104,8 +108,18 @@
     },
     {
       "id": 10,
+      "title": "2D rules make each response feel physical",
+      "kicker": "09 · SYSTEM LOGIC",
+      "visual": "system",
+      "en": "The game is drawn in two dimensions. Floor position and jump height are separate, so the shadow stays on the floor while the pet hops. Objects are drawn in depth order. The same separation helps a kick happen at contact, not at a distance. Care, expressions and sound then respond to the current state. These rules support readable behaviour, rather than just adding visual polish.",
+      "zh": "游戏是用二维画面绘制的。地面位置和跳跃高度分开计算，所以小球跳起时，影子仍留在地面。物体按前后顺序绘制。这样的分离也帮助踢球发生在实际接触时，而不是隔空发生。照顾、表情和声音再根据当前状态作出回应。这些规则是为了让行为可读，而不只是增加画面效果。",
+      "notes": "来自版本1的空间示意优点，改为解释系统怎样支持交互反馈。画布内部仍为900×640，CSS只缩放显示。示意图是概念图，不是独立观众测试证据。不把实现文件名作为口播重点。",
+      "seconds": 32
+    },
+    {
+      "id": 11,
       "title": "Farewell becomes a new beginning",
-      "kicker": "09 · BEFORE / AFTER: FAREWELL",
+      "kicker": "10 · BEFORE / AFTER: FAREWELL",
       "en": "For natural old age, I replaced the abrupt result screen with a slower farewell. The pet pauses, softens and dissolves; its soul rises into stars. A gently moving envelope waits for a click, so the player chooses when to read the letter. Closing it gathers starlight into a new egg. This completes the life cycle: one relationship ends and another can begin. Neglect deaths keep the earlier result screen and restart; they do not receive this thank-you letter.",
       "zh": "自然老死的部分，我把突然出现的结算画面改成了缓慢告别。小球停下、身体软下来并消散，灵魂升起化成星星。轻轻晃动的信封等待点击，让玩家决定什么时候读信。关闭信后，星光汇成新的蛋。生命循环由此完成：一段关系结束，另一段可以开始。疏于照顾导致的死亡仍保留原来的结算与重新开始，不会收到这封感谢信。",
       "visual": "farewell",
@@ -113,19 +127,19 @@
       "seconds": 37
     },
     {
-      "id": 11,
+      "id": 12,
       "title": "What the feedback actually tells me",
-      "kicker": "10 · EVIDENCE & ITS LIMITS",
-      "en": "Peer suggestions helped me move beyond a cute character on screen: background music, a toy that feels more interactive, and clearer expressions. My own playthroughs then exposed more specific problems, including disconnected pursuit, slow-motion aging and a rushed hatch. I revised those details, while tutor advice focused my attention on sound and readable needs. These are useful development observations, not a controlled audience study. I can explain what changed, but I cannot yet claim that the final version creates attachment for every player.",
-      "zh": "同学的建议推动我把作品从屏幕上的可爱角色往前推进：加入背景音乐、让玩具更有互动性、让表情更清楚。自己的反复试玩又暴露出更具体的问题，包括隔空追球、像慢放一样的衰老，以及太快的孵化过程。我修改了这些细节；老师的建议则让我更关注声音和状态是否可读。这些是有用的开发观察，不是受控的受众研究。我能说明改了什么，但还不能声称最终版本会让所有玩家产生依恋。",
+      "kicker": "11 · EVIDENCE & ITS LIMITS",
+      "en": "Peer feedback prompted background music, richer expressions and more interactive toy play. My playthroughs exposed disconnected pursuit, slow-motion aging and a rushed hatch. Tutor advice focused on sound and readable needs. Each led to a visible revision. This qualitative feedback explains my decisions, but it does not establish how every visitor will feel.",
+      "zh": "同学建议促成了背景音乐、更丰富的表情和更有互动性的玩具。自己的试玩发现了隔空追球、慢放式衰老和太快的出场；老师的意见集中在声音与状态可读性。这些建议都对应了看得见的修改。这些定性反馈能够解释我的决定，但不能证明每位观众都会产生什么情绪。",
       "visual": "evidence",
       "notes": "基于作者报告的同学反馈、自己的试玩及老师意见。不得增添测试人数、姓名、伪造引语或已举办展览的说法。brief还要求给至少一名同学建设性反馈；作者尚未提供这一方向的具体经历，提交前补入真实记录。",
-      "seconds": 40
+      "seconds": 26
     },
     {
-      "id": 12,
+      "id": 13,
       "title": "Consequences are part of caring",
-      "kicker": "11 · CRITICAL REFLECTION",
+      "kicker": "12 · CRITICAL REFLECTION",
       "en": "Death is intentional. If the pet could never die from neglect, keeping it alive would carry less responsibility and challenge. Waste smells after six seconds and can cause illness death at thirteen; hunger or mood at zero for eight seconds can also be fatal. These consequences make attention matter. The question is whether a first-time player can understand the warning and respond fairly. I want to keep the challenge, while testing clearer cues and enough recovery time. Natural old age offers a different kind of ending.",
       "zh": "死亡是我有意加入的。如果怎么疏于照顾都不会死，养活它就少了责任感和挑战。粑粑六秒开始发臭，十三秒可能病死；饥饿或心情归零持续八秒也会致死。这些后果让关注和照顾变得重要。需要验证的是，第一次玩的玩家能否理解警告，并有公平的时间回应。我想保留挑战，同时测试更清楚的提示和足够的挽救时间。自然老死则提供了另一种结尾。",
       "visual": "reflection",
@@ -133,19 +147,19 @@
       "seconds": 41
     },
     {
-      "id": 13,
+      "id": 14,
       "title": "What I would test next",
-      "kicker": "12 · REFINEMENT PLAN",
-      "en": "The four-to-three-stage change already shortens the visit. Next, I would check whether that revised length works for first-time players, rather than assume it does. Without coaching, do they discover dragging, understand a refusal and respond to warnings? I would compare clearer cues and slightly longer warning periods while keeping the possibility of death. Saved progress and separate voice controls remain future possibilities. The next version should build on the shorter cycle, not add stages back in.",
-      "zh": "从四阶段缩成三阶段，已经缩短了体验。下一步，我会验证这个调整后的长度是否适合第一次玩的玩家，而不是直接假定它已经合适。在没有指导时，他们会发现拖拽、理解拒绝并回应警告吗？我会比较更清楚的提示和稍长的警告期，同时保留死亡的可能性。存档与独立叫声控制仍是未来方向。下一版应该在缩短后的流程上完善，而不是再加回阶段。",
+      "kicker": "13 · REFINEMENT PLAN",
+      "en": "The three-stage revision already shortens the visit. I would next watch first-time players without coaching: do they discover dragging, understand refusal and act on warnings? I would compare clearer cues and slightly longer warning periods while keeping the risk of death. I would also check the revised duration. Saved progress and separate voice controls are future possibilities.",
+      "zh": "三阶段的修改已经缩短了体验。下一步，我会在不指导的情况下观察新玩家：他们能发现拖拽、理解拒绝、回应警告吗？我会保留死亡风险，比较更清楚的提示和稍长的警告时间，也验证缩短后的体验长度。存档和独立叫声控制是未来方向。",
       "visual": "next",
       "notes": "这是未来测试计划，不是已完成研究。若实际补录试玩，请取得参与者同意，并保留具体观察和修改依据。",
-      "seconds": 37
+      "seconds": 28
     },
     {
-      "id": 14,
+      "id": 15,
       "title": "A little life, then another beginning",
-      "kicker": "13 · CLOSING",
+      "kicker": "14 · CLOSING",
       "en": "Each stage changes the relationship: the little one needs care, Youth sometimes resists, and Senior asks for closeness. Death gives that care consequences. The new egg completes the cycle of birth, growth, farewell and renewal. I want the player to remember the life they cared for, even as another begins.",
       "zh": "每个阶段都在改变这段关系：幼年需要照顾，青年有时拒绝，老年主动寻求陪伴。死亡让照顾有了后果。新的蛋完成了出生、成长、告别和新生的循环。我希望即使新的相遇开始，玩家也会记得自己曾经照顾过的这段生命。",
       "visual": "closing",
@@ -153,7 +167,7 @@
       "seconds": 25
     },
     {
-      "id": 15,
+      "id": 16,
       "title": "References & source notes",
       "kicker": "APPENDIX · NOT READ ALOUD",
       "en": "",
@@ -163,7 +177,7 @@
       "seconds": 0
     },
     {
-      "id": 16,
+      "id": 17,
       "title": "AI assistance & submission record",
       "kicker": "APPENDIX · NOT READ ALOUD",
       "en": "",
