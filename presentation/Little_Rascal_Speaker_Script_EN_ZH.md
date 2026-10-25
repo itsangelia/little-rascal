@@ -1,6 +1,6 @@
 # Little Rascal — Presentation script
 
-English narration: about 777 words; add a two-minute edited walkthrough.
+English narration: about 804 words; add a two-minute edited walkthrough.
 
 ## 01 — Little Rascal
 
@@ -34,13 +34,13 @@ Framework source: Norman, D. A. (2004). Emotional Design. Describe this as the d
 
 ## 04 — From a first meeting to a new beginning
 
-Time: 38 seconds
+Time: 44 seconds
 
-The experience begins with a gently moving egg. Clicking it triggers a shooting-star arrival, followed by a naming screen and a short guide. Naming gives the player a personal entry into the relationship. The main loop then combines care with visible feedback. Growth follows useful interactions and the next sleep and waking, rather than a single upgrade button. The final farewell leads back to an egg, so the life cycle can begin again.
+The experience begins with a gently moving egg. Clicking it triggers a shooting-star arrival, followed by naming and a short guide. Naming gives the player a personal entry into the relationship. The main loop combines care with visible feedback. Growth follows useful interactions and the next sleep and waking. An accepted sleep lasts at least three visible seconds after arrival at the nest, making rest easier to notice. The final farewell leads back to an egg, so the life cycle can begin again.
 
-体验从一颗轻轻晃动的蛋开始。点击后会出现流星出场动画，接着进入起名和简短说明。起名让玩家更个人化地进入这段关系。主体循环把照顾行为和可见反馈连接起来。成长需要有效互动，并在下一次睡醒后发生，而不是点击一次升级按钮。最后的告别会回到一颗新蛋，让生命循环重新开始。
+体验从一颗轻轻晃动的蛋开始。点击后会出现流星出场动画，接着进入起名和简短说明。起名让玩家更个人化地进入这段关系。主体循环把照顾行为和可见反馈连接起来。成长需要有效互动，并在下一次睡醒后发生。一次被接受的睡觉操作，在到达巢里后至少会有三秒可见的睡眠，让休息更容易被玩家注意到。最后的告别会回到一颗新蛋，让生命循环重新开始。
 
-
+Accepted sleep has a minimum of three visible active seconds after nest arrival and also waits for energy to reach at least 80. This does not change growth qualification: two effective feeds plus two other care actions, then the next waking. Youth can still refuse an unneeded full-energy sleep request.
 
 ## 05 — One character, three changing relationships
 
@@ -94,23 +94,23 @@ Natural old age has a different ending from neglect. The senior pauses, gently s
 
 ## 10 — Build spatial movement with 2D tools
 
-Time: 40 seconds
+Time: 43 seconds
 
-Technically, the game uses two-dimensional programming with pseudo-three-dimensional movement. Ground position and jump height are calculated separately. Depth scaling, object sorting by floor position and an anchored shadow create the impression of space. Supporting scripts handle hatching, naming, stages, the toy, music and the ending, while the main sketch coordinates gameplay. Background music is enabled by default, but the browser may require the player’s first gesture before allowing playback.
+The game uses two-dimensional programming with pseudo-three-dimensional movement. Ground position and jump height are separate; depth scaling, Y sorting and shadows create space. Focused scripts handle stages, the toy, music and other systems. Internal game coordinates remain nine hundred by six hundred and forty. CSS fits the display to the window without changing the layout, and a player-clicked button enables fullscreen where supported. The native naming input remains aligned during resizing. Music is enabled by default, but browser policy may require the first player gesture before playback.
 
-技术上，游戏使用二维编程实现伪三维运动。地面位置和跳跃高度分别计算，再通过远近缩放、按地面位置排序绘制，以及贴地阴影，营造空间感。出场、起名、成长、玩具、音乐和结尾由对应脚本处理，主 sketch 负责协调游戏逻辑。背景音乐默认开启，但浏览器可能需要玩家第一次交互后才允许播放。
+游戏使用二维编程实现伪三维运动。地面位置和跳跃高度分别计算，再通过远近缩放、按地面位置排序和阴影营造空间感。成长阶段、玩具、音乐等系统由对应脚本负责。游戏内部坐标始终保持九百乘六百四十。CSS 在不改变布局的情况下让显示大小适应窗口，玩家也可以点击按钮进入浏览器支持的全屏模式。原生起名输入框在窗口变化时仍会保持对齐。音乐默认开启，但受浏览器规则影响，可能需要玩家第一次交互后才允许播放。
 
-
+Final release ef6daa9: viewport.js and style.css scale the canvas display only; no resizeCanvas() or internal coordinate/physics changes. Aspect ratio is preserved, so cream margins may remain. Fullscreen is user-triggered on the document root and depends on browser support; this keeps the native naming form visible and aligned. Background audio retains browser-gesture unlocking. Window fit does not establish full mobile/accessibility support.
 
 ## 11 — Make each reaction feel intentional
 
 Time: 42 seconds
 
-Development involved repeated designer-led revisions. Examples include replacing remote-looking toy contact with a contact-timed kick, giving seniors short hops and real rest periods, and simplifying the life cycle to three stages. Browser checks help verify interactions, growth and the ending. They do not establish emotional effectiveness. The next step is to observe actual players and revise from that evidence. Other limitations include fixed canvas dimensions, no saved progress and a need for further accessibility work.
+Development involved repeated designer-led revisions: improving contact-timed kicks, giving seniors short hops and rest periods, and simplifying the life cycle to three stages. The final visual pass unifies the watercolor room and interface, with window fitting and fullscreen. Browser checks verify interactions, growth and the ending, but do not establish emotional effectiveness. The next step is to observe actual players. Saved progress is not implemented, and accessibility and longer play-session balancing remain future work.
 
-开发过程中进行了多次由设计者主导的调整，例如把看起来隔空互动的玩球改成接触后踢球，让老年宠物有短跳和真正的休息，并把生命周期简化成三个阶段。浏览器检查帮助验证互动、成长和结尾流程，但它们不能证明情感效果。下一步应该观察真实玩家，并根据证据修改。另外，目前仍有固定画布、没有保存进度，以及可访问性尚待完善等限制。
+开发过程中进行了多次由设计者主导的调整：优化接触后踢球的反馈，让老年宠物有短跳和真正的休息，并把生命周期简化成三个阶段。最后的视觉调整统一了水彩房间和界面，并加入窗口适配与全屏。浏览器检查帮助验证互动、成长和结尾流程，但不能证明情感效果。下一步应该观察真实玩家。目前尚未实现进度保存，可访问性和更长试玩过程中的平衡，也仍需要后续完善。
 
-
+Distinguish implemented iteration from future work. The current internal canvas is fixed at 900 × 640 but its CSS display now fits the window; do not call the released game non-responsive solely because coordinates are fixed. No audience study, participant counts or emotional-effectiveness metrics are claimed. Saved progress, further accessibility and longer balancing are proposals, not implemented features.
 
 ## 12 — A relationship built from small interactions
 
@@ -120,7 +120,7 @@ Little Rascal brings everyday care, changing personality and a complete life cyc
 
 Little Rascal 把日常照顾、变化的性格和完整生命周期，放进了一个小小的房间。这个项目的重点，是连接行为与情感意义。下一步的挑战是通过真实玩家验证这个设计目标。谢谢观看。
 
-Playable game: https://itsangelia.github.io/little-rascal/?v=b5fe1fc
+Playable game: https://itsangelia.github.io/little-rascal/?v=ef6daa9
 
 ## 13 — References and production credits
 
