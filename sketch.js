@@ -75,7 +75,7 @@ let adultRefusalMood = "angry";
 let adultAngryUntil = 0;
 let adultReaction = null;
 
-const GROWTH_RULES = { feeds: 2, care: 2, feedThreshold: 95 };
+const GROWTH_RULES = { feeds: 2, care: 2, childFeeds: 3, childPets: 3, feedThreshold: 95 };
 let lifeStage = "child";
 let growthFeeds = 0;
 let growthCare = 0;
@@ -308,6 +308,7 @@ let goingToSleep = false;
 
 let isSleeping = false;
 const MIN_SLEEP_SECONDS = 3;
+const CHILD_AUTO_SLEEP_ENERGY = 30;
 let sleepElapsedSeconds = 0;
 
 
@@ -742,9 +743,7 @@ function updateStats() {
     // High-energy manual sleep must still include a readable rest, without losing energy.
     if (energy >= 80 && sleepElapsedSeconds >= MIN_SLEEP_SECONDS) {
       isSleeping = false;
-      growthWakeReady = growthWakeReady || growthSleepPending ||
-        (nextLifeStage() && growthFeeds >= GROWTH_RULES.feeds &&
-         growthCare >= GROWTH_RULES.care);
+      growthWakeReady = growthWakeReady || growthSleepPending || growthRequirementsMet();
       growthSleepPending = false;
       movementState = "pause";
       pauseTimer = 25;
@@ -786,7 +785,7 @@ function updateStats() {
 
   if (
 
-    energy <= 8 &&
+    (lifeStage === "child" ? energy < CHILD_AUTO_SLEEP_ENERGY : energy <= 8) &&
 
     !isSleeping &&
 
@@ -800,7 +799,7 @@ function updateStats() {
 
     !isPooping &&
 
-    !isPetCrying()
+    (lifeStage === "child" || !isPetCrying())
 
   ) {
 
@@ -2758,7 +2757,7 @@ function performPet() {
   if (isDead || !preparePetInteraction("pet")) return;
   fulfillElderPetRequest();
   if (!isEating && !isBeingPetted && !isPlaying && !isPooping &&
-      !isSleeping && !goingToSleep) recordGrowthCare();
+      !isSleeping && !goingToSleep) recordGrowthCare("pet");
 
   interactionMode =
     "none";
@@ -2856,7 +2855,7 @@ function performPlay() {
   if (!preparePetInteraction("play")) return;
 
   if (!isEating && !isBeingPetted && !isPlaying && !isPooping &&
-      !isSleeping && !goingToSleep) recordGrowthCare();
+      !isSleeping && !goingToSleep) recordGrowthCare("play");
 
   stopCurrentMovement();
 
@@ -2977,12 +2976,14 @@ function startSleeping(playerRequested = false) {
     return;
   }
 
-  // Too sad:
-  // stay crying instead of automatically sleeping.
+  // A tired child rests automatically even when sad; manual sleep and mature
+  // pets keep the existing need for comfort before going to bed.
+  const automaticChildRest = !playerRequested && lifeStage === "child" &&
+    energy < CHILD_AUTO_SLEEP_ENERGY;
 
   if (
     happiness <
-    getCryThreshold()
+    getCryThreshold() && !automaticChildRest
   ) {
 
     return;
@@ -3034,8 +3035,7 @@ function startSleeping(playerRequested = false) {
 
 
   sleepElapsedSeconds = 0;
-  growthSleepPending = !!nextLifeStage() &&
-    growthFeeds >= GROWTH_RULES.feeds && growthCare >= GROWTH_RULES.care;
+  growthSleepPending = growthRequirementsMet();
 
   goingToSleep =
     true;
@@ -3415,7 +3415,7 @@ function cleanPoopAtMouse() {
       );
 
 
-      recordGrowthCare();
+      recordGrowthCare("clean");
       if (lifeStage === "adult") resetYouthInteractionStreak();
 
       poops.splice(
@@ -4691,16 +4691,25 @@ function drawPoopStink() {
 }
 
 // Care contributes to growth only once per completed interaction interval.
-function recordGrowthCare() {
+function recordGrowthCare(action = "other") {
+  // Only petting supplies the child's care requirement; other care still helps
+  // needs and retains its existing rewards without replacing these strokes.
+  if (lifeStage === "child" && action !== "pet") return;
   if (!nextLifeStage() || isDead || millis() - lastGrowthCareTime < 1300) return;
   growthCare++;
   lastGrowthCareTime = millis();
 }
 
+function growthRequirementsMet() {
+  if (!nextLifeStage()) return false;
+  const feeds = lifeStage === "child" ? GROWTH_RULES.childFeeds : GROWTH_RULES.feeds;
+  const care = lifeStage === "child" ? GROWTH_RULES.childPets : GROWTH_RULES.care;
+  return growthFeeds >= feeds && growthCare >= care;
+}
+
 function updateGrowth() {
   const nextStage = nextLifeStage();
-  if (isDead || !growthWakeReady || !nextStage || growthFeeds < GROWTH_RULES.feeds ||
-      growthCare < GROWTH_RULES.care) return;
+  if (isDead || !growthWakeReady || !nextStage || !growthRequirementsMet()) return;
   // Never interrupt a jump, care action, sleep, or waste creation.
   if (isEating || isBeingPetted || isPlaying || isSleeping || goingToSleep ||
       isPooping || toyBall.dragging || toyPlayAction ||
@@ -5150,7 +5159,7 @@ function updateToyPlayAction() {
       energy = constrain(energy - PLAY_ENERGY_COST.toy, 0, 100);
       hunger = constrain(hunger - 0.5, 0, 100);
       // A completed player-started ball interaction is care too; idle demos are not.
-      if (toyBall.used && !adultInvitingBall) recordGrowthCare();
+      if (toyBall.used && !adultInvitingBall) recordGrowthCare("play");
       createHeart();
     }
     ballChaseUntil = ballChaseSpeed = 0;

@@ -106,7 +106,7 @@ function helpDrawAbout() {
   fill(UI_THEME.ink);
   textStyle(NORMAL);
   textSize(15);
-  text("Pet, play or clean. Then let them sleep — they grow on waking.", width / 2, 447);
+  text("Feed and pet little ones, then let them sleep — they grow on waking.", width / 2, 447);
 }
 
 function helpControlRow(type, title, body, y) {
@@ -139,7 +139,7 @@ function helpDrawCare() {
   helpHeading("Notice what your pet needs", "Watch hunger, mood and energy — their body gives you clues too.");
   const cards = [
     { y: 244, title: "TIME FOR A MEAL", lines: ["Below 30 hunger, your pet looks weak and flat.", "A meal helps them fill out again. Zero hunger for 8 seconds is fatal."] },
-    { y: 322, title: "A LITTLE COMFORT", lines: ["Pet or play with them to lift their mood. Let them sleep for energy.", "Mood at zero for 8 seconds can also end their little life."] },
+    { y: 322, title: "A LITTLE COMFORT", lines: ["Pet or play to lift their mood. Little ones sleep below 30 energy.", "Mood at zero for 8 seconds can also end their little life."] },
     { y: 400, title: "KEEP THEIR HOME FRESH", lines: ["Waste attracts flies after 6 seconds; 7 more seconds can cause fatal illness.", "Smelly waste makes them cry. Clean every smelly pile to comfort them."] }
   ];
   for (const card of cards) {
