@@ -1,7 +1,66 @@
-html, body {
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #fcfaf2;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+}
+
+main {
+  position: relative;
+  width: min(100vw, calc(100vh * 900 / 640));
+  width: min(100vw, calc(100dvh * 900 / 640));
+  aspect-ratio: 900 / 640;
   margin: 0;
   padding: 0;
 }
-canvas {
+
+main canvas {
   display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.game-fullscreen-button {
+  position: absolute;
+  left: 95.5556%;
+  top: 2.1875%;
+  width: 3.3333%;
+  height: 4.6875%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 1.3px solid #b49a61;
+  border-radius: 50%;
+  background: #fff8e5;
+  color: #715b40;
+  cursor: pointer;
+}
+
+.game-fullscreen-button:hover {
+  background: #f5e8be;
+}
+
+.game-fullscreen-button:focus-visible {
+  outline: 2px solid #cca35a;
+  outline-offset: 2px;
+}
+
+.game-fullscreen-button svg {
+  display: block;
+  width: 62%;
+  height: 62%;
+  pointer-events: none;
 }

@@ -82,3 +82,8 @@ These instructions apply to the entire repository and all future Codex tasks.
 
 - Keep the existing 900 × 640 layout and control hitboxes. `ui-theme.js` unifies matte cream paper, warm ochre outlines, sage need bars and muted tool colors. Preserve the familiar five tool symbols, visible selection/hover/press feedback, need warnings, native blank name input and speaker waves/slash.
 - An accepted sleep lasts at least three visible active seconds after arrival at `(660, 300)` and only ends when energy is at least 80. Never reduce a high-energy pet back to 80 on waking. Help/hidden-tab time does not consume the minimum rest. Preserve automatic low-energy sleep, Youth full-energy refusal, energy clamping and growth on actual waking.
+
+## Window-fitting presentation
+
+- Keep the p5 game canvas and all game coordinates at 900 × 640. `style.css` scales only its displayed size to fit and center inside the window with the original aspect ratio; keep any cream margins needed to avoid stretching or cropping.
+- `viewport.js` owns the small full-screen DOM control in the unused upper-right gutter. Request fullscreen on the document root after a user gesture so native naming inputs remain visible. Preserve button-event isolation, fullscreen exit, scaled pointer mapping and name-form alignment across window changes. Do not introduce `resizeCanvas()` for display fitting.
