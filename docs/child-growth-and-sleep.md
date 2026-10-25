@@ -1,10 +1,15 @@
 # Childhood growth and sleep
 
-Child → Youth now requires three effective feeds and three accepted petting
-actions, then the next completed sleep. Feeding counts when hunger is at most
-95 and the pet is available for care. Petting counts once per available action;
-playing, physical toy rewards and cleaning still improve needs but do not replace
-the child's petting requirement. They also do not consume its petting cooldown.
+Child → Youth requires **three effective interactions total**, counting feeding
+and petting together in any combination, then the next completed sleep. Three
+feeds, three pets, two feeds plus one pet, and one feed plus two pets all qualify.
+There are no separate three-feed and three-pet quotas.
+
+Feeding keeps the existing rule: hunger at most 95 and the pet available for care.
+Petting counts when accepted, available and able to increase mood (below 100),
+once per interaction interval. Playing, physical toy rewards and cleaning still
+help needs but do not count toward this shared childhood total or consume its
+petting cooldown.
 
 `growthRequirementsMet()` supplies the same requirement to sleep preparation,
 waking and the growth transition. Reaching the counts while awake does not grow
@@ -23,5 +28,5 @@ guide retains its brief care/sleep explanation without restoring the previously
 removed quantified growth line.
 
 Check energy just below/at 30, deferred sleep during care, an early unqualified
-nap, two feeds/two strokes, three feeds/three strokes before and after waking,
+nap, two combined interactions, all four three-interaction combinations before and after waking,
 non-petting care, and the existing Youth growth path. Check for console errors.

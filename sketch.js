@@ -75,7 +75,7 @@ let adultRefusalMood = "angry";
 let adultAngryUntil = 0;
 let adultReaction = null;
 
-const GROWTH_RULES = { feeds: 2, care: 2, childFeeds: 3, childPets: 3, feedThreshold: 95 };
+const GROWTH_RULES = { feeds: 2, care: 2, childInteractions: 3, feedThreshold: 95 };
 let lifeStage = "child";
 let growthFeeds = 0;
 let growthCare = 0;
@@ -2756,7 +2756,8 @@ function performFeed() {
 function performPet() {
   if (isDead || !preparePetInteraction("pet")) return;
   fulfillElderPetRequest();
-  if (!isEating && !isBeingPetted && !isPlaying && !isPooping &&
+  if ((lifeStage !== "child" || happiness < 100) &&
+      !isEating && !isBeingPetted && !isPlaying && !isPooping &&
       !isSleeping && !goingToSleep) recordGrowthCare("pet");
 
   interactionMode =
@@ -4692,8 +4693,8 @@ function drawPoopStink() {
 
 // Care contributes to growth only once per completed interaction interval.
 function recordGrowthCare(action = "other") {
-  // Only petting supplies the child's care requirement; other care still helps
-  // needs and retains its existing rewards without replacing these strokes.
+  // Childhood counts feeding and petting toward one shared interaction total.
+  // Other care still helps needs, but does not count toward this growth step.
   if (lifeStage === "child" && action !== "pet") return;
   if (!nextLifeStage() || isDead || millis() - lastGrowthCareTime < 1300) return;
   growthCare++;
@@ -4702,9 +4703,10 @@ function recordGrowthCare(action = "other") {
 
 function growthRequirementsMet() {
   if (!nextLifeStage()) return false;
-  const feeds = lifeStage === "child" ? GROWTH_RULES.childFeeds : GROWTH_RULES.feeds;
-  const care = lifeStage === "child" ? GROWTH_RULES.childPets : GROWTH_RULES.care;
-  return growthFeeds >= feeds && growthCare >= care;
+  if (lifeStage === "child") {
+    return growthFeeds + growthCare >= GROWTH_RULES.childInteractions;
+  }
+  return growthFeeds >= GROWTH_RULES.feeds && growthCare >= GROWTH_RULES.care;
 }
 
 function updateGrowth() {
