@@ -1,15 +1,97 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Little Rascal · 背景对照</title>
-<style>*{box-sizing:border-box}body{margin:0;background:#fcfaf2;color:#504637;font-family:Arial,sans-serif;line-height:1.6}main{max-width:1160px;margin:auto;padding:24px 18px 60px}h1{font-size:28px;margin:8px 0}nav{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}button,a{font:inherit}button{border:1px solid #bfb493;border-radius:22px;background:white;padding:10px 24px;cursor:pointer;color:#504637}button[aria-pressed="true"]{background:#728367;color:white;border-color:#728367}a{color:#586e48}img{display:block;width:100%;height:auto;background:#fff;border:1px solid #ded6bc;border-radius:12px}.caption{color:#817967;margin:8px 0}.foot{margin-top:24px}button:focus-visible{outline:3px solid #cca35a;outline-offset:3px}</style></head><body><main>
-<h1>Little Rascal · 背景效果对照</h1><p>点击切换，查看优化版和原图。</p>
-<nav aria-label="选择背景版本"><button type="button" id="refined" aria-pressed="true">优化版</button><button type="button" id="original" aria-pressed="false">原图</button></nav>
-<p class="caption" id="caption">优化版：窗外层次、水彩质感与植物细节</p>
-<img id="background" src="background-refined.png" alt="优化后的水彩房间背景，左侧植物、右侧软巢和小屋，中央保留空地">
-<p class="foot"><a href="background-refined.png" target="_blank" rel="noopener">单独打开优化图</a> · <a href="background-refined.png" download>下载图片</a> · <a href="../">进入正式游戏</a></p>
-<p class="caption">这是背景效果稿，正式游戏仍使用原图。</p>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Little Rascal · 背景效果对照</title>
+<style>
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:#fcfaf2;color:#504637;font-family:Arial,sans-serif;line-height:1.6}
+main{max-width:1400px;margin:auto;padding:24px 18px 60px}
+h1{font-size:28px;margin:8px 0}
+h2{font-size:20px;margin:0 0 10px}
+nav{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}
+button,a{font:inherit}
+button{border:1px solid #bfb493;border-radius:22px;background:white;padding:10px 24px;cursor:pointer;color:#504637}
+button[aria-pressed="true"]{background:#728367;color:white;border-color:#728367}
+.compare-toggle{border-style:dashed}
+a{color:#586e48}
+img{display:block;width:100%;height:auto;background:#fff;border:1px solid #ded6bc;border-radius:12px}
+.caption{color:#817967;margin:8px 0}
+.foot{margin-top:24px}
+.single{max-width:1160px;margin:auto}
+.comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-top:20px}
+figure{margin:0;padding:16px;background:#fffdf7;border:1px solid #ded6bc;border-radius:16px}
+figcaption{margin-top:12px}
+figcaption a{white-space:nowrap}
+button:focus-visible,a:focus-visible{outline:3px solid #cca35a;outline-offset:3px}
+@media(max-width:720px){.comparison{grid-template-columns:1fr}h1{font-size:24px}button{padding:9px 17px}}
+</style>
+</head>
+<body>
+<main>
+<h1>Little Rascal · 背景效果对照</h1>
+<p>选择原图、第一版或第二版，也可以把两版效果稿并排查看。</p>
+<nav aria-label="选择背景版本">
+<button type="button" id="original" aria-pressed="false">原图</button>
+<button type="button" id="v1" aria-pressed="false">第一版</button>
+<button type="button" id="v2" aria-pressed="true">第二版</button>
+<button type="button" id="compare" class="compare-toggle" aria-pressed="false" aria-expanded="false" aria-controls="comparison">并排对比第一版 / 第二版</button>
+</nav>
+<p class="caption" id="caption" aria-live="polite">第二版效果稿：在第一版基础上继续细化的水彩房间</p>
+<section class="single" id="single-view" aria-label="当前选择的背景">
+<img id="background" src="background-refined-v2.png" alt="第二版水彩房间背景效果稿，中央保留宠物活动空地">
+</section>
+<section class="comparison" id="comparison" aria-label="第一版与第二版并排对照" hidden>
+<figure>
+<h2>A · 第一版</h2>
+<img src="background-refined.png" alt="第一版水彩房间背景效果稿" loading="lazy">
+<figcaption><a href="background-refined.png" target="_blank" rel="noopener">单独打开第一版</a> · <a href="background-refined.png" download>下载第一版</a></figcaption>
+</figure>
+<figure>
+<h2>B · 第二版</h2>
+<img src="background-refined-v2.png" alt="第二版水彩房间背景效果稿" loading="lazy">
+<figcaption><a href="background-refined-v2.png" target="_blank" rel="noopener">单独打开第二版</a> · <a href="background-refined-v2.png" download>下载第二版</a></figcaption>
+</figure>
+</section>
+<p class="foot"><a id="open-selected" href="background-refined-v2.png" target="_blank" rel="noopener">单独打开第二版</a> · <a id="download-selected" href="background-refined-v2.png" download>下载第二版</a> · <a href="../">进入正式游戏</a></p>
+<p class="caption">第一版和第二版都是背景效果稿；正式游戏仍使用原图，尚未替换。</p>
+</main>
 <script>
 const image=document.getElementById('background');
 const caption=document.getElementById('caption');
-const choices={refined:{src:'background-refined.png',label:'优化版：窗外层次、水彩质感与植物细节'},original:{src:'../map.jpg',label:'原图：当前正式游戏使用的背景'}};
-for(const [id,choice] of Object.entries(choices))document.getElementById(id).addEventListener('click',()=>{image.src=choice.src;image.alt=choice.label;caption.textContent=choice.label;for(const key of Object.keys(choices))document.getElementById(key).setAttribute('aria-pressed',String(key===id));});
-</script></main></body></html>
+const singleView=document.getElementById('single-view');
+const comparison=document.getElementById('comparison');
+const compareButton=document.getElementById('compare');
+const openSelected=document.getElementById('open-selected');
+const downloadSelected=document.getElementById('download-selected');
+const choices={
+ original:{src:'../map.jpg',name:'原图',label:'原图：当前正式游戏使用的背景'},
+ v1:{src:'background-refined.png',name:'第一版',label:'第一版效果稿：窗外层次、水彩质感与植物细节'},
+ v2:{src:'background-refined-v2.png',name:'第二版',label:'第二版效果稿：在第一版基础上继续细化的水彩房间'}
+};
+let selected='v2';
+function setComparison(show){
+ singleView.hidden=show;
+ comparison.hidden=!show;
+ compareButton.setAttribute('aria-pressed',String(show));
+ compareButton.setAttribute('aria-expanded',String(show));
+ caption.textContent=show?'并排对照：A 为第一版，B 为第二版；手机上将上下排列。':choices[selected].label;
+}
+function selectBackground(id){
+ selected=id;
+ const choice=choices[id];
+ image.src=choice.src;
+ image.alt=choice.label;
+ openSelected.href=downloadSelected.href=choice.src;
+ openSelected.textContent='单独打开'+choice.name;
+ downloadSelected.textContent='下载'+choice.name;
+ for(const key of Object.keys(choices))document.getElementById(key).setAttribute('aria-pressed',String(key===id));
+ setComparison(false);
+}
+for(const id of Object.keys(choices))document.getElementById(id).addEventListener('click',()=>selectBackground(id));
+compareButton.addEventListener('click',()=>setComparison(comparison.hidden));
+</script>
+</body>
+</html>
