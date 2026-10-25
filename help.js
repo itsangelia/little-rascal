@@ -44,13 +44,9 @@ function drawHelpButton() {
   const b = helpButtonBounds;
   const hover = isOverHelpButton();
   push();
-  ellipseMode(CENTER);
-  stroke(174, 153, 105);
-  strokeWeight(1.4);
-  fill(hover ? color(250, 228, 164, 245) : color(252, 247, 225, 230));
-  circle(b.x + b.w / 2, b.y + b.h / 2, b.w);
+  uiPaperCircle(b.x + b.w / 2, b.y + b.h / 2, b.w, { hover, tone: "cream" });
   noStroke();
-  fill(113, 97, 64);
+  fill(UI_THEME.ink);
   textFont("Arial");
   textStyle(BOLD);
   textAlign(CENTER, CENTER);
@@ -69,13 +65,13 @@ function helpDrawSprite(img, x, y, spriteWidth) {
 
 function helpHeading(title, subtitle) {
   noStroke();
-  fill(107, 88, 59);
+  fill(UI_THEME.ink);
   textStyle(BOLD);
   textSize(28);
   text(title, width / 2, 179);
   textStyle(NORMAL);
   textSize(15);
-  fill(126, 131, 100);
+  fill(UI_THEME.muted);
   text(subtitle, width / 2, 213);
 }
 
@@ -87,18 +83,18 @@ function helpDrawAbout() {
     { x: 665, img: elderSprites.normal, label: "SENIOR" }
   ];
   for (const stage of stages) {
-    stroke(222, 213, 177);
+    stroke(lerpColor(color(UI_THEME.paper), color(UI_THEME.outline), 0.55));
     strokeWeight(1);
-    fill(250, 246, 228);
+    fill(lerpColor(color(UI_THEME.paper), color(UI_THEME.gold), 0.08));
     rect(stage.x - 83, 245, 166, 139, 20);
     helpDrawSprite(stage.img, stage.x, 306, 78);
     noStroke();
-    fill(119, 124, 91);
+    fill(UI_THEME.muted);
     textSize(12);
     textStyle(BOLD);
     text(stage.label, stage.x, 361);
   }
-  stroke(186, 178, 139);
+  stroke(UI_THEME.outline);
   strokeWeight(2);
   for (const x of [342, 557]) {
     line(x - 10, 309, x + 10, 309);
@@ -106,7 +102,7 @@ function helpDrawAbout() {
     line(x + 10, 309, x + 4, 315);
   }
   noStroke();
-  fill(111, 91, 60);
+  fill(UI_THEME.ink);
   textStyle(NORMAL);
   textSize(15);
   text("Pet, play or clean. Then let them sleep — they grow on waking.", width / 2, 447);
@@ -114,17 +110,17 @@ function helpDrawAbout() {
 
 function helpControlRow(type, title, body, y) {
   noStroke();
-  fill(239, 230, 198);
+  fill(lerpColor(color(UI_THEME.paper), color(UI_THEME.gold), 0.23));
   circle(172, y, 42);
   drawToolbarIcon(type, 172, y);
   textAlign(LEFT, CENTER);
-  fill(111, 91, 60);
+  fill(UI_THEME.ink);
   textStyle(BOLD);
   textSize(16);
   text(title, 210, y - 10);
   textStyle(NORMAL);
   textSize(14);
-  fill(121, 123, 99);
+  fill(UI_THEME.muted);
   text(body, 210, y + 12);
   textAlign(CENTER, CENTER);
 }
@@ -147,16 +143,16 @@ function helpDrawCare() {
   ];
   for (const card of cards) {
     noStroke();
-    fill(240, 237, 215);
+    fill(lerpColor(color(UI_THEME.paper), color(UI_THEME.sage), 0.12));
     rect(139, card.y, 622, 69, 12);
     textAlign(LEFT, CENTER);
     textStyle(BOLD);
     textSize(12);
-    fill(117, 123, 88);
+    fill(UI_THEME.ink);
     text(card.title, 157, card.y + 15);
     textStyle(NORMAL);
     textSize(13);
-    fill(114, 98, 74);
+    fill(UI_THEME.muted);
     text(card.lines[0], 157, card.y + 35);
     text(card.lines[1], 157, card.y + 53);
   }
@@ -165,13 +161,13 @@ function helpDrawCare() {
 
 function helpDrawNavButton(label, x, w, primary) {
   const hover = helpContains(x, 496, w, 43);
-  stroke(primary ? color(184, 148, 78) : color(198, 191, 157));
+  stroke(UI_THEME.outline);
   strokeWeight(1.3);
-  fill(primary ? (hover ? color(250, 222, 137) : color(242, 216, 156))
-    : (hover ? color(239, 237, 216) : color(248, 245, 229)));
+  fill(lerpColor(color(UI_THEME.paper), color(primary ? UI_THEME.gold : UI_THEME.sage),
+    primary ? (hover ? 0.48 : 0.35) : (hover ? 0.17 : 0.07)));
   rect(x, 496, w, 43, 19);
   noStroke();
-  fill(105, 88, 58);
+  fill(UI_THEME.ink);
   textSize(14);
   textStyle(BOLD);
   text(label, x + w / 2, 518);
@@ -185,30 +181,30 @@ function drawHelpPopup() {
   textFont("Arial");
   textAlign(CENTER, CENTER);
   noStroke();
-  fill(58, 59, 43, 88);
+  fill(72, 64, 49, 88);
   rect(0, 0, width, height);
-  fill(75, 66, 43, 24);
+  fill(103, 83, 61, 24);
   rect(96, 102, 720, 470, 24);
-  stroke(183, 162, 113);
+  stroke(UI_THEME.outline);
   strokeWeight(1.7);
-  fill(253, 250, 237);
+  fill(UI_THEME.paper);
   rect(90, 94, 720, 470, 24);
   noFill();
-  stroke(234, 225, 195);
+  stroke(lerpColor(color(UI_THEME.paper), color(UI_THEME.outline), 0.35));
   strokeWeight(1);
   rect(99, 103, 702, 452, 19);
   for (let i = 0; i < helpTabs.length; i++) {
     const x = 139 + i * 199;
     noStroke();
-    fill(i === helpPage ? color(238, 224, 175) : color(244, 240, 221));
+    fill(lerpColor(color(UI_THEME.paper), color(i === helpPage ? UI_THEME.gold : UI_THEME.sage), i === helpPage ? 0.32 : 0.09));
     rect(x, 112, 185, 34, 12);
-    fill(i === helpPage ? color(106, 86, 53) : color(141, 138, 109));
+    fill(i === helpPage ? UI_THEME.ink : UI_THEME.muted);
     textStyle(BOLD);
     textSize(13);
     text(helpTabs[i], x + 92.5, 129);
   }
   const closeHover = helpContains(766, 109, 30, 30);
-  stroke(closeHover ? color(136, 99, 61) : color(171, 154, 112));
+  stroke(closeHover ? UI_THEME.ink : UI_THEME.outline);
   strokeWeight(1.7);
   line(776, 119, 786, 129);
   line(786, 119, 776, 129);
@@ -220,7 +216,7 @@ function drawHelpPopup() {
   textStyle(NORMAL);
   textSize(12);
   noStroke();
-  fill(153, 148, 117);
+  fill(UI_THEME.muted);
   text((helpPage + 1) + " / 3", 450, 518);
   const overTab = helpTabs.some((_, i) => helpContains(139 + i * 199, 112, 185, 34));
   const overBack = helpPage > 0 && helpContains(139, 496, 110, 43);

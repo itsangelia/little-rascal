@@ -38,7 +38,7 @@ function handleMusicClick() {
 
 function drawSpeakerIcon(enabled) {
   noStroke();
-  fill(113, 97, 64);
+  fill(UI_THEME.ink);
   rectMode(CORNER);
   rect(-11, -4, 5, 8, 1);
   beginShape();
@@ -48,8 +48,8 @@ function drawSpeakerIcon(enabled) {
   vertex(-7, 4);
   endShape(CLOSE);
   noFill();
-  stroke(113, 97, 64);
-  strokeWeight(1.5);
+  stroke(UI_THEME.ink);
+  strokeWeight(1.45);
   strokeCap(ROUND);
   if (enabled) {
     // Exactly three sound waves accompany the enabled speaker.
@@ -67,12 +67,11 @@ function drawMusicButton() {
   const b = musicButtonBounds;
   const hover = isOverMusicButton();
   push();
-  ellipseMode(CENTER);
-  stroke(174, 153, 105);
-  strokeWeight(1.4);
-  fill(hover ? color(250, 228, 164, 245) : color(252, 247, 225, 230));
-  circle(b.x + b.w / 2, b.y + b.h / 2, b.w);
+  uiPaperCircle(b.x + b.w / 2, b.y + b.h / 2, b.w, {
+    hover, pressed: hover && mouseIsPressed, tone: "cream"
+  });
   translate(b.x + b.w / 2, b.y + b.h / 2);
+  scale(0.92);
   drawSpeakerIcon(musicEnabled);
   pop();
   if (hover) cursor(HAND);

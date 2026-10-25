@@ -307,6 +307,8 @@ let playHopsRemaining = 0;
 let goingToSleep = false;
 
 let isSleeping = false;
+const MIN_SLEEP_SECONDS = 3;
+let sleepElapsedSeconds = 0;
 
 
 
@@ -611,7 +613,7 @@ function drawGameFrame() {
   drawHelpButton();
   drawPetNameLabel();
   if (interactionMode === "none" && !growthPopupOpen) {
-    cursor(toyBall.dragging || isOverToyBall() || isOverHelpButton() ? HAND : ARROW);
+    cursor(toyBall.dragging || isOverToyBall() || isOverHelpButton() || getClickedToolbarButton() ? HAND : ARROW);
   }
   drawElderPetRequest();
   if (growthPopupOpen) drawGrowthPopup();
@@ -726,34 +728,18 @@ function updateStats() {
   // ==========================================================
 
   if (isSleeping) {
-
-    energy +=
-      10 *
-      seconds;
-
-
-    if (
-      energy >= 80
-    ) {
-
-      energy = 80;
-
-
+    if (!document.hidden) sleepElapsedSeconds += seconds;
+    energy = min(100, energy + 10 * seconds);
+    // High-energy manual sleep must still include a readable rest, without losing energy.
+    if (energy >= 80 && sleepElapsedSeconds >= MIN_SLEEP_SECONDS) {
       isSleeping = false;
       growthWakeReady = growthWakeReady || growthSleepPending ||
         (nextLifeStage() && growthFeeds >= GROWTH_RULES.feeds &&
          growthCare >= GROWTH_RULES.care);
       growthSleepPending = false;
-
-
-      movementState =
-        "pause";
-
-
+      movementState = "pause";
       pauseTimer = 25;
-
     }
-
   }
 
 
@@ -3039,6 +3025,7 @@ function startSleeping(playerRequested = false) {
   stopCurrentMovement();
 
 
+  sleepElapsedSeconds = 0;
   growthSleepPending = !!nextLifeStage() &&
     growthFeeds >= GROWTH_RULES.feeds && growthCare >= GROWTH_RULES.care;
 
@@ -3846,764 +3833,132 @@ function drawStats() {
 // STAT BAR
 // ============================================================
 
-function drawStatBar(
-
-  x,
-
-  y,
-
-  barWidth,
-
-  value,
-
-  label
-
-) {
-
+function drawStatBar(x, y, barWidth, value, label) {
+  const amount = constrain(value, 0, 100);
+  const fillColor = amount < 30 ? "#cf8b80" : amount < 50 ? UI_THEME.gold : UI_THEME.sage;
   push();
-
-
-  // Card
-
+  rectMode(CORNER);
+  uiPaperPanel(x - 10, y - 15, barWidth + 20, 42, 14, "rgba(255,249,235,0.95)");
   noStroke();
-
-
-  fill(
-    255,
-    255,
-    255,
-    205
-  );
-
-
-  rect(
-
-    x - 10,
-
-    y - 15,
-
-    barWidth + 20,
-
-    42,
-
-    16
-
-  );
-
-
-  // Label
-
-  fill(
-    75,
-    74,
-    68
-  );
-
-
-  textAlign(
-    LEFT,
-    CENTER
-  );
-
-
-  textSize(
-    9
-  );
-
-
-  text(
-
-    label,
-
-    x,
-
-    y - 5
-
-  );
-
-
-  // Empty
-
-  fill(
-    220,
-    226,
-    218,
-    220
-  );
-
-
-  rect(
-
-    x,
-
-    y + 5,
-
-    barWidth,
-
-    10,
-
-    7
-
-  );
-
-
-  // ==========================================================
-  // BAR COLOUR
-  // ==========================================================
-
-  if (
-    value < 30
-  ) {
-
-    fill(
-      220,
-      112,
-      112,
-      235
-    );
-
+  fill(fillColor);
+  circle(x + 3, y - 5, 5);
+  fill(UI_THEME.ink);
+  textFont("Arial");
+  textStyle(BOLD);
+  textSize(9);
+  textAlign(LEFT, CENTER);
+  text(label, x + 12, y - 5);
+  textStyle(NORMAL);
+  textAlign(RIGHT, CENTER);
+  fill(UI_THEME.muted);
+  text(Math.round(amount), x + barWidth, y - 5);
+  fill(UI_THEME.track);
+  rect(x, y + 5, barWidth, 10, 5);
+  if (amount > 0) {
+    fill(fillColor);
+    rect(x, y + 5, barWidth * amount / 100, 10, min(5, barWidth * amount / 200));
   }
-
-  else if (
-    value < 50
-  ) {
-
-    fill(
-      224,
-      180,
-      92,
-      235
-    );
-
-  }
-
-  else {
-
-    fill(
-      108,
-      184,
-      154,
-      235
-    );
-
-  }
-
-
-  rect(
-
-    x,
-
-    y + 5,
-
-    barWidth *
-    value /
-    100,
-
-    10,
-
-    7
-
-  );
-
-
   pop();
-
 }
 
-
-
-// ============================================================
-// TOOLBAR
-// ============================================================
-
+// The five familiar tools retain their original positions and click areas.
 function drawToolbar() {
-
   push();
-
-
-  // Yellow base
-
-  noStroke();
-
-
-  fill(
-    218,
-    188,
-    105,
-    238
-  );
-
-
-  rect(
-
-    220,
-
-    566,
-
-    460,
-
-    62,
-
-    30
-
-  );
-
-
-  fill(
-    244,
-    222,
-    145,
-    235
-  );
-
-
-  rect(
-
-    229,
-
-    573,
-
-    442,
-
-    45,
-
-    23
-
-  );
-
-
-  for (
-    let button of toolbarButtons
-  ) {
-
-    drawToolbarButton(
-      button
-    );
-
-  }
-
-
+  rectMode(CORNER);
+  uiPaperPanel(220, 566, 460, 62, 29, "rgba(255,249,235,0.97)");
+  for (const button of toolbarButtons) drawToolbarButton(button);
   pop();
-
 }
 
-
-
-// ============================================================
-// TOOLBAR BUTTON
-// ============================================================
-
-function drawToolbarButton(
-  button
-) {
-
-  let selected =
-
-    interactionMode ===
-    button.type;
-
-
+function drawToolbarButton(button) {
+  const selected = interactionMode === button.type;
+  const active = selected || (button.type === "sleep" && (isSleeping || goingToSleep)) ||
+    (button.type === "play" && isPlaying);
+  const hover = dist(mouseX, mouseY, button.x, button.y) < 32;
+  const pressed = hover && mouseIsPressed;
+  const tones = { feed: "sand", pet: "rose", play: "honey", sleep: "lavender", clean: "leaf" };
   push();
-
-
-  if (
-    selected
-  ) {
-
-    noStroke();
-
-
-    fill(
-      255,
-      223,
-      75,
-      150
-    );
-
-
-    ellipse(
-
-      button.x,
-
-      button.y,
-
-      72,
-
-      54
-
-    );
-
-  }
-
-
-  stroke(
-    44,
-    133,
-    177
-  );
-
-
-  strokeWeight(
-    2
-  );
-
-
-  fill(
-    67,
-    181,
-    222
-  );
-
-
-  ellipse(
-
-    button.x,
-
-    button.y,
-
-    60,
-
-    44
-
-  );
-
-
+  uiPaperOval(button.x, button.y, 60, 44, { hover, active, pressed, tone: tones[button.type] });
+  drawToolbarIcon(button.type, button.x, button.y - 1 + (pressed ? 0.7 : 0));
   noStroke();
-
-
-  fill(
-    135,
-    220,
-    241
-  );
-
-
-  ellipse(
-
-    button.x,
-
-    button.y - 1,
-
-    52,
-
-    36
-
-  );
-
-
-  // Shine
-
-  fill(
-    255,
-    255,
-    255,
-    130
-  );
-
-
-  ellipse(
-
-    button.x - 12,
-
-    button.y - 10,
-
-    18,
-
-    8
-
-  );
-
-
-  drawToolbarIcon(
-
-    button.type,
-
-    button.x,
-
-    button.y - 1
-
-  );
-
-
-  fill(
-    68,
-    69,
-    65
-  );
-
-
-  textAlign(
-    CENTER,
-    CENTER
-  );
-
-
-  textSize(
-    8
-  );
-
-
-  text(
-
-    button.label,
-
-    button.x,
-
-    button.y + 29
-
-  );
-
-
+  fill(active ? UI_THEME.ink : UI_THEME.muted);
+  textFont("Arial");
+  textStyle(active ? BOLD : NORMAL);
+  textAlign(CENTER, CENTER);
+  textSize(8);
+  text(button.label, button.x, button.y + 29);
+  if (selected) {
+    fill(UI_THEME.gold);
+    circle(button.x, button.y + 22, 3);
+  }
   pop();
-
 }
-
 
 
 // ============================================================
 // ICONS
 // ============================================================
 
-function drawToolbarIcon(
-
-  type,
-
-  x,
-
-  y
-
-) {
-
+function drawToolbarIcon(type, x, y) {
   push();
-
-
-  translate(
-    x,
-    y
-  );
-
-
-  // ==========================================================
-  // FEED
-  // ==========================================================
-
-  if (
-    type === "feed"
-  ) {
-
+  translate(x, y);
+  strokeWeight(1.2);
+  strokeJoin(ROUND);
+  strokeCap(ROUND);
+  if (type === "feed") {
+    stroke("#a77e56");
+    fill("#d5b978");
+    ellipse(0, -4, 23, 9);
+    fill("#c38e70");
+    rectMode(CORNER);
+    rect(-13, -1, 26, 10, 4);
     noStroke();
-
-
-    fill(
-      244,
-      175,
-      66
-    );
-
-
-    ellipse(
-      0,
-      -5,
-      23,
-      9
-    );
-
-
-    fill(
-      211,
-      103,
-      65
-    );
-
-
-    rect(
-      -13,
-      -1,
-      26,
-      8,
-      3
-    );
-
-
-    ellipse(
-      0,
-      7,
-      26,
-      8
-    );
-
-
-    fill(
-      255,
-      219,
-      110
-    );
-
-
-    circle(
-      -6,
-      -5,
-      4
-    );
-
-
-    circle(
-      0,
-      -6,
-      4
-    );
-
-
-    circle(
-      6,
-      -4,
-      4
-    );
-
-  }
-
-
-  // ==========================================================
-  // PET
-  // ==========================================================
-
-  else if (
-    type === "pet"
-  ) {
-
+    fill("#f5df9c");
+    for (const point of [[-6,-5],[0,-6],[6,-4]]) circle(point[0], point[1], 3.5);
+    stroke("#f1d4bb");
+    line(-8, 3, 8, 3);
+  } else if (type === "pet") {
+    // The same soft heart is reused by the petting cursor and senior thought bubble.
     noStroke();
-
-
-    fill(
-      236,
-      90,
-      135
-    );
-
-
-    circle(
-      -6,
-      -3,
-      12
-    );
-
-
-    circle(
-      6,
-      -3,
-      12
-    );
-
-
-    triangle(
-
-      -12,
-      0,
-
-      12,
-      0,
-
-      0,
-      15
-
-    );
-
-
-    fill(
-      255,
-      190,
-      210,
-      170
-    );
-
-
-    circle(
-      -6,
-      -6,
-      4
-    );
-
-  }
-
-
-  // ==========================================================
-  // PLAY
-  // ==========================================================
-
-  else if (
-    type === "play"
-  ) {
-
-    stroke(
-      210,
-      140,
-      34
-    );
-
-
-    strokeWeight(
-      1.5
-    );
-
-
-    fill(
-      250,
-      190,
-      47
-    );
-
-
-    circle(
-      0,
-      0,
-      24
-    );
-
-
+    fill(UI_THEME.pink);
+    circle(-6, -3, 12);
+    circle(6, -3, 12);
+    triangle(-12, 0, 12, 0, 0, 15);
+  } else if (type === "play") {
+    stroke("#b48d4c");
+    fill("#ead296");
+    circle(0, 0, 24);
     noFill();
-
-
-    arc(
-
-      0,
-
-      0,
-
-      17,
-
-      17,
-
-      -0.9,
-
-      1.1
-
-    );
-
-
-    noStroke();
-
-
-    fill(
-      255,
-      232,
-      120
-    );
-
-
-    circle(
-      -5,
-      -6,
-      6
-    );
-
+    arc(-7, 0, 23, 24, -1.05, 1.05);
+  } else if (type === "sleep") {
+    // A real crescent leaves the paper behind it clear in every UI state.
+    const ctx = drawingContext;
+    ctx.save();
+    ctx.fillStyle = "#e7cc85";
+    ctx.strokeStyle = "#b48d4c";
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(4, -11);
+    ctx.bezierCurveTo(-10, -14, -16, 6, -4, 11);
+    ctx.bezierCurveTo(3, 15, 11, 11, 13, 5);
+    ctx.bezierCurveTo(0, 10, -5, -4, 4, -11);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  } else if (type === "clean") {
+    stroke(UI_THEME.ink);
+    strokeWeight(2.3);
+    line(-5, 9, 7, -11);
+    stroke("#ad8b50");
+    strokeWeight(1);
+    fill("#dcc18b");
+    quad(-11, 7, -3, 12, 6, 3, -3, -1);
+    line(-8, 7, -4, 9);
+    line(-5, 4, -1, 7);
   }
-
-
-  // ==========================================================
-  // SLEEP
-  // ==========================================================
-
-  else if (
-    type === "sleep"
-  ) {
-
-    noStroke();
-
-
-    fill(
-      255,
-      220,
-      74
-    );
-
-
-    circle(
-      0,
-      0,
-      24
-    );
-
-
-    fill(
-      135,
-      220,
-      241
-    );
-
-
-    circle(
-      8,
-      -5,
-      21
-    );
-
-  }
-
-
-  // ==========================================================
-  // CLEAN
-  // ==========================================================
-
-  else if (
-    type === "clean"
-  ) {
-
-    stroke(
-      110,
-      78,
-      50
-    );
-
-
-    strokeWeight(
-      3
-    );
-
-
-    line(
-
-      -5,
-      9,
-
-      7,
-      -11
-
-    );
-
-
-    noStroke();
-
-
-    fill(
-      250,
-      205,
-      84
-    );
-
-
-    quad(
-
-      -11,
-      7,
-
-      -3,
-      12,
-
-      6,
-      3,
-
-      -3,
-      -1
-
-    );
-
-  }
-
-
   pop();
-
 }
-
 
 
 // ============================================================
@@ -5221,6 +4576,7 @@ function die(cause) {
   stopCurrentMovement();
   isEating = isBeingPetted = isPlaying = isPooping = false;
   isSleeping = goingToSleep = false;
+  sleepElapsedSeconds = 0;
   playHopsRemaining = 0;
   actionEndTime = mealPoopTime = poopEndTime = 0;
   poopCreatedThisTime = false;
@@ -5290,6 +4646,7 @@ function restartPet() {
   petAngle = 0;
   isEating = isBeingPetted = isPlaying = isPooping = false;
   isSleeping = goingToSleep = false;
+  sleepElapsedSeconds = 0;
   actionEndTime = playHopsRemaining = mealPoopTime = poopEndTime = 0;
   poopCreatedThisTime = false;
   interactionMode = "none";

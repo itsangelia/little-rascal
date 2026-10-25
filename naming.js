@@ -79,21 +79,22 @@ function openNamingPopup() {
   feedback.textContent = "Choose a name of up to 16 characters.";
   Object.assign(feedback.style, { position: "absolute", width: "1px", height: "1px", overflow: "hidden", clipPath: "inset(50%)" });
   Object.assign(namingInput.style, {
-    boxSizing: "border-box", border: "1.5px solid #c4ad78", outlineColor: "#c59c48",
-    background: "#fffdf3", color: "#705b3c", fontFamily: "Arial, sans-serif",
-    textAlign: "center", pointerEvents: "auto", cursor: "text", caretColor: "#705b3c",
-    userSelect: "text", webkitUserSelect: "text", boxShadow: "inset 0 2px 4px #b9a77d14"
+    boxSizing: "border-box", border: "1.3px solid " + UI_THEME.outline, outlineColor: UI_THEME.gold,
+    outlineOffset: "2px", background: UI_THEME.paper, color: UI_THEME.ink, fontFamily: "Arial, sans-serif",
+    textAlign: "center", pointerEvents: "auto", cursor: "text", caretColor: UI_THEME.ink,
+    userSelect: "text", webkitUserSelect: "text", boxShadow: "inset 0 1px 3px #67533d0d"
   });
   const button = document.createElement("button");
   button.type = "submit";
   button.textContent = "LET'S BEGIN";
   Object.assign(button.style, {
-    position: "absolute", boxSizing: "border-box", border: "1.5px solid #b8944e",
-    background: "#f2d89c", color: "#69583a", fontFamily: "Arial, sans-serif", fontWeight: "bold",
+    position: "absolute", boxSizing: "border-box", border: "1.3px solid " + UI_THEME.outline,
+    background: "#f1e1b9", color: UI_THEME.ink, fontFamily: "Arial, sans-serif", fontWeight: "bold",
+    outlineColor: UI_THEME.gold, outlineOffset: "2px", boxShadow: "0 2px 2px #67533d0d",
     cursor: "pointer", pointerEvents: "auto"
   });
-  button.addEventListener("mouseenter", () => { button.style.background = "#fade89"; });
-  button.addEventListener("mouseleave", () => { button.style.background = "#f2d89c"; });
+  button.addEventListener("mouseenter", () => { button.style.background = "#ebd49d"; });
+  button.addEventListener("mouseleave", () => { button.style.background = "#f1e1b9"; });
   // Native focus preserves the blinking caret and opens touch keyboards on a tap.
   namingInput.addEventListener("pointerdown", () => {
     if (document.activeElement !== namingInput) namingInput.focus({ preventScroll: true });
@@ -158,16 +159,16 @@ function drawNamingPopup() {
   push();
   rectMode(CORNER);
   noStroke();
-  fill(58, 59, 43, 88);
+  fill(72, 64, 49, 88);
   rect(0, 0, width, height);
-  fill(75, 66, 43, 24);
+  fill(103, 83, 61, 24);
   rect(201, 118, 510, 420, 25);
-  stroke(183, 162, 113);
+  stroke(UI_THEME.outline);
   strokeWeight(1.7);
-  fill(253, 250, 237);
+  fill(UI_THEME.paper);
   rect(195, 110, 510, 420, 25);
   noFill();
-  stroke(234, 225, 195);
+  stroke(lerpColor(color(UI_THEME.paper), color(UI_THEME.outline), 0.35));
   strokeWeight(1);
   rect(204, 119, 492, 402, 19);
   noStroke();
@@ -175,7 +176,7 @@ function drawNamingPopup() {
   textAlign(CENTER, CENTER);
   textStyle(BOLD);
   textSize(29);
-  fill(107, 88, 59);
+  fill(UI_THEME.ink);
   text("Hello, little one!", width / 2, 157);
   const art = getPetArtwork(petHappyImg);
   const spriteWidth = 94;
@@ -185,13 +186,13 @@ function drawNamingPopup() {
     art.x, art.y, art.width, art.height);
   textStyle(NORMAL);
   textSize(17);
-  fill(114, 98, 74);
+  fill(UI_THEME.ink);
   text("What shall we call your little friend?", width / 2, 318);
   textSize(12);
-  fill(namingError ? color(172, 102, 79) : color(142, 143, 113));
+  fill(namingError ? color(172, 102, 79) : color(UI_THEME.muted));
   text(namingError || "Choose a name of up to 16 characters.", width / 2, 407);
   textSize(13);
-  fill(139, 142, 110);
+  fill(UI_THEME.muted);
   text("A tiny name for a whole little life.", width / 2, 496);
   pop();
   cursor(ARROW);
@@ -204,7 +205,6 @@ function drawPetNameLabel() {
   textFont("Arial");
   textStyle(NORMAL);
   textAlign(CENTER, CENTER);
-  fill(112, 89, 60, 225);
   let fontSize = 16;
   textSize(fontSize);
   while (textWidth(petName) > 220 && fontSize > 12) textSize(--fontSize);
@@ -214,6 +214,19 @@ function drawPetNameLabel() {
     letters.pop();
     label = letters.join("") + "…";
   }
+  // A quiet paper label adds contrast without moving or changing the pet name.
+  const plateWidth = constrain(textWidth(label) + 20, 56, 240);
+  rectMode(CORNER);
+  const plateFill = color(UI_THEME.paper);
+  plateFill.setAlpha(230);
+  const plateStroke = color(UI_THEME.outline);
+  plateStroke.setAlpha(170);
+  fill(plateFill);
+  stroke(plateStroke);
+  strokeWeight(1);
+  rect((width - plateWidth) / 2, 64, plateWidth, 26, 12);
+  noStroke();
+  fill(UI_THEME.ink);
   text(label, width / 2, 77);
   pop();
 }
