@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Little Rascal · 原声试听</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#f7f4e8;color:#6c573b;font:16px/1.65 system-ui,sans-serif}main{max-width:880px;margin:36px auto;padding:0 22px}h1{font-size:30px;line-height:1.2;margin:0 0 16px}p{margin:10px 0 22px}.muted{color:#7e8064;font-size:14px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.card,.selection{background:#fffaf0;border:1px solid #dbcda9;border-radius:20px;padding:22px}.card h2{margin:0;font-size:24px}.time{font-size:14px;color:#81846d;margin:5px 0 14px}audio{display:none}button,a.button{display:inline-block;border:1px solid #b89455;border-radius:24px;padding:9px 17px;background:#f2dca6;color:#665032;font:inherit;font-weight:600;text-decoration:none;cursor:pointer}.listen{display:block;width:100%;margin-bottom:16px;background:#ecebdc;border-color:#c9c9af}button[aria-pressed=true]{background:#d9e2c7;border-color:#818a69}button:focus-visible,a:focus-visible{outline:3px solid #9aab80;outline-offset:3px}.choices{display:flex;flex-wrap:wrap;gap:10px}.selection{margin:22px 0 16px}.selection p{margin:0 0 14px}#status{min-height:1.7em;margin:12px 0 0;font-size:14px}footer{font-size:14px;color:#81846d;margin-bottom:35px}@media(max-width:600px){main{margin-top:24px}.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>选一选球球的声音</h1>
+  <p>四段都截自你上传的音频，保留原来的音调和速度。先试听，再分别选择摸摸和玩球要用的声音。</p>
+  <p class="muted">这是原声试听草案，正式游戏暂时保持原样。默认 C／B 仅用于试听比较。</p>
+  <div class="grid" id="clips"></div>
+  <section class="selection" aria-label="当前选择">
+    <p id="selected" aria-live="polite"></p>
+    <div class="choices">
+      <a class="button" id="try-game" target="_blank" rel="noopener">在游戏里试听这组声音</a>
+      <button id="copy" type="button">复制选择，发回聊天</button>
+    </div>
+    <p id="status" role="status"></p>
+  </section>
+  <footer>游戏试玩仍有点蛋、起名流程。进入后试试摸摸、玩球；原有扬声器可以一起静音音乐和叫声。</footer>
+</main>
+<script>
+  const clips = [
+    {id:'A',time:'12.10–12.62 秒',duration:'0.52'},
+    {id:'B',time:'19.80–20.23 秒',duration:'0.43'},
+    {id:'C',time:'26.37–26.76 秒',duration:'0.39'},
+    {id:'D',time:'48.28–48.77 秒',duration:'0.49'}
+  ];
+  let chosen = {pet:'C',play:'B'};
+  for(const clip of clips){
+    const card=document.createElement('section');card.className='card';
+    card.innerHTML=`<h2>片段 ${clip.id}</h2><div class="time">原音频 ${clip.time} · 时长 ${clip.duration} 秒</div><audio preload="metadata" src="voice-samples/${clip.id}.wav"></audio><button class="listen" type="button" data-listen="${clip.id}">▶ 试听 ${clip.id}</button><div class="choices"><button type="button" data-kind="pet" data-clip="${clip.id}" aria-pressed="false">摸摸用 ${clip.id}</button><button type="button" data-kind="play" data-clip="${clip.id}" aria-pressed="false">玩球用 ${clip.id}</button></div>`;
+    document.getElementById('clips').append(card);
+  }
+  const update=()=>{
+    document.getElementById('selected').textContent=`当前试听：摸摸 ${chosen.pet} · 玩球 ${chosen.play}`;
+    document.getElementById('try-game').href=`../previews/sounds/?pet=${chosen.pet}&play=${chosen.play}&v=recorded-voice-1`;
+    for(const button of document.querySelectorAll('[data-kind]'))button.setAttribute('aria-pressed',String(chosen[button.dataset.kind]===button.dataset.clip));
+  };
+  document.getElementById('clips').addEventListener('click',event=>{
+    const listen=event.target.closest('[data-listen]');
+    if(listen){
+      const player=listen.closest('.card').querySelector('audio');
+      for(const other of document.querySelectorAll('audio'))if(other!==player)other.pause();
+      player.currentTime=0;
+      player.play().catch(()=>{document.getElementById('status').textContent='暂时无法播放，请再点一次试听。'});
+      return;
+    }
+    const button=event.target.closest('[data-kind]');if(!button)return;
+    chosen[button.dataset.kind]=button.dataset.clip;update();
+    document.getElementById('status').textContent='已更新试听组合，正式游戏尚未改动。';
+  });
+  for(const player of document.querySelectorAll('audio'))player.addEventListener('play',()=>{for(const other of document.querySelectorAll('audio'))if(other!==player)other.pause()});
+  document.getElementById('copy').addEventListener('click',async()=>{
+    const text=`摸摸用片段 ${chosen.pet}，玩球用片段 ${chosen.play}。`;
+    try{await navigator.clipboard.writeText(text);document.getElementById('status').textContent='已复制，粘贴回聊天即可。'}
+    catch(_){document.getElementById('status').textContent=text+' 可以直接把这句话发回聊天。'}
+  });
+  update();
+</script>
+</body>
+</html>

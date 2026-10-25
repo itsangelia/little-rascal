@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "status": "audition-only; awaiting owner selection",
+  "source": {
+    "uploadedName": "提取的音频.m4a",
+    "durationSeconds": 65.872993,
+    "sampleRate": 44100,
+    "channels": 2,
+    "sha256": "b596e2c1e491c285985a9417af0746802437877309aaec3d9090938f2bbb1b50",
+    "originalIncludedInRepository": false
+  },
+  "analysisNotice": "Candidates were identified from waveform, spectrogram and silence boundaries only. No subjective listening or emotion classification is claimed. Timestamp labels do not identify a happy, sad, petting or playing emotion.",
+  "processing": {
+    "linearGain": 0.6,
+    "fadeInSeconds": 0.008,
+    "fadeOutSeconds": 0.008,
+    "playbackRate": 1,
+    "pitchShiftSemitones": 0,
+    "timeStretch": false,
+    "format": "stereo PCM 16-bit WAV; original 44.1 kHz sample rate"
+  },
+  "previewDefaults": {
+    "pet": "C",
+    "play": "B",
+    "notice": "Audition defaults based on signal cleanliness only, not approved final interaction mapping. Choose ?pet=A&play=B etc. to compare.",
+    "masterGain": 0.45,
+    "combinedGainRelativeToSource": 0.27
+  },
+  "excludedRange": {
+    "startSeconds": 57.51,
+    "endSeconds": 63.58,
+    "reason": "Continuous broad-band/stereo section, unlike the isolated earlier bursts."
+  },
+  "samples": [
+    {
+      "id": "A",
+      "file": "A.wav",
+      "sourceStartSeconds": 12.1,
+      "sourceEndSeconds": 12.62,
+      "durationSeconds": 0.52,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.195557,
+      "rmsDbfs": -28.33
+    },
+    {
+      "id": "B",
+      "file": "B.wav",
+      "sourceStartSeconds": 19.8,
+      "sourceEndSeconds": 20.23,
+      "durationSeconds": 0.43,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.232513,
+      "rmsDbfs": -24.1
+    },
+    {
+      "id": "C",
+      "file": "C.wav",
+      "sourceStartSeconds": 26.37,
+      "sourceEndSeconds": 26.76,
+      "durationSeconds": 0.39,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.167145,
+      "rmsDbfs": -28.03
+    },
+    {
+      "id": "D",
+      "file": "D.wav",
+      "sourceStartSeconds": 48.28,
+      "sourceEndSeconds": 48.77,
+      "durationSeconds": 0.49,
+      "sampleRate": 44100,
+      "channels": 2,
+      "peakAmplitude": 0.242828,
+      "rmsDbfs": -24.16
+    }
+  ]
+}
